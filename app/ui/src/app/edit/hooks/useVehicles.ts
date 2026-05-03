@@ -137,6 +137,10 @@ export function useVehicles() {
     });
   }, []);
 
+  const markAllAvailable = useCallback(() => {
+    setVehicles((prev) => prev.map((v) => ({ ...v, available: true })));
+  }, []);
+
   const importVehicles = useCallback((incoming: VehicleRow[]) => {
     if (incoming.length === 0) return;
     setVehicles(incoming);
@@ -158,6 +162,7 @@ export function useVehicles() {
     deleteVehicle,
     unlockVehicle,
     confirmVehicle,
+    markAllAvailable,
     importVehicles,
     touchedIds,
     activeVehicleIsValid,
