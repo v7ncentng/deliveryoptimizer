@@ -33,11 +33,6 @@ export const SIDEBAR_NAV_LABEL_ACTIVE =
 export const SIDEBAR_NAV_LABEL_INACTIVE =
   "text-[14px] leading-5 font-medium text-[var(--edit-text-primary)] text-center whitespace-nowrap";
 
-export const PAGE_V2_BODY = "flex flex-1 min-h-0";
-
-export const PAGE_V2_MAIN =
-  "flex-1 min-w-0 bg-[var(--edit-bg-primary)] border-t border-l border-[var(--edit-stone-200)] rounded-tl-[12px] p-6 lg:p-8 space-y-8 lg:space-y-10";
-
 export const NAVBAR_V2_ROOT =
   "bg-[var(--edit-stone-50)] flex items-center justify-between p-4";
 
@@ -51,3 +46,30 @@ export const NAVBAR_V2_BTN_OUTLINE =
 
 export const NAVBAR_V2_BTN_FILLED =
   "h-9 px-4 rounded-[80px] bg-[var(--edit-btn-primary)] font-semibold text-[14px] leading-5 text-[var(--edit-text-temporary)] whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+  
+export const PAGE_V2_BODY = "flex flex-1 min-h-0";
+
+export const PAGE_V2_MAIN =
+  "flex-1 min-w-0 bg-[var(--edit-bg-primary)] border-t border-l border-[var(--edit-stone-200)] rounded-tl-[12px] p-6 lg:p-8 space-y-8 lg:space-y-10";
+
+export const VEHICLE_INFO_CONTAINER =
+  "hidden lg:flex flex-col gap-4 border border-[var(--edit-stone-200)] rounded-[8px] overflow-hidden p-4";
+
+export const VEHICLE_INFO_HEADER_ROW =
+  "flex gap-4 items-center font-semibold text-[16px] leading-[1.5] text-[var(--edit-text-primary)]";
+
+export const VEHICLE_INFO_HEADER_CELL = "shrink-0 w-[200px]";
+
+export const VEHICLE_INFO_DIVIDER = "border-t border-[var(--edit-stone-200)]";
+
+export const VEHICLE_SECTION_BTN_GHOST =
+  "h-9 px-4 rounded-[80px] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-tertiary-btn-hover)] active:bg-[var(--edit-tertiary-btn-pressed)] transition-colors cursor-pointer";
+
+export const VEHICLE_SECTION_HEADER =
+  "flex flex-col gap-2 mb-4";
+
+export const VEHICLE_SECTION_HEADING =
+  "font-bold text-[20px] leading-[28px] text-[var(--edit-text-primary)]";
+
+export const VEHICLE_SECTION_SUBHEADING =
+  "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
