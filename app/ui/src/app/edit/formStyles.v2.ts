@@ -169,6 +169,12 @@ export const OVERLAY_DEPARTURE_WRAPPER =
 export const OVERLAY_DEPARTURE_INPUT =
   "flex-1 font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent min-w-0";
 
+export const OVERLAY_TIME_SEGMENT_INPUT =
+  "w-8 font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent text-center";
+
+export const OVERLAY_TIME_COLON =
+  "font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] select-none";
+
 export const OVERLAY_MERIDIEM_WRAPPER =
   "flex gap-1 items-center shrink-0";
 
