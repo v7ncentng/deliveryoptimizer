@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { VehicleRow as VehicleRowType, VehicleType, CapacityUnit } from "../types/delivery";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import {
@@ -8,9 +8,10 @@ import {
   OVERLAY_BODY,
   OVERLAY_CANCEL_BTN,
   OVERLAY_CLOSE_BTN,
-  OVERLAY_DEPARTURE_INPUT,
   OVERLAY_DEPARTURE_WRAPPER,
   OVERLAY_DEPARTURE_WRAPPER_ERROR,
+  OVERLAY_TIME_COLON,
+  OVERLAY_TIME_SEGMENT_INPUT,
   OVERLAY_DELETE_BTN,
   OVERLAY_DONE_BTN,
   OVERLAY_FIELD,
@@ -70,11 +71,12 @@ const CHEVRON_DOWN_ICON = (
   </svg>
 );
 
-function parseDepartureTime(time: string): { timeValue: string; meridiem: "am" | "pm" } {
-  if (!time.trim()) return { timeValue: "", meridiem: "am" };
+function parseDepartureTime(time: string): { hours: string; minutes: string; meridiem: "am" | "pm" } {
+  if (!time.trim()) return { hours: "", minutes: "", meridiem: "am" };
   const isPm = /pm/i.test(time);
   const cleaned = time.replace(/\s*(am|pm)\s*/i, "").trim();
-  return { timeValue: cleaned, meridiem: isPm ? "pm" : "am" };
+  const [h = "", m = ""] = cleaned.split(":");
+  return { hours: h, minutes: m, meridiem: isPm ? "pm" : "am" };
 }
 
 type VehicleDetailsOverlayProps = {
@@ -103,15 +105,19 @@ export default function VehicleDetailsOverlay({
   const [available, setAvailable] = useState(vehicle.available);
 
   const parsed = parseDepartureTime(vehicle.departureTime);
-  const [timeValue, setTimeValue] = useState(parsed.timeValue);
+  const [hours, setHours] = useState(parsed.hours);
+  const [minutes, setMinutes] = useState(parsed.minutes);
   const [meridiem, setMeridiem] = useState<"am" | "pm">(parsed.meridiem);
   const [submitted, setSubmitted] = useState(false);
+
+  const hoursRef = useRef<HTMLInputElement>(null);
+  const minutesRef = useRef<HTMLInputElement>(null);
 
   const nameError     = submitted && !name.trim();
   const typeError     = submitted && !type;
   const capacityError = submitted && capacity <= 0;
   const unitError     = submitted && !capacityUnit;
-  const departureError = submitted && !timeValue.trim();
+  const departureError = submitted && (!hours.trim() || !minutes.trim());
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -123,8 +129,8 @@ export default function VehicleDetailsOverlay({
 
   function handleSave() {
     setSubmitted(true);
-    if (!name.trim() || !type || capacity <= 0 || !capacityUnit || !timeValue.trim()) return;
-    const departureTime = `${timeValue.trim()} ${meridiem.toUpperCase()}`;
+    if (!name.trim() || !type || capacity <= 0 || !capacityUnit || !hours.trim() || !minutes.trim()) return;
+    const departureTime = `${hours}:${minutes} ${meridiem.toUpperCase()}`;
     onSave({ ...vehicle, name, type, capacity, capacityUnit, available, departureTime });
   }
 
@@ -294,16 +300,43 @@ export default function VehicleDetailsOverlay({
                   Departure time<span className={OVERLAY_REQUIRED_STAR} aria-hidden="true">*</span>
                 </label>
                 <div className={departureError ? OVERLAY_DEPARTURE_WRAPPER_ERROR : OVERLAY_DEPARTURE_WRAPPER}>
-                  <input
-                    id="overlay-departure-time"
-                    value={timeValue}
-                    onChange={(e) => setTimeValue(e.target.value)}
-                    placeholder="Enter"
-                    className={OVERLAY_DEPARTURE_INPUT}
-                    aria-required="true"
-                    aria-label="Departure time"
-                    aria-invalid={departureError}
-                  />
+                  <div className="flex items-center">
+                    <input
+                      ref={hoursRef}
+                      id="overlay-departure-time"
+                      value={hours}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 2);
+                        setHours(val);
+                        if (val.length === 2) minutesRef.current?.focus();
+                      }}
+                      placeholder="HH"
+                      maxLength={2}
+                      inputMode="numeric"
+                      className={OVERLAY_TIME_SEGMENT_INPUT}
+                      aria-required="true"
+                      aria-label="Departure hours"
+                      aria-invalid={departureError}
+                    />
+                    <span className={OVERLAY_TIME_COLON}>:</span>
+                    <input
+                      ref={minutesRef}
+                      value={minutes}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 2);
+                        setMinutes(val);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Backspace" && minutes === "") hoursRef.current?.focus();
+                      }}
+                      placeholder="MM"
+                      maxLength={2}
+                      inputMode="numeric"
+                      className={OVERLAY_TIME_SEGMENT_INPUT}
+                      aria-label="Departure minutes"
+                      aria-invalid={departureError}
+                    />
+                  </div>
                   <div
                     className={OVERLAY_MERIDIEM_WRAPPER}
                     role="group"
