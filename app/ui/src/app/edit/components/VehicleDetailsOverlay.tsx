@@ -96,6 +96,7 @@ type VehicleDetailsOverlayProps = {
   mode?: "add" | "edit";
   onClose: () => void;
   onSave: (updated: VehicleRowType) => void;
+  onDelete?: () => void;
 };
 
 export default function VehicleDetailsOverlay({
@@ -103,6 +104,7 @@ export default function VehicleDetailsOverlay({
   mode = "add",
   onClose,
   onSave,
+  onDelete,
 }: VehicleDetailsOverlayProps) {
   const panelRef = useFocusTrap<HTMLDivElement>(true);
 
@@ -380,6 +382,16 @@ export default function VehicleDetailsOverlay({
 
         {/* Footer */}
         <div className={OVERLAY_FOOTER}>
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              disabled={!canDelete}
+              className={OVERLAY_DELETE_BTN}
+            >
+              Delete
+            </button>
+          )}
           <button type="button" onClick={onClose} className={OVERLAY_CANCEL_BTN}>
             Cancel
           </button>
