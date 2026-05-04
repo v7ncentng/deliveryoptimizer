@@ -17,28 +17,15 @@ function isVehicleValid(v: VehicleRow): boolean {
 }
 
 export function useVehicles() {
-  const [vehicles, setVehicles] = useState<VehicleRow[]>([
-    {
-      id: 1,
-      locked: false,
-      editingExisting: false,
-      name: "",
-      startLocation: "",
-      cachedLocation: undefined,
-      type: "",
-      capacityUnit: "",
-      capacity: 0,
-      available: true,
-      departureTime: "",
-    },
-  ]);
+  const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
 
   // Set of vehicle IDs whose fields should show validation errors.
   const [touchedIds, setTouchedIds] = useState<Set<number>>(new Set());
 
   const activeVehicle = vehicles.find((v) => !v.locked);
   const activeVehicleIsValid = !!activeVehicle && isVehicleValid(activeVehicle);
-  const allVehiclesLocked = vehicles.length > 0 && vehicles.every((v) => v.locked);
+  // Vacuously true for an empty list so "Add vehicle" is enabled from the start.
+  const allVehiclesLocked = vehicles.every((v) => v.locked);
 
   const updateVehicle = useCallback(<K extends keyof VehicleRow>(
     id: number,
@@ -89,6 +76,34 @@ export function useVehicles() {
       ];
     });
   }, []);
+
+  // Creates a pre-filled, immediately-locked vehicle from the overlay form.
+  // startLocation is a temporary placeholder until the shared depot flow is built.
+  const addVehicleWithDetails = useCallback(
+    (details: Pick<VehicleRow, "name" | "type" | "capacity" | "capacityUnit" | "available" | "departureTime">) => {
+      setVehicles((prev) => {
+        const newId = prev.reduce((max, v) => Math.max(max, v.id), 0) + 1;
+        return [
+          ...prev.map((v) => ({ ...v, locked: true })),
+          {
+            id: newId,
+            locked: true,
+            editingExisting: false,
+            name: details.name,
+            startLocation: "1600 Pennsylvania Ave",
+            cachedLocation: undefined,
+            type: details.type,
+            capacityUnit: details.capacityUnit,
+            capacity: details.capacity,
+            available: details.available,
+            departureTime: details.departureTime,
+          },
+        ];
+      });
+      setTouchedIds(new Set());
+    },
+    []
+  );
 
   // Always keep at least one vehicle in the list.
   const deleteVehicle = useCallback((id: number) => {
@@ -159,6 +174,7 @@ export function useVehicles() {
     vehicles,
     updateVehicle,
     addVehicle,
+    addVehicleWithDetails,
     deleteVehicle,
     unlockVehicle,
     confirmVehicle,
