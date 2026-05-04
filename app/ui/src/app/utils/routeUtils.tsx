@@ -33,7 +33,12 @@ export function PageFooter() {
                 style={{ objectFit: "contain" }}
             />
 
-            <span style={{ fontSize: "13px", color: "#555" }}>
+            <span style={{
+                fontSize: "clamp(10px, 1.1vw, 13px)",
+                color: "#555",
+                textAlign: "right",
+                maxWidth: "66%",
+            }}>
                 Built with ❤️ for Humanity. The Benevolent Bandwidth Foundation
             </span>
         </footer>
