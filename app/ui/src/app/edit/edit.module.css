@@ -42,6 +42,11 @@
 
   --edit-tertiary-btn-hover: #F6F5F2;
   --edit-tertiary-btn-pressed: #F6F5F2;
+
+  /* ── Semantic status ─────────────────────────────────────────── */
+  --edit-container-success: #daf1db;
+  --edit-text-success:      #2a7e3b;
+  --edit-required-asterisk: #da1b0b;
 }
 
 /* ── Primary Button Hover and Pressed States Overlay ──────────────────────── */

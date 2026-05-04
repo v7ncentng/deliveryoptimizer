@@ -73,3 +73,89 @@ export const VEHICLE_SECTION_HEADING =
 
 export const VEHICLE_SECTION_SUBHEADING =
   "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
+
+// ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
+
+export const OVERLAY_BACKDROP =
+  "fixed inset-0 z-50 flex items-center justify-center bg-black/40";
+
+export const OVERLAY_PANEL =
+  "bg-[var(--edit-bg-primary)] flex flex-col gap-[14px] items-end overflow-hidden p-6 rounded-[6px] w-full max-w-[480px] mx-4 shadow-lg";
+
+export const OVERLAY_BODY =
+  "flex flex-col gap-6 items-start w-full";
+
+export const OVERLAY_HEADER =
+  "flex items-center justify-between w-full";
+
+export const OVERLAY_TITLE =
+  "font-bold text-[20px] leading-7 text-[var(--edit-text-primary)]";
+
+export const OVERLAY_CLOSE_BTN =
+  "flex items-center justify-center size-6 text-[var(--edit-text-primary)] hover:opacity-70 transition-opacity cursor-pointer";
+
+export const OVERLAY_ROW =
+  "flex gap-4 items-start w-full";
+
+export const OVERLAY_FIELD =
+  "flex flex-1 flex-col gap-[6px] items-start min-w-0";
+
+export const OVERLAY_LABEL =
+  "font-normal text-[16px] leading-normal text-[var(--edit-text-primary)] w-full";
+
+export const OVERLAY_REQUIRED_STAR =
+  "text-[var(--edit-required-asterisk)]";
+
+export const OVERLAY_INPUT =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center px-3 rounded-[6px] w-full font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none focus:border-[var(--edit-teal-300)] bg-[var(--edit-bg-primary)] transition-colors";
+
+export const OVERLAY_SELECT_WRAPPER =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-3 rounded-[6px] w-full relative overflow-hidden cursor-pointer";
+
+export const OVERLAY_SELECT =
+  "appearance-none absolute inset-0 w-full h-full opacity-0 cursor-pointer";
+
+export const OVERLAY_SELECT_VALUE =
+  "font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] pointer-events-none flex-1 truncate";
+
+export const OVERLAY_SELECT_PLACEHOLDER =
+  "font-normal text-[16px] leading-6 text-[var(--edit-stone-500)] pointer-events-none flex-1 truncate";
+
+export const OVERLAY_STATUS_BADGE_AVAILABLE =
+  "bg-[var(--edit-container-success)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px] cursor-pointer select-none shrink-0";
+
+export const OVERLAY_STATUS_BADGE_UNAVAILABLE =
+  "bg-[var(--edit-stone-50)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px] cursor-pointer select-none shrink-0";
+
+export const OVERLAY_STATUS_BADGE_TEXT_AVAILABLE =
+  "font-semibold text-[16px] leading-[22px] text-[var(--edit-text-success)] whitespace-nowrap";
+
+export const OVERLAY_STATUS_BADGE_TEXT_UNAVAILABLE =
+  "font-semibold text-[16px] leading-[22px] text-[var(--edit-stone-600)] whitespace-nowrap";
+
+export const OVERLAY_STATUS_HINT =
+  "text-[12px] leading-normal text-[var(--edit-text-secondary)]";
+
+export const OVERLAY_DEPARTURE_WRAPPER =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-3 rounded-[6px] w-full gap-2 focus-within:border-[var(--edit-teal-300)] transition-colors";
+
+export const OVERLAY_DEPARTURE_INPUT =
+  "flex-1 font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent min-w-0";
+
+export const OVERLAY_MERIDIEM_WRAPPER =
+  "flex gap-1 items-center shrink-0";
+
+export const OVERLAY_MERIDIEM_BTN_ACTIVE =
+  "bg-[var(--edit-container-active)] flex items-center justify-center rounded-[2px] size-8 font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] cursor-pointer transition-colors";
+
+export const OVERLAY_MERIDIEM_BTN_INACTIVE =
+  "flex items-center justify-center rounded-[2px] size-8 font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] cursor-pointer hover:bg-[var(--edit-stone-50)] transition-colors";
+
+export const OVERLAY_FOOTER =
+  "flex gap-[6px] items-center";
+
+export const OVERLAY_CANCEL_BTN =
+  "h-9 px-4 rounded-[80px] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-tertiary-btn-hover)] active:bg-[var(--edit-tertiary-btn-pressed)] transition-colors cursor-pointer";
+
+export const OVERLAY_DONE_BTN =
+  "h-9 px-4 rounded-[80px] bg-[var(--edit-btn-primary)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:[background:var(--edit-primary-btn-hover)] active:[background:var(--edit-primary-btn-pressed)] transition-colors cursor-pointer";
