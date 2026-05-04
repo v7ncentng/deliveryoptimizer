@@ -159,3 +159,12 @@ export const OVERLAY_CANCEL_BTN =
 
 export const OVERLAY_DONE_BTN =
   "h-9 px-4 rounded-[80px] bg-[var(--edit-btn-primary)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:[background:var(--edit-primary-btn-hover)] active:[background:var(--edit-primary-btn-pressed)] transition-colors cursor-pointer";
+
+export const OVERLAY_INPUT_ERROR =
+  "border border-[var(--edit-error-border)] flex h-11 items-center px-3 rounded-[6px] w-full font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-[var(--edit-bg-primary)] transition-colors";
+
+export const OVERLAY_SELECT_WRAPPER_ERROR =
+  "border border-[var(--edit-error-border)] flex h-11 items-center justify-between px-3 rounded-[6px] w-full relative overflow-hidden cursor-pointer";
+
+export const OVERLAY_DEPARTURE_WRAPPER_ERROR =
+  "border border-[var(--edit-error-border)] flex h-11 items-center justify-between px-3 rounded-[6px] w-full gap-2 transition-colors";
