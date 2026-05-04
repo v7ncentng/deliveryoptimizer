@@ -47,6 +47,7 @@
   --edit-container-success: #daf1db;
   --edit-text-success:      #2a7e3b;
   --edit-required-asterisk: #da1b0b;
+  --edit-error-border:      #da1b0b;
 }
 
 /* ── Primary Button Hover and Pressed States Overlay ──────────────────────── */
