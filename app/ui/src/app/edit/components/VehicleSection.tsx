@@ -4,7 +4,9 @@
  * Vehicle grid: column headers plus one VehicleRow per vehicle, and an Add control below.
  */
 
+import { useState } from "react";
 import VehicleRow from "./VehicleRow";
+import VehicleDetailsOverlay from "./VehicleDetailsOverlay";
 import type { VehicleRow as VehicleRowType } from "../types/delivery";
 import { DESKTOP_VEHICLE_GRID_CLASS } from "../formStyles";
 import {
@@ -19,9 +21,23 @@ import {
   VEHICLE_SECTION_SUBHEADING,
 } from "../formStyles.v2";
 
+const BLANK_VEHICLE: VehicleRowType = {
+  id: 0,
+  locked: false,
+  editingExisting: false,
+  name: "",
+  startLocation: "",
+  type: "",
+  capacityUnit: "",
+  capacity: 0,
+  available: true,
+  departureTime: "",
+};
+
 type VehicleSectionProps = {
   vehicles: VehicleRowType[];
   addVehicle: () => void;
+  addVehicleWithDetails: (details: Pick<VehicleRowType, "name" | "type" | "capacity" | "capacityUnit" | "available" | "departureTime">) => void;
   markAllAvailable: () => void;
   updateVehicle: <K extends keyof VehicleRowType>(id: number, key: K, value: VehicleRowType[K]) => void;
   deleteVehicle: (id: number) => void;
@@ -36,7 +52,7 @@ type VehicleSectionProps = {
 
 export default function VehicleSection({
   vehicles,
-  addVehicle,
+  addVehicleWithDetails,
   markAllAvailable,
   updateVehicle,
   deleteVehicle,
@@ -48,6 +64,8 @@ export default function VehicleSection({
   geocodeFailedVehicleIds,
   outOfRegionVehicleIds,
 }: VehicleSectionProps) {
+  const [isAddOverlayOpen, setIsAddOverlayOpen] = useState(false);
+
   const addEnabled = allVehiclesLocked || activeVehicleIsValid;
   const geocodeFailedSet = new Set(geocodeFailedVehicleIds);
   const outOfRegionSet = new Set(outOfRegionVehicleIds);
@@ -65,7 +83,7 @@ export default function VehicleSection({
         </button>
         <button
           type="button"
-          onClick={addVehicle}
+          onClick={() => setIsAddOverlayOpen(true)}
           disabled={!addEnabled}
           className={`${NAVBAR_V2_BTN_OUTLINE} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
@@ -121,6 +139,23 @@ export default function VehicleSection({
         ))}
       </div>
 
+      {isAddOverlayOpen && (
+        <VehicleDetailsOverlay
+          vehicle={BLANK_VEHICLE}
+          onClose={() => setIsAddOverlayOpen(false)}
+          onSave={(updated) => {
+            addVehicleWithDetails({
+              name: updated.name,
+              type: updated.type,
+              capacity: updated.capacity,
+              capacityUnit: updated.capacityUnit,
+              available: updated.available,
+              departureTime: updated.departureTime,
+            });
+            setIsAddOverlayOpen(false);
+          }}
+        />
+      )}
     </section>
   );
 }
