@@ -78,22 +78,19 @@ export const VEHICLE_ROW_STATUS_BADGE_AVAILABLE =
   "bg-[var(--edit-container-success)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px]";
 
 export const VEHICLE_ROW_STATUS_BADGE_UNAVAILABLE =
-  "bg-[var(--edit-stone-50)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px]";
+  "bg-[var(--edit-stone-50)] flex items-center overflow-hidden p-[8px] rounded-[4px]";
 
 export const VEHICLE_ROW_STATUS_TEXT_AVAILABLE =
   "font-semibold text-[16px] leading-[22px] text-[var(--edit-text-success)] whitespace-nowrap";
 
 export const VEHICLE_ROW_STATUS_TEXT_UNAVAILABLE =
-  "font-semibold text-[16px] leading-[22px] text-[var(--edit-stone-600)] whitespace-nowrap";
+  "font-semibold text-[16px] leading-[22px] text-[var(--edit-text-secondary)] whitespace-nowrap";
 
 export const VEHICLE_ROW_ACTIONS =
   "flex items-center justify-end gap-1";
 
 export const VEHICLE_ROW_ICON_BUTTON =
   "relative size-10 shrink-0 rounded-[4px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--edit-bg-primary)] hover:bg-[var(--edit-tertiary-btn-hover)] active:bg-[var(--edit-tertiary-btn-pressed)] transition-colors";
-
-export const VEHICLE_ROW_ICON =
-  "absolute left-2 top-2 size-6";
 
 export const VEHICLE_SECTION_BTN_GHOST =
   "h-9 px-4 rounded-[80px] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-tertiary-btn-hover)] active:bg-[var(--edit-tertiary-btn-pressed)] transition-colors cursor-pointer";
@@ -158,13 +155,13 @@ export const OVERLAY_STATUS_BADGE_AVAILABLE =
   "bg-[var(--edit-container-success)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px] cursor-pointer select-none shrink-0";
 
 export const OVERLAY_STATUS_BADGE_UNAVAILABLE =
-  "bg-[var(--edit-stone-50)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px] cursor-pointer select-none shrink-0";
+  "bg-[var(--edit-stone-50)] flex items-center overflow-hidden p-[8px] rounded-[4px] cursor-pointer select-none shrink-0";
 
 export const OVERLAY_STATUS_BADGE_TEXT_AVAILABLE =
   "font-semibold text-[16px] leading-[22px] text-[var(--edit-text-success)] whitespace-nowrap";
 
 export const OVERLAY_STATUS_BADGE_TEXT_UNAVAILABLE =
-  "font-semibold text-[16px] leading-[22px] text-[var(--edit-stone-600)] whitespace-nowrap";
+  "font-semibold text-[16px] leading-[22px] text-[var(--edit-text-secondary)] whitespace-nowrap";
 
 export const OVERLAY_STATUS_HINT =
   "text-[12px] leading-normal text-[var(--edit-text-secondary)]";

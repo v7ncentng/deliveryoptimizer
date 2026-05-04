@@ -282,7 +282,7 @@ export default function VehicleDetailsOverlay({
                     aria-label="Toggle availability"
                   >
                     <span className={available ? OVERLAY_STATUS_BADGE_TEXT_AVAILABLE : OVERLAY_STATUS_BADGE_TEXT_UNAVAILABLE}>
-                      {available ? "Available" : "Unavailable"}
+                      {available ? "Available" : "In use"}
                     </span>
                   </button>
                   <p className={OVERLAY_STATUS_HINT}>Tap to toggle</p>
