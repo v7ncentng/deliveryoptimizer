@@ -17,30 +17,30 @@ export function PageFooter() {
                 position: "relative",
                 zIndex: 1,
                 display: "flex",
-                justifyContent: "space-between",
+                flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
                 padding: "20px 32px",
                 borderTop: "1px solid rgba(0,0,0,0.06)",
                 fontFamily: "'DM Sans', sans-serif",
+                gap: "12px",
             }}
         >
+            <span style={{
+                fontSize: "clamp(10px, 1.1vw, 13px)",
+                color: "#555",
+                textAlign: "center",
+            }}>
+                Built with ❤️ for Humanity. The Benevolent Bandwidth Foundation
+            </span>
             {/* b² logo — served from /public/b2-logo.png */}
             <Image
                 src="/logo.png"
                 alt="b² logo"
-                width={44}
-                height={36}
+                width={35.2}
+                height={28.8}
                 style={{ objectFit: "contain" }}
             />
-
-            <span style={{
-                fontSize: "clamp(10px, 1.1vw, 13px)",
-                color: "#555",
-                textAlign: "right",
-                maxWidth: "66%",
-            }}>
-                Built with ❤️ for Humanity. The Benevolent Bandwidth Foundation
-            </span>
         </footer>
     );
 }
