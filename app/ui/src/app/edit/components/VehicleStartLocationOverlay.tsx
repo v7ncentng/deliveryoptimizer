@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { SUPPORTED_STATES } from "../constants/supportedRegions";
+import OverlayFieldError from "./OverlayFieldError";
 import {
   OVERLAY_BACKDROP,
   OVERLAY_BODY,
@@ -59,7 +60,7 @@ const CHEVRON_DOWN_ICON = (
   </svg>
 );
 
-const COUNTRIES = ["United States", "Canada", "Mexico"];
+const COUNTRIES = ["United States"];
 
 export type StartLocationAddress = {
   line1: string;
@@ -95,7 +96,7 @@ export default function VehicleStartLocationOverlay({
   const line1Error = submitted && !line1.trim();
   const cityError = submitted && !city.trim();
   const stateError = submitted && !state;
-  const zipError = submitted && !zipCode.trim();
+  const zipError = submitted && zipCode.length !== 5;
   const countryError = submitted && !country;
 
   useEffect(() => {
@@ -112,7 +113,7 @@ export default function VehicleStartLocationOverlay({
 
   function handleSave() {
     setSubmitted(true);
-    if (!line1.trim() || !city.trim() || !state || !zipCode.trim() || !country) return;
+    if (!line1.trim() || !city.trim() || !state || zipCode.length !== 5 || !country) return;
     onSave({ line1, line2, city, state, zipCode, country });
   }
 
@@ -162,6 +163,7 @@ export default function VehicleStartLocationOverlay({
                 aria-required="true"
                 aria-invalid={line1Error}
               />
+              {line1Error && <OverlayFieldError message="Enter an address" />}
             </div>
 
             {/* Address line 2 — full width, optional */}
@@ -193,6 +195,7 @@ export default function VehicleStartLocationOverlay({
                   aria-required="true"
                   aria-invalid={cityError}
                 />
+                {cityError && <OverlayFieldError message="Enter a city" />}
               </div>
 
               <div className={OVERLAY_FIELD}>
@@ -220,6 +223,7 @@ export default function VehicleStartLocationOverlay({
                     ))}
                   </select>
                 </div>
+                {stateError && <OverlayFieldError message="Enter a state" />}
               </div>
             </div>
 
@@ -232,13 +236,15 @@ export default function VehicleStartLocationOverlay({
                 <input
                   id="start-loc-zip"
                   value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value)}
+                  onChange={(e) => setZipCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
                   placeholder="Enter"
                   inputMode="numeric"
+                  maxLength={5}
                   className={zipError ? OVERLAY_INPUT_ERROR : OVERLAY_INPUT}
                   aria-required="true"
                   aria-invalid={zipError}
                 />
+                {zipError && <OverlayFieldError message="Zip code must be 5 digits" />}
               </div>
 
               <div className={OVERLAY_FIELD}>
@@ -266,6 +272,7 @@ export default function VehicleStartLocationOverlay({
                     ))}
                   </select>
                 </div>
+                {countryError && <OverlayFieldError message="Enter a valid region" />}
               </div>
             </div>
           </div>
