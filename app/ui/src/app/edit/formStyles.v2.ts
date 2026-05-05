@@ -207,3 +207,9 @@ export const OVERLAY_SELECT_WRAPPER_ERROR =
 
 export const OVERLAY_DEPARTURE_WRAPPER_ERROR =
   "border border-[var(--edit-error-border)] flex h-11 items-center justify-between px-3 rounded-[6px] w-full gap-2 transition-colors";
+
+export const OVERLAY_FIELD_ERROR_CONTAINER =
+  "bg-[var(--edit-error-bg)] flex gap-2 items-center p-2 rounded-[4px] w-full";
+
+export const OVERLAY_FIELD_ERROR_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-error-border)]";
