@@ -48,6 +48,7 @@
   --edit-text-success:      #2A7E3B;
   --edit-required-asterisk: #DA1B0B;
   --edit-error-border:      #DA1B0B;
+  --edit-error-bg:          #fef2f2;
   --edit-icon-edit:      #3D3D3C;
   --edit-icon-trash:       #DA1B0B;
 }
