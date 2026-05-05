@@ -13,7 +13,6 @@ import {
   OVERLAY_DEPARTURE_WRAPPER_ERROR,
   OVERLAY_TIME_COLON,
   OVERLAY_TIME_SEGMENT_INPUT,
-  OVERLAY_DELETE_BTN,
   OVERLAY_DONE_BTN,
   OVERLAY_FIELD,
   OVERLAY_FOOTER,
@@ -95,19 +94,15 @@ function parseDepartureTime(time: string): { hours: string; minutes: string; mer
 type VehicleDetailsOverlayProps = {
   vehicle: VehicleRowType;
   mode?: "add" | "edit";
-  canDelete?: boolean;
   onClose: () => void;
   onSave: (updated: VehicleRowType) => void;
-  onDelete?: () => void;
 };
 
 export default function VehicleDetailsOverlay({
   vehicle,
   mode = "add",
-  canDelete = true,
   onClose,
   onSave,
-  onDelete,
 }: VehicleDetailsOverlayProps) {
   const panelRef = useFocusTrap<HTMLDivElement>(true);
 
@@ -143,7 +138,7 @@ export default function VehicleDetailsOverlay({
   function handleSave() {
     setSubmitted(true);
     if (!name.trim() || !type || capacity <= 0 || !capacityUnit || !isValidTime(hours, minutes)) return;
-    const departureTime = `${hours}:${minutes} ${meridiem.toUpperCase()}`;
+    const departureTime = `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")} ${meridiem.toUpperCase()}`;
     onSave({ ...vehicle, name, type, capacity, capacityUnit, available, departureTime });
   }
 
