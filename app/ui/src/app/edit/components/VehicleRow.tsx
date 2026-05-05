@@ -340,7 +340,7 @@ export default function VehicleRow({
 function formatCapacity(vehicle: VehicleRowType): string {
   const unit =
     vehicle.capacityUnit === "cubic_feet"
-      ? "cubic feet"
+      ? "Cubic Feet"
       : vehicle.capacityUnit;
 
   return [vehicle.capacity || "", unit].filter(Boolean).join(" ");

@@ -73,7 +73,6 @@ export type StartLocationAddress = {
 };
 
 type VehicleStartLocationOverlayProps = {
-  vehicleName?: string;
   initialAddress?: Partial<StartLocationAddress>;
   onClose: () => void;
   onSave: (address: StartLocationAddress) => void;
