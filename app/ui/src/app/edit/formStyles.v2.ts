@@ -9,16 +9,22 @@ export const SIDEBAR_ROOT =
 
 export const SIDEBAR_NAV = "flex flex-col gap-4 pt-4 px-2";
 
-export const SIDEBAR_NAV_ITEM =
+export const SIDEBAR_NAV_ITEM_ACTIVE =
   "flex flex-col gap-1 items-center w-full";
 
 export const SIDEBAR_NAV_ITEM_INACTIVE =
+  "flex flex-col gap-1 items-center w-full cursor-pointer";
+
+export const SIDEBAR_NAV_ITEM_DISABLED =
   "flex flex-col gap-1 items-center w-full opacity-[0.26] cursor-not-allowed";
 
 export const SIDEBAR_NAV_PILL_ACTIVE =
   "w-full flex items-center justify-center rounded-[80px] bg-[var(--edit-container-active)] px-[9px] py-[4px]";
 
 export const SIDEBAR_NAV_PILL_INACTIVE =
+  "w-full flex items-center justify-center rounded-[80px] px-[9px] py-[4px]";
+
+export const SIDEBAR_NAV_PILL_DISABLED =
   "w-full flex items-center justify-center rounded-[80px] px-[9px] py-[4px]";
 
 export const SIDEBAR_NAV_LABEL_ACTIVE =
