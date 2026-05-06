@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  SIDEBAR_NAV_ITEM,
+  SIDEBAR_NAV_ITEM_ACTIVE,
   SIDEBAR_NAV_ITEM_INACTIVE,
   SIDEBAR_NAV_LABEL_ACTIVE,
   SIDEBAR_NAV_LABEL_INACTIVE,
@@ -23,7 +23,7 @@ export default function SidebarEditButton() {
   const isActive = pathname === "/edit";
 
   return (
-    <Link href="/edit" className={isActive ? SIDEBAR_NAV_ITEM : SIDEBAR_NAV_ITEM_INACTIVE}>
+    <Link href="/edit" className={isActive ? SIDEBAR_NAV_ITEM_ACTIVE : SIDEBAR_NAV_ITEM_INACTIVE}>
       <span className={isActive ? SIDEBAR_NAV_PILL_ACTIVE : SIDEBAR_NAV_PILL_INACTIVE}>
         {SVG_EDIT_ICON}
       </span>

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import {
-  SIDEBAR_NAV_ITEM_INACTIVE,
+  SIDEBAR_NAV_ITEM_DISABLED,
   SIDEBAR_NAV_LABEL_INACTIVE,
-  SIDEBAR_NAV_PILL_INACTIVE,
+  SIDEBAR_NAV_PILL_DISABLED,
 } from "../../formStyles.v2";
 
 
@@ -15,8 +15,8 @@ const SIDEBAR_RESULTS_ICON = (
 
 export default function SidebarResultsButton() {
   return (
-    <Link href="#" className={SIDEBAR_NAV_ITEM_INACTIVE}>  {/* TODO: add results page link when at least one route exists */}
-      <span className={SIDEBAR_NAV_PILL_INACTIVE}>
+    <Link href="#" className={SIDEBAR_NAV_ITEM_DISABLED}>  {/* TODO: add results page link when at least one route exists */}
+      <span className={SIDEBAR_NAV_PILL_DISABLED}>
         {SIDEBAR_RESULTS_ICON}
       </span>
       <span className={SIDEBAR_NAV_LABEL_INACTIVE}>
