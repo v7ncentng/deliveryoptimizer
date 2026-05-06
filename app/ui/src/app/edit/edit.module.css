@@ -35,9 +35,31 @@
   --edit-btn-primary:      #39AC8F;
 
   /* ── Button Hover States ──────────────────────────────────────────────────── */
-  --edit-primary-btn-hover: linear-gradient(0deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.08) 100%), var(--edit-btn-primary);
-  --edit-primary-btn-pressed: linear-gradient(0deg, rgba(0, 0, 0, 0.16) 0%, rgba(0, 0, 0, 0.16) 100%), var(--edit-btn-primary);
-
   --edit-secondary-btn-hover: rgba(0, 0, 0, 0.02);
   --edit-secondary-btn-pressed: rgba(0, 0, 0, 0.04);
+}
+
+/* ── Primary Button Hover and Pressed States Overlay ──────────────────────── */
+.primaryBtnOverlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.primaryBtnOverlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #000000;
+  opacity: 0;
+  transition: opacity 150ms ease;
+  pointer-events: none;
+}
+
+.primaryBtnOverlay:hover::after {
+  opacity: 0.08;
+}
+
+.primaryBtnOverlay:active::after {
+  opacity: 0.16;
 }
