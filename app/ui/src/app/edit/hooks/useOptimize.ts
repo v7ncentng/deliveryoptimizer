@@ -88,8 +88,9 @@ export function useOptimize(
   const [outOfRegionVehicleIds, setOutOfRegionVehicleIds] = useState<number[]>([])
   const [optimizationJobId, setOptimizationJobId] = useState<string | null>(null)
   const [result, setResult] = useState<unknown>(null)
+  const [needsDepotAddress, setNeedsDepotAddress] = useState(false)
  
-  const optimize = useCallback(async (depotAddress: string) => {
+  const optimize = useCallback(async (depotAddress?: string) => {
     setOptimizeError(null)
     setGeocodeFailedAddressIds([])
     setGeocodeFailedVehicleIds([])
@@ -97,6 +98,7 @@ export function useOptimize(
     setOutOfRegionVehicleIds([])
     setOptimizationJobId(null)
     setResult(null)
+    setNeedsDepotAddress(false)
 
     const unlockedVehicle = vehicles.find((v) => !v.locked)
     const unlockedAddress = addresses.find((a) => !a.locked)
@@ -137,13 +139,19 @@ export function useOptimize(
       return
     }
 
+    const trimmedDepotAddress = depotAddress?.trim()
+    if (!trimmedDepotAddress) {
+      setNeedsDepotAddress(true)
+      return
+    }
+
     setIsOptimizing(true)
     try {
       // Geocode the shared depot address once and reuse it for all vehicles.
-      const depotLoc = await geocodeAddress(depotAddress)
+      const depotLoc = await geocodeAddress(trimmedDepotAddress)
       if (!depotLoc) {
         setGeocodeFailedVehicleIds(availableVehicles.map((v) => v.id))
-        setOptimizeError(`Could not geocode starting address "${depotAddress}". Try a more specific address.`)
+        setOptimizeError(`Could not geocode starting address "${trimmedDepotAddress}". Try a more specific address.`)
         return
       }
       for (const v of availableVehicles) {
@@ -180,7 +188,7 @@ export function useOptimize(
       if (!depotLoc.state || !SUPPORTED_STATES.has(depotLoc.state)) {
         setOutOfRegionVehicleIds(availableVehicles.map((v) => v.id))
         setOptimizeError(
-          `Unsupported region: "${depotAddress}". We currently only support CA, TX, and FL.`
+          `Unsupported region: "${trimmedDepotAddress}". We currently only support CA, TX, and FL.`
         )
         return
       }
@@ -304,11 +312,17 @@ export function useOptimize(
     setOptimizeError(null)
   }, [])
 
+  const dismissDepotAddressPrompt = useCallback(() => {
+    setNeedsDepotAddress(false)
+  }, [])
+
   return {
     optimize,
     isOptimizing,
     optimizeError,
     clearOptimizeError,
+    needsDepotAddress,
+    dismissDepotAddressPrompt,
     geocodeFailedAddressIds,
     geocodeFailedVehicleIds,
     outOfRegionAddressIds,
