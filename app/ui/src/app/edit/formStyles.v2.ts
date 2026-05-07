@@ -113,6 +113,12 @@ export const ADDRESS_SECTION_HEADING =
 export const ADDRESS_SECTION_SUBHEADING =
   "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
 
+export const ADDRESS_SEARCH_BAR =
+  "flex items-center gap-2 px-4 py-[11px] rounded-[80px] border border-[var(--edit-stone-200)] bg-[var(--edit-stone-50)] focus-within:border-[var(--edit-teal-300)] transition-colors";
+
+export const ADDRESS_SEARCH_INPUT =
+  "flex-1 font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent min-w-0 [&::-webkit-search-cancel-button]:hidden";
+
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
 export const OVERLAY_BACKDROP =

@@ -12,13 +12,12 @@ import {
   ADDRESS_ADD_PILL_DESKTOP_ENABLED,
   ADDRESS_ADD_PILL_MOBILE_DISABLED,
   ADDRESS_ADD_PILL_MOBILE_ENABLED,
-  ADDRESS_SEARCH_INPUT_DESKTOP,
-  ADDRESS_SEARCH_INPUT_MOBILE,
   ADDRESS_EMPTY_STATE,
   ADDRESS_LIST_WRAP,
   ADDRESS_TOOLBAR_DESKTOP,
   ADDRESS_TOOLBAR_MOBILE_WRAP,
 } from "../formStyles";
+import AddressSearchBar from "./AddressSearchBar";
 import {
   ADDRESS_SECTION_HEADER,
   ADDRESS_SECTION_HEADING,
@@ -99,26 +98,12 @@ export default function AddressSection({
         >
           Import
         </button>
-        <input
-          type="search"
-          value={searchQuery}
-          aria-label="Search addresses"
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Find address"
-          className={ADDRESS_SEARCH_INPUT_MOBILE}
-        />
+        <AddressSearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       {/* Desktop: Search left, spacer, Add right */}
       <div className={ADDRESS_TOOLBAR_DESKTOP}>
-        <input
-          type="search"
-          value={searchQuery}
-          aria-label="Search addresses"
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Find address"
-          className={ADDRESS_SEARCH_INPUT_DESKTOP}
-        />
+        <AddressSearchBar value={searchQuery} onChange={setSearchQuery} className="shrink-0 w-56 xl:w-72" />
         <div className="flex-1 min-w-0" />
         <button
           type="button"
