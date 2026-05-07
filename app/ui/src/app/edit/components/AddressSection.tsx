@@ -16,10 +16,14 @@ import {
   ADDRESS_SEARCH_INPUT_MOBILE,
   ADDRESS_EMPTY_STATE,
   ADDRESS_LIST_WRAP,
-  ADDRESS_SECTION_TITLE,
   ADDRESS_TOOLBAR_DESKTOP,
   ADDRESS_TOOLBAR_MOBILE_WRAP,
 } from "../formStyles";
+import {
+  ADDRESS_SECTION_HEADER,
+  ADDRESS_SECTION_HEADING,
+  ADDRESS_SECTION_SUBHEADING,
+} from "../formStyles.v2";
 
 type AddressSectionProps = {
   addressesOnCurrentPage: AddressCardType[];
@@ -61,7 +65,10 @@ export default function AddressSection({
 
   return (
     <section>
-      <h2 className={ADDRESS_SECTION_TITLE}>Addresses</h2>
+      <div className={ADDRESS_SECTION_HEADER}>
+        <h2 className={ADDRESS_SECTION_HEADING}>Delivery addresses</h2>
+        <p className={ADDRESS_SECTION_SUBHEADING}>Upload or manually add addresses</p>
+      </div>
 
       <input
         ref={fileInputRef}

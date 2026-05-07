@@ -101,6 +101,15 @@ export const VEHICLE_SECTION_HEADING =
 export const VEHICLE_SECTION_SUBHEADING =
   "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
 
+export const ADDRESS_SECTION_HEADER =
+  "flex flex-col gap-2 mb-4";
+
+export const ADDRESS_SECTION_HEADING =
+  "font-bold text-[20px] leading-[28px] text-[var(--edit-text-primary)]";
+
+export const ADDRESS_SECTION_SUBHEADING =
+  "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
+
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
 export const OVERLAY_BACKDROP =
