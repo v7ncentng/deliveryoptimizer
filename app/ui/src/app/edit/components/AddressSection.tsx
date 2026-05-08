@@ -6,6 +6,7 @@
 
 import { useRef } from "react";
 import AddressCard from "./AddressCard";
+import AddressRowHeader from "./AddressRowHeader";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
   ADDRESS_EMPTY_STATE,
@@ -128,7 +129,9 @@ export default function AddressSection({
           No Addresses Found
         </div>
       ) : (
-        <div className={ADDRESS_LIST_WRAP}>
+        <>
+          <AddressRowHeader />
+          <div className={ADDRESS_LIST_WRAP}>
           {addressesOnCurrentPage.map((a) => (
             <AddressCard
               key={`address-${a.id}`}
@@ -143,7 +146,8 @@ export default function AddressSection({
               outOfRegionFailed={outOfRegionIds.includes(a.id)}
           />
           ))}
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

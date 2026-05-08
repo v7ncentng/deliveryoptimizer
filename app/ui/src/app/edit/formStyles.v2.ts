@@ -128,6 +128,32 @@ export const ADDRESS_SEARCH_BAR =
 export const ADDRESS_SEARCH_INPUT =
   "flex-1 font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent min-w-0 [&::-webkit-search-cancel-button]:hidden";
 
+// ── Address Row Header (Figma 8012:2303) ──────────────────────────────────────
+
+export const ADDRESS_ROW_HEADER_ROOT =
+  "hidden lg:flex gap-4 items-start w-full";
+
+export const ADDRESS_ROW_HEADER_CHECKBOX =
+  "shrink-0 size-6";
+
+export const ADDRESS_ROW_HEADER_COLS =
+  "flex gap-10 items-center font-semibold text-[16px] leading-[1.5] text-[var(--edit-text-primary)] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_RECIPIENT =
+  "w-[328px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_QUANTITY =
+  "w-[72px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_DELIVERY_EST =
+  "shrink-0 whitespace-nowrap";
+
+export const ADDRESS_ROW_HEADER_CELL_DELIVERY_TIME =
+  "w-[247px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_NOTES =
+  "w-[246px] shrink-0";
+
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
 export const OVERLAY_BACKDROP =

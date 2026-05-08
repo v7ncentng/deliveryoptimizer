@@ -19,7 +19,6 @@ import {
   ADDRESS_DELIVERY_COLUMN,
   ADDRESS_DESKTOP_FIELD,
   ADDRESS_DESKTOP_GRID_GAP,
-  ADDRESS_DESKTOP_HDR,
   ADDRESS_DESKTOP_SELECT_BASE,
   ADDRESS_INPUT_DESKTOP_BASE,
   ADDRESS_LOCKED_SURFACE_MD,
@@ -95,12 +94,6 @@ export default function AddressCard({
       {/* Desktop layout */}
       <div className="hidden lg:block">
         <div className={`grid ${DESKTOP_ADDRESS_GRID_CLASS} ${ADDRESS_DESKTOP_GRID_GAP} items-stretch`}>
-          <span className={ADDRESS_DESKTOP_HDR}>Address</span>
-          <span className={ADDRESS_DESKTOP_HDR}>Time Buffer</span>
-          <span className={ADDRESS_DESKTOP_HDR}>Delivery</span>
-          <span className={ADDRESS_DESKTOP_HDR}>Quantity</span>
-          <span className={ADDRESS_DESKTOP_HDR}>Notes</span>
-          <span />
           {a.locked ? (
             <>
               <div className={`${ADDRESS_LOCKED_SURFACE_MD}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
