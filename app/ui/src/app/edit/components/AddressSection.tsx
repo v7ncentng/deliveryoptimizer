@@ -14,6 +14,7 @@ import {
   ADDRESS_TOOLBAR_DESKTOP,
   ADDRESS_TOOLBAR_MOBILE_WRAP,
 } from "../formStyles";
+
 import AddressSearchBar from "./AddressSearchBar";
 import {
   ADDRESS_SECTION_HEADER,
@@ -23,6 +24,8 @@ import {
   ADDRESS_BTN_V2_DESKTOP_DISABLED,
   ADDRESS_BTN_V2_MOBILE_ENABLED,
   ADDRESS_BTN_V2_MOBILE_DISABLED,
+  ADDRESS_LIST_CONTAINER,
+  ADDRESS_LIST_DIVIDER,
 } from "../formStyles.v2";
 
 type AddressSectionProps = {
@@ -123,29 +126,49 @@ export default function AddressSection({
         </button>
       </div>
 
-      {/* Mobile: spaced cards; desktop: single divided panel */}
+      {/* Mobile: spaced cards */}
       {searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
         <div className={ADDRESS_EMPTY_STATE}>
           No Addresses Found
         </div>
       ) : (
         <>
-          <AddressRowHeader />
-          <div className={ADDRESS_LIST_WRAP}>
-          {addressesOnCurrentPage.map((a) => (
-            <AddressCard
-              key={`address-${a.id}`}
-              address={a}
-              addressesCount={addressesCount}
-              updateAddress={updateAddress}
-              deleteAddress={deleteAddress}
-              unlockAddress={unlockAddress}
-              confirmAddress={confirmAddress}
-              addressTouched={touchedIds.has(a.id)}
-              geocodeFailed={geocodeFailedIds.includes(a.id)}
-              outOfRegionFailed={outOfRegionIds.includes(a.id)}
-          />
-          ))}
+          {/* Mobile card list */}
+          <div className={`lg:hidden ${ADDRESS_LIST_WRAP}`}>
+            {addressesOnCurrentPage.map((a) => (
+              <AddressCard
+                key={`address-${a.id}`}
+                address={a}
+                addressesCount={addressesCount}
+                updateAddress={updateAddress}
+                deleteAddress={deleteAddress}
+                unlockAddress={unlockAddress}
+                confirmAddress={confirmAddress}
+                addressTouched={touchedIds.has(a.id)}
+                geocodeFailed={geocodeFailedIds.includes(a.id)}
+                outOfRegionFailed={outOfRegionIds.includes(a.id)}
+              />
+            ))}
+          </div>
+
+          {/* Desktop hi-fi container: header + divider + rows */}
+          <div className={ADDRESS_LIST_CONTAINER}>
+            <AddressRowHeader />
+            <div className={ADDRESS_LIST_DIVIDER} />
+            {addressesOnCurrentPage.map((a) => (
+              <AddressCard
+                key={`address-${a.id}`}
+                address={a}
+                addressesCount={addressesCount}
+                updateAddress={updateAddress}
+                deleteAddress={deleteAddress}
+                unlockAddress={unlockAddress}
+                confirmAddress={confirmAddress}
+                addressTouched={touchedIds.has(a.id)}
+                geocodeFailed={geocodeFailedIds.includes(a.id)}
+                outOfRegionFailed={outOfRegionIds.includes(a.id)}
+              />
+            ))}
           </div>
         </>
       )}

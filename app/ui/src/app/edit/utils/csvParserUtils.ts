@@ -3,24 +3,11 @@ function normalizeHeader(h: string): string {
   return h.trim().toLowerCase().replace(/[\s\-_.]+/g, "_");
 }
 
-/** Map a raw time-buffer string (seconds) to the nearest TIME_BUFFER_OPTIONS label. */
-export function bufferSecondsToLabel(raw: string): string {
+/** Convert a raw time-buffer string (seconds) to whole minutes. Returns 0 if invalid. */
+export function bufferSecondsToMinutes(raw: string): number {
   const secs = parseInt(raw, 10);
-  if (isNaN(secs) || secs <= 0) return "";
-  const mins = Math.round(secs / 60);
-  if (mins <= 5) return "5 min";
-  if (mins <= 10) return "10 min";
-  if (mins <= 30) return "30 min";
-  if (mins <= 45) return "45 min";
-  const hrs = Math.round(mins / 60);
-  if (hrs <= 1) return "1hr";
-  if (hrs <= 2) return "2hr";
-  if (hrs <= 3) return "3hr";
-  if (hrs <= 4) return "4hr";
-  if (hrs <= 5) return "5hr";
-  if (hrs <= 6) return "6hr";
-  if (hrs <= 7) return "7hr";
-  return "8hr";
+  if (isNaN(secs) || secs <= 0) return 0;
+  return Math.round(secs / 60);
 }
   
 /**

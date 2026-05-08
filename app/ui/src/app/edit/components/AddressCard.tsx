@@ -1,38 +1,15 @@
 "use client";
 
-/**
- * Single delivery stop: desktop grid, or mobile accordion with stacked fields.
- */
-
 import { useState } from "react";
 import AddressAutocompleteInput from "./AddressAutocompleteInput";
-import {
-  TIME_OPTIONS,
-  TIME_BUFFER_OPTIONS,
-} from "../constants/timeOptions";
+import { TIME_OPTIONS } from "../constants/timeOptions";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
-  ADDRESS_CARD_EDITING_EXTRA,
   ADDRESS_CARD_ROOT_BASE,
-  ADDRESS_COL_MIN_QTY,
-  ADDRESS_COL_MIN_TIME_BUFFER,
-  ADDRESS_DELIVERY_COLUMN,
   ADDRESS_DESKTOP_FIELD,
-  ADDRESS_DESKTOP_GRID_GAP,
-  ADDRESS_DESKTOP_SELECT_BASE,
-  ADDRESS_INPUT_DESKTOP_BASE,
-  ADDRESS_LOCKED_SURFACE_MD,
   GEOCODE_ERROR_LOCKED,
-  ADDRESS_NOTES_COLUMN,
-  ADDRESS_NOTES_LOCKED_BOX,
-  ADDRESS_TEXTAREA_EDIT,
   ACCORDION_TRIGGER,
-  CONFIRM_BUTTON_DESKTOP,
   CONFIRM_PILL_MOBILE,
-  DESKTOP_ADDRESS_GRID_CLASS,
-  EDITING_EXISTING_HIGHLIGHT,
-  ICON_BUTTON_9,
-  ICON_BUTTON_9_DANGER,
   MOBILE_ADDRESS_INPUT_BASE,
   MOBILE_ADDRESS_LOCKED_ROW,
   MOBILE_ADDRESS_NOTES_AREA,
@@ -43,6 +20,26 @@ import {
   PILL_ROW_HALF_NEUTRAL,
   fieldBorder,
 } from "../formStyles";
+import {
+  ADDRESS_ROW_EDIT_ROOT,
+  ADDRESS_ROW_EDIT_LEFT,
+  ADDRESS_ROW_EDIT_COLS,
+  ADDRESS_ROW_RECIPIENT_COL,
+  ADDRESS_ROW_NAME_ROW,
+  ADDRESS_ROW_FIELD_INPUT,
+  ADDRESS_ROW_ADDR_WRAP,
+  ADDRESS_ROW_ADDR_GRADIENT,
+  ADDRESS_ROW_STEPPER_CONTAINER,
+  ADDRESS_ROW_EST_GROUP,
+  ADDRESS_ROW_TIME_GROUP,
+  ADDRESS_ROW_TIME_SELECT_WRAP,
+  ADDRESS_ROW_TIME_SELECT,
+  ADDRESS_ROW_NOTES_WRAP,
+  ADDRESS_ROW_ACTIONS,
+  ADDRESS_ROW_ACTION_BTN,
+  ADDRESS_ROW_LOCKED_CELL,
+  ADDRESS_ROW_HEADER_CHECKBOX,
+} from "../formStyles.v2";
 
 type AddressCardProps = {
   address: AddressCardType;
@@ -56,6 +53,49 @@ type AddressCardProps = {
   outOfRegionFailed: boolean;
 };
 
+function StepperInput({
+  value,
+  min = 0,
+  ariaLabel,
+  onIncrement,
+  onDecrement,
+  onChange,
+}: {
+  value: number;
+  min?: number;
+  ariaLabel: string;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className={`${ADDRESS_ROW_STEPPER_CONTAINER} w-[72px]`}>
+      <input
+        type="number"
+        min={min}
+        value={value || ""}
+        onChange={(e) => onChange(parseInt(e.target.value, 10) || 0)}
+        aria-label={ariaLabel}
+        className="flex-1 min-w-0 bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+      <div className="flex flex-col shrink-0">
+        <button type="button" onClick={onIncrement} aria-label={`Increase ${ariaLabel}`} className="cursor-pointer focus:outline-none">
+          <svg viewBox="0 0 24 12" width="24" height="12">
+            <path fill="none" className="stroke-[var(--edit-stone-200)]" d="M6 0.5H18C21.0376 0.5 23.5 2.96243 23.5 6V11.5H0.5V6C0.5 2.96243 2.96243 0.5 6 0.5Z" />
+            <path className="fill-[var(--edit-icon-edit)]" d="M12 5.39189L8.93333 8.5L8 7.55405L12 3.5L16 7.55405L15.0667 8.5L12 5.39189Z" />
+          </svg>
+        </button>
+        <button type="button" onClick={onDecrement} aria-label={`Decrease ${ariaLabel}`} className="cursor-pointer focus:outline-none">
+          <svg viewBox="0 0 24 12" width="24" height="12">
+            <path fill="none" className="stroke-[var(--edit-stone-200)]" d="M18 11.5H6C2.96243 11.5 0.5 9.03757 0.5 6V0.5H23.5V6C23.5 9.03757 21.0376 11.5 18 11.5Z" />
+            <path className="fill-[var(--edit-icon-edit)]" d="M12 6.60811L8.93333 3.5L8 4.44595L12 8.5L16 4.44595L15.0667 3.5L12 6.60811Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AddressCard({
   address: a,
   addressesCount,
@@ -67,10 +107,9 @@ export default function AddressCard({
   geocodeFailed,
   outOfRegionFailed,
 }: AddressCardProps) {
-  
   const [manualExpanded, setManualExpanded] = useState(false);
   const expanded = !a.locked || manualExpanded;
-  
+
   const addrInvalid = geocodeFailed || (addressTouched && !a.recipientAddress.trim());
   const qtyInvalid = addressTouched && a.deliveryQuantity <= 0;
 
@@ -80,175 +119,251 @@ export default function AddressCard({
   const mobileSelectClass = (invalid: boolean) =>
     `${MOBILE_ADDRESS_INPUT_BASE} ${fieldBorder(invalid, "mobile")} cursor-pointer select-chevron`;
 
-  const displayAddr = a.recipientAddress.trim() || "Address";
-
-  // IDs for accordion ARIA: trigger controls the panel.
+  const displayAddr = a.recipientAddress.trim() || a.recipientName.trim() || "Address";
   const panelId = `addr-panel-${a.id}`;
 
   return (
-    <div
-      className={`${ADDRESS_CARD_ROOT_BASE} ${
-        !a.locked && a.editingExisting ? `${EDITING_EXISTING_HIGHLIGHT} ${ADDRESS_CARD_EDITING_EXTRA}` : ""
-      }`}
-    >
-      {/* Desktop layout */}
+    <>
+      {/* ── Desktop hi-fi layout ── */}
       <div className="hidden lg:block">
-        <div className={`grid ${DESKTOP_ADDRESS_GRID_CLASS} ${ADDRESS_DESKTOP_GRID_GAP} items-stretch`}>
-          {a.locked ? (
-            <>
-              <div className={`${ADDRESS_LOCKED_SURFACE_MD}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
-                <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.recipientAddress}</span>
-              </div>
-              <div className={`${ADDRESS_LOCKED_SURFACE_MD} ${ADDRESS_COL_MIN_TIME_BUFFER}`}>
-                <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.timeBuffer || "—"}</span>
-              </div>
-              <div className={ADDRESS_DELIVERY_COLUMN}>
-                <div className={`${ADDRESS_LOCKED_SURFACE_MD} w-full`}>
-                  <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>
-                    {a.deliveryTimeStart && a.deliveryTimeEnd
-                      ? `${a.deliveryTimeStart} – ${a.deliveryTimeEnd}`
-                      : a.deliveryTimeStart || a.deliveryTimeEnd || "—"}
-                  </span>
-                </div>
-              </div>
-              <div className={`${ADDRESS_LOCKED_SURFACE_MD} ${ADDRESS_COL_MIN_QTY}`}>
-                <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.deliveryQuantity}</span>
-              </div>
-              <div className={ADDRESS_NOTES_COLUMN}>
-                <div className={ADDRESS_NOTES_LOCKED_BOX}>
-                  <span className={`${ADDRESS_DESKTOP_FIELD} line-clamp-[12] leading-snug xl:leading-6`}>{a.notes}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 self-start pt-1">
-                <button
-                  type="button"
-                  onClick={() => unlockAddress(a.id)}
-                  className={ICON_BUTTON_9}
-                  title="Edit"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteAddress(a.id)}
-                  disabled={addressesCount <= 1}
-                  className={ICON_BUTTON_9_DANGER}
-                  title="Delete"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <AddressAutocompleteInput
-                value={a.recipientAddress}
-                onChange={(val) => updateAddress(a.id, "recipientAddress", val)}
-                placeholder="Address"
-                ariaLabel="Recipient address"
-                className={`${ADDRESS_INPUT_DESKTOP_BASE} ${fieldBorder(addrInvalid)}`}
-              />
-              <select
-                value={a.timeBuffer}
-                onChange={(e) => updateAddress(a.id, "timeBuffer", e.target.value)}
-                aria-label="Time buffer"
-                className={`${ADDRESS_DESKTOP_SELECT_BASE} self-start bg-white ${ADDRESS_COL_MIN_TIME_BUFFER} ${fieldBorder(false)}`}
-              >
-                <option value="">None</option>
-                {TIME_BUFFER_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-              <div className={ADDRESS_DELIVERY_COLUMN}>
-                <div className="flex items-center gap-1 w-full min-w-0">
-                  <select
-                    value={a.deliveryTimeStart}
-                    onChange={(e) => updateAddress(a.id, "deliveryTimeStart", e.target.value)}
-                    className={`${ADDRESS_DESKTOP_SELECT_BASE} flex-1 min-w-0 bg-white ${fieldBorder(false)}`}
-                    aria-label="Delivery time start"
-                  >
-                    <option value="">None</option>
-                    {TIME_OPTIONS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                  <span className="shrink-0 text-zinc-400 text-xs" aria-hidden>–</span>
-                  <select
-                    value={a.deliveryTimeEnd}
-                    onChange={(e) => updateAddress(a.id, "deliveryTimeEnd", e.target.value)}
-                    className={`${ADDRESS_DESKTOP_SELECT_BASE} flex-1 min-w-0 bg-white ${fieldBorder(false)}`}
-                    aria-label="Delivery time end"
-                  >
-                    <option value="">None</option>
-                    {TIME_OPTIONS.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <input
-                type="number"
-                min={0}
-                value={a.deliveryQuantity || ""}
-                onChange={(e) =>
-                  updateAddress(a.id, "deliveryQuantity", e.target.value === "" ? 0 : parseInt(e.target.value, 10) || 0)
-                }
-                aria-label="Delivery quantity"
-                className={`${ADDRESS_INPUT_DESKTOP_BASE} ${ADDRESS_COL_MIN_QTY} ${fieldBorder(qtyInvalid)}`}
-              />
-              <div className={ADDRESS_NOTES_COLUMN}>
-                <textarea
-                  value={a.notes}
-                  onChange={(e) => updateAddress(a.id, "notes", e.target.value)}
-                  aria-label="Notes"
-                  rows={1}
-                  className={ADDRESS_TEXTAREA_EDIT}
+        <div className={ADDRESS_ROW_EDIT_ROOT}>
+          {/* Left: checkbox + all columns */}
+          <div className={ADDRESS_ROW_EDIT_LEFT}>
+            {/* Static select-all checkbox */}
+            <div className={ADDRESS_ROW_HEADER_CHECKBOX} aria-hidden>
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path
+                  className="fill-[var(--edit-icon-edit)]"
+                  d="M5 21C4.45 21 3.97917 20.8042 3.5875 20.4125C3.19583 20.0208 3 19.55 3 19V5C3 4.45 3.19583 3.97917 3.5875 3.5875C3.97917 3.19583 4.45 3 5 3H19C19.55 3 20.0208 3.19583 20.4125 3.5875C20.8042 3.97917 21 4.45 21 5V19C21 19.55 20.8042 20.0208 20.4125 20.4125C20.0208 20.8042 19.55 21 19 21H5ZM5 19H19V5H5V19Z"
                 />
-              </div>
-              <div className="flex items-center gap-1 self-start pt-0.5">
-                {a.editingExisting && (
-                  <button
-                    type="button"
-                    onClick={() => confirmAddress(a.id)}
-                    className={CONFIRM_BUTTON_DESKTOP}
-                  >
-                    Confirm
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => deleteAddress(a.id)}
-                  disabled={addressesCount <= 1}
-                  className={ICON_BUTTON_9_DANGER}
-                  title="Delete"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
-                  </svg>
-                </button>
-              </div>
-            </>
-          )}
+              </svg>
+            </div>
+
+            {/* Data columns */}
+            <div className={ADDRESS_ROW_EDIT_COLS}>
+              {a.locked ? (
+                <>
+                  {/* Recipient column — locked */}
+                  <div className={ADDRESS_ROW_RECIPIENT_COL}>
+                    {(a.recipientName || a.phoneNumber) && (
+                      <div className={ADDRESS_ROW_NAME_ROW}>
+                        <div className={`${ADDRESS_ROW_LOCKED_CELL} flex-1`}>
+                          <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.recipientName || "—"}</span>
+                        </div>
+                        <div className={`${ADDRESS_ROW_LOCKED_CELL} flex-1`}>
+                          <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.phoneNumber || "—"}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-full${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
+                      <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.recipientAddress}</span>
+                    </div>
+                  </div>
+
+                  {/* Quantity — locked */}
+                  <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[72px]`}>
+                    <span className={ADDRESS_DESKTOP_FIELD}>{a.deliveryQuantity}</span>
+                  </div>
+
+                  {/* Delivery estimation — locked */}
+                  <div className={ADDRESS_ROW_EST_GROUP}>
+                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[72px]`}>
+                      <span className={ADDRESS_DESKTOP_FIELD}>{a.timeBuffer > 0 ? a.timeBuffer : "—"}</span>
+                    </div>
+                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]">minutes</span>
+                  </div>
+
+                  {/* Delivery time — locked */}
+                  <div className={ADDRESS_ROW_TIME_GROUP}>
+                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[111px]`}>
+                      <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.deliveryTimeStart || "—"}</span>
+                    </div>
+                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]" aria-hidden>–</span>
+                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[111px]`}>
+                      <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.deliveryTimeEnd || "—"}</span>
+                    </div>
+                  </div>
+
+                  {/* Notes — locked */}
+                  <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[240px] items-start`}>
+                    <span className={`${ADDRESS_DESKTOP_FIELD} line-clamp-3`}>{a.notes || "—"}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Recipient column — edit */}
+                  <div className={ADDRESS_ROW_RECIPIENT_COL}>
+                    <div className={ADDRESS_ROW_NAME_ROW}>
+                      <input
+                        value={a.recipientName}
+                        onChange={(e) => updateAddress(a.id, "recipientName", e.target.value)}
+                        placeholder="First and last name"
+                        aria-label="Recipient name"
+                        className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
+                      />
+                      <input
+                        value={a.phoneNumber}
+                        onChange={(e) =>
+                          updateAddress(a.id, "phoneNumber", e.target.value.replace(/[^\d+\s()\-]/g, ""))
+                        }
+                        placeholder="+1 123 456 7890"
+                        aria-label="Phone number"
+                        type="tel"
+                        inputMode="tel"
+                        className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
+                      />
+                    </div>
+                    <div className={`${ADDRESS_ROW_ADDR_WRAP}${addrInvalid ? " border-[var(--edit-error-border)]" : ""}`}>
+                      <AddressAutocompleteInput
+                        value={a.recipientAddress}
+                        onChange={(val) => updateAddress(a.id, "recipientAddress", val)}
+                        placeholder="Enter address"
+                        ariaLabel="Recipient address"
+                        className="flex-1 h-full px-2 text-[16px] leading-[1.5] font-normal text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent"
+                      />
+                      {/* Gradient fade + static chevron */}
+                      <div className={ADDRESS_ROW_ADDR_GRADIENT} aria-hidden>
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                          <path
+                            className="fill-[var(--edit-icon-edit)]"
+                            d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quantity — edit */}
+                  <StepperInput
+                    value={a.deliveryQuantity}
+                    min={1}
+                    ariaLabel="Delivery quantity"
+                    onChange={(v) => updateAddress(a.id, "deliveryQuantity", v)}
+                    onIncrement={() => updateAddress(a.id, "deliveryQuantity", (a.deliveryQuantity || 0) + 1)}
+                    onDecrement={() => updateAddress(a.id, "deliveryQuantity", Math.max(1, (a.deliveryQuantity || 1) - 1))}
+                  />
+
+                  {/* Delivery estimation — edit */}
+                  <div className={ADDRESS_ROW_EST_GROUP}>
+                    <StepperInput
+                      value={a.timeBuffer}
+                      min={0}
+                      ariaLabel="Delivery estimation in minutes"
+                      onChange={(v) => updateAddress(a.id, "timeBuffer", v)}
+                      onIncrement={() => updateAddress(a.id, "timeBuffer", (a.timeBuffer || 0) + 1)}
+                      onDecrement={() => updateAddress(a.id, "timeBuffer", Math.max(0, (a.timeBuffer || 0) - 1))}
+                    />
+                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]">minutes</span>
+                  </div>
+
+                  {/* Delivery time — edit */}
+                  <div className={ADDRESS_ROW_TIME_GROUP}>
+                    <div className={ADDRESS_ROW_TIME_SELECT_WRAP}>
+                      <select
+                        value={a.deliveryTimeStart}
+                        onChange={(e) => updateAddress(a.id, "deliveryTimeStart", e.target.value)}
+                        aria-label="Delivery time start"
+                        className={ADDRESS_ROW_TIME_SELECT}
+                      >
+                        <option value="">Start</option>
+                        {TIME_OPTIONS.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                      <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] pointer-events-none truncate flex-1">
+                        {a.deliveryTimeStart || "Start"}
+                      </span>
+                      <svg viewBox="0 0 24 24" width="24" height="24" className="rotate-90 shrink-0 pointer-events-none" aria-hidden>
+                        <path className="fill-[var(--edit-icon-edit)]" d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z" />
+                      </svg>
+                    </div>
+                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]" aria-hidden>–</span>
+                    <div className={ADDRESS_ROW_TIME_SELECT_WRAP}>
+                      <select
+                        value={a.deliveryTimeEnd}
+                        onChange={(e) => updateAddress(a.id, "deliveryTimeEnd", e.target.value)}
+                        aria-label="Delivery time end"
+                        className={ADDRESS_ROW_TIME_SELECT}
+                      >
+                        <option value="">End</option>
+                        {TIME_OPTIONS.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                      <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] pointer-events-none truncate flex-1">
+                        {a.deliveryTimeEnd || "End"}
+                      </span>
+                      <svg viewBox="0 0 24 24" width="24" height="24" className="rotate-90 shrink-0 pointer-events-none" aria-hidden>
+                        <path className="fill-[var(--edit-icon-edit)]" d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Notes — edit */}
+                  <div className={ADDRESS_ROW_NOTES_WRAP}>
+                    <textarea
+                      value={a.notes}
+                      onChange={(e) => updateAddress(a.id, "notes", e.target.value)}
+                      placeholder="Enter notes"
+                      aria-label="Notes"
+                      rows={1}
+                      className="w-full bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] resize-none font-normal"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right: action buttons */}
+          <div className={ADDRESS_ROW_ACTIONS}>
+            {a.locked ? (
+              <button
+                type="button"
+                onClick={() => unlockAddress(a.id)}
+                className={ADDRESS_ROW_ACTION_BTN}
+                title="Edit"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="absolute left-2 top-2" stroke="var(--edit-icon-edit)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => confirmAddress(a.id)}
+                className={ADDRESS_ROW_ACTION_BTN}
+                title="Confirm"
+              >
+                <svg viewBox="0 0 40 40" width="40" height="40">
+                  <path
+                    className="fill-[var(--edit-icon-edit)]"
+                    d="M17.5501 26.0001L11.8501 20.3001L13.2751 18.8751L17.5501 23.1501L26.7251 13.9751L28.1501 15.4001L17.5501 26.0001Z"
+                  />
+                </svg>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => deleteAddress(a.id)}
+              disabled={addressesCount <= 1}
+              className={`${ADDRESS_ROW_ACTION_BTN} disabled:opacity-40 disabled:cursor-not-allowed`}
+              title="Delete"
+            >
+              <svg viewBox="0 0 40 40" width="40" height="40">
+                <path
+                  className="fill-[var(--edit-icon-edit)]"
+                  d="M15 29C14.45 29 13.9792 28.8042 13.5875 28.4125C13.1958 28.0208 13 27.55 13 27V14H12V12H17V11H23V12H28V14H27V27C27 27.55 26.8042 28.0208 26.4125 28.4125C26.0208 28.8042 25.55 29 25 29H15ZM25 14H15V27H25V14ZM17 25H19V16H17V25ZM21 25H23V16H21V25Z"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile accordion */}
-      <div className="lg:hidden">
+      {/* ── Mobile accordion ── */}
+      <div className={`${ADDRESS_CARD_ROOT_BASE} lg:hidden`}>
         <button
           type="button"
           onClick={() => {
@@ -257,7 +372,7 @@ export default function AddressCard({
             } else {
               setManualExpanded(false);
             }
-          }}         
+          }}
           aria-expanded={expanded}
           aria-controls={panelId}
           className={ACCORDION_TRIGGER}
@@ -282,6 +397,18 @@ export default function AddressCard({
             {a.locked ? (
               <>
                 <div>
+                  <span className={MOBILE_FIELD_LABEL}>Name</span>
+                  <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                    <span className="text-sm text-black truncate">{a.recipientName || "—"}</span>
+                  </div>
+                </div>
+                <div>
+                  <span className={MOBILE_FIELD_LABEL}>Phone</span>
+                  <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                    <span className="text-sm text-black truncate">{a.phoneNumber || "—"}</span>
+                  </div>
+                </div>
+                <div>
                   <span className={MOBILE_FIELD_LABEL}>Address</span>
                   <div className={`${MOBILE_ADDRESS_LOCKED_ROW}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
                     <span className="text-sm text-black truncate">{a.recipientAddress}</span>
@@ -289,13 +416,13 @@ export default function AddressCard({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className={MOBILE_FIELD_LABEL}>Time Buffer</span>
+                    <span className={MOBILE_FIELD_LABEL}>Delivery estimation</span>
                     <div className={MOBILE_ADDRESS_LOCKED_ROW}>
-                      <span className="text-sm text-black truncate">{a.timeBuffer || "—"}</span>
+                      <span className="text-sm text-black truncate">{a.timeBuffer > 0 ? `${a.timeBuffer} min` : "—"}</span>
                     </div>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className={MOBILE_FIELD_LABEL}>Delivery</span>
+                    <span className={MOBILE_FIELD_LABEL}>Delivery time</span>
                     <div className={MOBILE_ADDRESS_LOCKED_ROW}>
                       <span className="text-sm text-black truncate">
                         {a.deliveryTimeStart && a.deliveryTimeEnd
@@ -318,25 +445,40 @@ export default function AddressCard({
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => unlockAddress(a.id)}
-                    className={PILL_ROW_HALF_NEUTRAL}
-                  >
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={PILL_ROW_HALF_NEUTRAL}>
                     Edit
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteAddress(a.id)}
-                    disabled={addressesCount <= 1}
-                    className={PILL_ROW_HALF_DANGER}
-                  >
+                  <button type="button" onClick={() => deleteAddress(a.id)} disabled={addressesCount <= 1} className={PILL_ROW_HALF_DANGER}>
                     Delete
                   </button>
                 </div>
               </>
             ) : (
               <>
+                <div>
+                  <span className={MOBILE_FIELD_LABEL}>Name</span>
+                  <input
+                    value={a.recipientName}
+                    onChange={(e) => updateAddress(a.id, "recipientName", e.target.value)}
+                    placeholder="First and last name"
+                    aria-label="Recipient name"
+                    className={mobileInputClass(false)}
+                  />
+                </div>
+                <div>
+                  <span className={MOBILE_FIELD_LABEL}>Phone</span>
+                  <input
+                    value={a.phoneNumber}
+                    onChange={(e) =>
+                      updateAddress(a.id, "phoneNumber", e.target.value.replace(/[^\d+\s()\-]/g, ""))
+                    }
+                    placeholder="+1 123 456 7890"
+                    aria-label="Phone number"
+                    type="tel"
+                    inputMode="tel"
+                    className={mobileInputClass(false)}
+                  />
+                </div>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Address</span>
                   <AddressAutocompleteInput
@@ -349,23 +491,19 @@ export default function AddressCard({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className={MOBILE_FIELD_LABEL}>Time Buffer</span>
-                    <select
-                      value={a.timeBuffer}
-                      onChange={(e) => updateAddress(a.id, "timeBuffer", e.target.value)}
-                      aria-label="Time buffer"
-                      className={mobileSelectClass(false)}
-                    >
-                      <option value="">None</option>
-                      {TIME_BUFFER_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                    <span className={MOBILE_FIELD_LABEL}>Delivery estimation</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={a.timeBuffer || ""}
+                      onChange={(e) => updateAddress(a.id, "timeBuffer", parseInt(e.target.value, 10) || 0)}
+                      aria-label="Delivery estimation in minutes"
+                      placeholder="0"
+                      className={mobileInputClass(false)}
+                    />
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
-                    <span className={MOBILE_FIELD_LABEL}>Delivery</span>
+                    <span className={MOBILE_FIELD_LABEL}>Delivery time</span>
                     <div className="flex items-center gap-1 w-full min-w-0">
                       <select
                         value={a.deliveryTimeStart}
@@ -375,9 +513,7 @@ export default function AddressCard({
                       >
                         <option value="">None</option>
                         {TIME_OPTIONS.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
+                          <option key={t} value={t}>{t}</option>
                         ))}
                       </select>
                       <span className="shrink-0 text-zinc-400 text-xs" aria-hidden>–</span>
@@ -389,9 +525,7 @@ export default function AddressCard({
                       >
                         <option value="">None</option>
                         {TIME_OPTIONS.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
+                          <option key={t} value={t}>{t}</option>
                         ))}
                       </select>
                     </div>
@@ -421,11 +555,7 @@ export default function AddressCard({
                   />
                 </div>
                 {a.editingExisting && (
-                  <button
-                    type="button"
-                    onClick={() => confirmAddress(a.id)}
-                    className={CONFIRM_PILL_MOBILE}
-                  >
+                  <button type="button" onClick={() => confirmAddress(a.id)} className={CONFIRM_PILL_MOBILE}>
                     Confirm
                   </button>
                 )}
@@ -443,6 +573,6 @@ export default function AddressCard({
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
