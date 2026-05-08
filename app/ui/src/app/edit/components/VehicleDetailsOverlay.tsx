@@ -13,7 +13,7 @@ import {
   OVERLAY_DEPARTURE_WRAPPER_ERROR,
   OVERLAY_TIME_COLON,
   OVERLAY_TIME_SEGMENT_INPUT,
-  OVERLAY_DONE_BTN,
+  OVERLAY_PRIMARY_BTN,
   OVERLAY_FIELD,
   OVERLAY_FOOTER,
   OVERLAY_HEADER,
@@ -39,6 +39,7 @@ import {
   OVERLAY_SCROLL_BODY,
   OVERLAY_TITLE,
 } from "../formStyles.v2";
+import styles from "../edit.module.css";
 
 const CLOSE_ICON = (
   <svg
@@ -383,7 +384,7 @@ export default function VehicleDetailsOverlay({
           <button type="button" onClick={onClose} className={OVERLAY_CANCEL_BTN}>
             Cancel
           </button>
-          <button type="button" onClick={handleSave} className={OVERLAY_DONE_BTN}>
+          <button type="button" onClick={handleSave} className={`${OVERLAY_PRIMARY_BTN} ${styles.primaryBtnOverlay}`}>
             Done
           </button>
         </div>

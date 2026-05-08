@@ -6,14 +6,15 @@ import {
   OVERLAY_BACKDROP,
   OVERLAY_BODY,
   OVERLAY_CANCEL_BTN,
+  OVERLAY_PRIMARY_BTN,
   OVERLAY_CLOSE_BTN,
-  OVERLAY_DONE_BTN,
   OVERLAY_FOOTER,
   OVERLAY_HEADER,
   OVERLAY_LABEL,
   OVERLAY_PANEL,
   OVERLAY_TITLE,
 } from "../formStyles.v2";
+import styles from "../edit.module.css";
 
 const CLOSE_ICON = (
   <svg
@@ -93,7 +94,7 @@ export default function ConfirmVehicleDeletionOverlay({
           <button type="button" onClick={onClose} className={OVERLAY_CANCEL_BTN}>
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} className={OVERLAY_DONE_BTN}>
+          <button type="button" onClick={onConfirm} className={`${OVERLAY_PRIMARY_BTN} ${styles.primaryBtnOverlay}`}>
             Delete
           </button>
         </div>
