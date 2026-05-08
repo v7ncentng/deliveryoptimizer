@@ -24,9 +24,6 @@ export const SIDEBAR_NAV_PILL_ACTIVE =
 export const SIDEBAR_NAV_PILL_INACTIVE =
   "w-full flex items-center justify-center rounded-[80px] px-[9px] py-[4px]";
 
-export const SIDEBAR_NAV_PILL_DISABLED =
-  "w-full flex items-center justify-center rounded-[80px] px-[9px] py-[4px]";
-
 export const SIDEBAR_NAV_LABEL_ACTIVE =
   "text-[14px] leading-5 font-bold text-[var(--edit-text-primary)] text-center whitespace-nowrap";
 
