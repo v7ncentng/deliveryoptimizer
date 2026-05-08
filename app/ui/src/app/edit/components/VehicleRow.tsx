@@ -54,7 +54,6 @@ type VehicleLayout = "desktop" | "mobile";
 type VehicleRowProps = {
   layout?: VehicleLayout;
   vehicle: VehicleRowType;
-  vehiclesCount: number;
   updateVehicle: <K extends keyof VehicleRowType>(id: number, key: K, value: VehicleRowType[K]) => void;
   deleteVehicle: (id: number) => void;
   unlockVehicle: (id: number) => void;

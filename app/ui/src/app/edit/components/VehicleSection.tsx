@@ -126,7 +126,6 @@ export default function VehicleSection({
               key={`vehicle-${v.id}`}
               layout="desktop"
               vehicle={v}
-              vehiclesCount={vehicles.length}
               updateVehicle={updateVehicle}
               deleteVehicle={handleDeleteRequest}
               unlockVehicle={unlockVehicle}
@@ -147,7 +146,6 @@ export default function VehicleSection({
             key={`vehicle-mobile-${v.id}`}
             layout="mobile"
             vehicle={v}
-            vehiclesCount={vehicles.length}
             updateVehicle={updateVehicle}
             deleteVehicle={handleDeleteRequest}
             unlockVehicle={unlockVehicle}
