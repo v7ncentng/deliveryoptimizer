@@ -15,7 +15,7 @@ const SIDEBAR_RESULTS_ICON = (
 
 export default function SidebarResultsButton() {
   return (
-    <Link href="#" className={SIDEBAR_NAV_ITEM_DISABLED}>  {/* TODO: add results page link when at least one route exists */}
+    <Link href="#" className={SIDEBAR_NAV_ITEM_DISABLED} aria-disabled="true" tabIndex={-1}>  {/* TODO: add results page link when at least one route exists */}
       <span className={SIDEBAR_NAV_PILL_DISABLED}>
         {SIDEBAR_RESULTS_ICON}
       </span>
