@@ -36,10 +36,10 @@ import {
   ADDRESS_ROW_TIME_SELECT,
   ADDRESS_ROW_NOTES_WRAP,
   ADDRESS_ROW_ACTIONS,
-  ADDRESS_ROW_ACTION_BTN,
   ADDRESS_ROW_LOCKED_CELL,
   ADDRESS_ROW_HEADER_CHECKBOX,
 } from "../formStyles.v2";
+import { EditIconButton, ConfirmIconButton, DeleteIconButton } from "./RowIconButtons";
 
 type AddressCardProps = {
   address: AddressCardType;
@@ -318,46 +318,11 @@ export default function AddressCard({
           {/* Right: action buttons */}
           <div className={ADDRESS_ROW_ACTIONS}>
             {a.locked ? (
-              <button
-                type="button"
-                onClick={() => unlockAddress(a.id)}
-                className={ADDRESS_ROW_ACTION_BTN}
-                title="Edit"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="absolute left-2 top-2" stroke="var(--edit-icon-edit)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-              </button>
+              <EditIconButton onClick={() => unlockAddress(a.id)} />
             ) : (
-              <button
-                type="button"
-                onClick={() => confirmAddress(a.id)}
-                className={ADDRESS_ROW_ACTION_BTN}
-                title="Confirm"
-              >
-                <svg viewBox="0 0 40 40" width="40" height="40">
-                  <path
-                    className="fill-[var(--edit-icon-edit)]"
-                    d="M17.5501 26.0001L11.8501 20.3001L13.2751 18.8751L17.5501 23.1501L26.7251 13.9751L28.1501 15.4001L17.5501 26.0001Z"
-                  />
-                </svg>
-              </button>
+              <ConfirmIconButton onClick={() => confirmAddress(a.id)} />
             )}
-            <button
-              type="button"
-              onClick={() => deleteAddress(a.id)}
-              disabled={addressesCount <= 1}
-              className={`${ADDRESS_ROW_ACTION_BTN} disabled:opacity-40 disabled:cursor-not-allowed`}
-              title="Delete"
-            >
-              <svg viewBox="0 0 40 40" width="40" height="40">
-                <path
-                  className="fill-[var(--edit-icon-edit)]"
-                  d="M15 29C14.45 29 13.9792 28.8042 13.5875 28.4125C13.1958 28.0208 13 27.55 13 27V14H12V12H17V11H23V12H28V14H27V27C27 27.55 26.8042 28.0208 26.4125 28.4125C26.0208 28.8042 25.55 29 25 29H15ZM25 14H15V27H25V14ZM17 25H19V16H17V25ZM21 25H23V16H21V25Z"
-                />
-              </svg>
-            </button>
+            <DeleteIconButton onClick={() => deleteAddress(a.id)} />
           </div>
         </div>
       </div>
