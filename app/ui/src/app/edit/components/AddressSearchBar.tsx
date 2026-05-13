@@ -15,7 +15,7 @@ export default function AddressSearchBar({ value, onChange, className }: Props) 
         className="shrink-0 size-6"
         viewBox="0 0 24 24"
         fill="none"
-        aria-hidden
+        aria-hidden="true"
       >
         <path
           fill="var(--edit-primary-icon)"
