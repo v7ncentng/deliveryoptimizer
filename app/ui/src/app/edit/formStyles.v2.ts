@@ -133,9 +133,6 @@ export const ADDRESS_SEARCH_INPUT =
 export const ADDRESS_ROW_HEADER_ROOT =
   "hidden lg:flex gap-4 items-start w-full";
 
-export const ADDRESS_ROW_HEADER_CHECKBOX =
-  "shrink-0 size-6";
-
 export const ADDRESS_ROW_HEADER_COLS =
   "flex gap-10 items-center font-semibold text-[16px] leading-[1.5] text-[var(--edit-text-primary)] shrink-0";
 
