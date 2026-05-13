@@ -62,6 +62,21 @@ export const VEHICLE_INFO_DIVIDER = "border-t border-[var(--edit-stone-200)]";
 export const VEHICLE_INFO_ROWS =
   "flex flex-col gap-3";
 
+export const VEHICLE_EMPTY_STATE_WRAPPER =
+  "flex flex-col gap-4 items-center justify-center py-[28px] shrink-0 w-full";
+
+export const VEHICLE_EMPTY_STATE_ICON =
+  "size-12 shrink-0";
+
+export const VEHICLE_EMPTY_STATE_TEXT_GROUP =
+  "flex flex-col gap-2 items-center leading-[1.5] text-[16px] text-[var(--edit-text-primary)] whitespace-nowrap";
+
+export const VEHICLE_EMPTY_STATE_TITLE =
+  "font-[650]";
+
+export const VEHICLE_EMPTY_STATE_SUBTITLE =
+  "font-normal";
+
 export const VEHICLE_ROW_DESKTOP =
   "grid w-full grid-cols-[minmax(7rem,1.2fr)_minmax(5rem,0.8fr)_minmax(6rem,0.9fr)_minmax(7rem,0.9fr)_minmax(7rem,1fr)_5.25rem] gap-4 items-center";
 
