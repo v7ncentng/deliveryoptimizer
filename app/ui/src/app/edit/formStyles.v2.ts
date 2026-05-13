@@ -239,6 +239,9 @@ export const ADDRESS_ROW_TIME_SELECT =
 export const ADDRESS_ROW_NOTES_WRAP =
   "border border-[var(--edit-stone-200)] flex items-start overflow-hidden px-2 py-[10px] rounded-[6px] w-[240px] shrink-0";
 
+export const ADDRESS_ROW_NOTES_TEXTAREA =
+  "w-full bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] resize-none font-normal overflow-hidden";
+
 export const ADDRESS_ROW_ACTIONS =
   "flex gap-2 items-center shrink-0 self-start pt-2";
 
@@ -256,6 +259,12 @@ export const ADDRESS_ROW_LOCKED_PLAIN_TEXT =
 
 export const ADDRESS_ROW_LOCKED_FIELD_BTN =
 "text-left bg-transparent border-0 p-0 m-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] rounded-sm";
+
+export const ADDRESS_ROW_LOCKED_NOTES_BTN =
+  `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[240px] shrink-0`;
+
+export const ADDRESS_ROW_LOCKED_NOTES_TEXT =
+  "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]";
 
 export const MOBILE_LOCKED_CLICKABLE =
 "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)]";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import AddressOverlay, { type LocationAddress } from "./AddressOverlay";
 import { TIME_OPTIONS } from "../constants/timeOptions";
 import type { AddressCard as AddressCardType } from "../types/delivery";
@@ -36,13 +36,23 @@ import {
   ADDRESS_ROW_TIME_SELECT_WRAP,
   ADDRESS_ROW_TIME_SELECT,
   ADDRESS_ROW_NOTES_WRAP,
+  ADDRESS_ROW_NOTES_TEXTAREA,
   ADDRESS_ROW_ACTIONS,
   ADDRESS_ROW_LOCKED_RECIPIENT_COL,
   ADDRESS_ROW_LOCKED_PLAIN_TEXT,
   ADDRESS_ROW_LOCKED_FIELD_BTN,
+  ADDRESS_ROW_LOCKED_NOTES_BTN,
+  ADDRESS_ROW_LOCKED_NOTES_TEXT,
   MOBILE_LOCKED_CLICKABLE,
 } from "../formStyles.v2";
 import { EditIconButton, ConfirmIconButton, DeleteIconButton } from "./RowIconButtons";
+
+function formatPhoneNumber(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 function parseRecipientAddress(addr: string): Partial<LocationAddress> {
   const parts = addr.split(", ");
@@ -110,6 +120,36 @@ function StepperInput({
         </button>
       </div>
     </div>
+  );
+}
+
+function AutoResizeNotesTextarea({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Enter notes"
+      aria-label="Notes"
+      rows={1}
+      className={ADDRESS_ROW_NOTES_TEXTAREA}
+    />
   );
 }
 
@@ -185,8 +225,10 @@ export default function AddressCard({
                   </button>
 
                   {/* Notes — locked */}
-                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[190px] shrink-0`}>
-                    {a.notes || "—"}
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={ADDRESS_ROW_LOCKED_NOTES_BTN}>
+                    <span className={ADDRESS_ROW_LOCKED_NOTES_TEXT}>
+                      {a.notes || "—"}
+                    </span>
                   </button>
                 </>
               ) : (
@@ -203,13 +245,12 @@ export default function AddressCard({
                       />
                       <input
                         value={a.phoneNumber}
-                        onChange={(e) =>
-                          updateAddress(a.id, "phoneNumber", e.target.value.replace(/[^\d+\s()\-]/g, ""))
-                        }
-                        placeholder="+1 123 456 7890"
+                        onChange={(e) => updateAddress(a.id, "phoneNumber", formatPhoneNumber(e.target.value))}
+                        placeholder="123-456-7890"
                         aria-label="Phone number"
                         type="tel"
-                        inputMode="tel"
+                        inputMode="numeric"
+                        maxLength={12}
                         className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
                       />
                     </div>
@@ -301,13 +342,9 @@ export default function AddressCard({
 
                   {/* Notes — edit */}
                   <div className={ADDRESS_ROW_NOTES_WRAP}>
-                    <textarea
+                    <AutoResizeNotesTextarea
                       value={a.notes}
-                      onChange={(e) => updateAddress(a.id, "notes", e.target.value)}
-                      placeholder="Enter notes"
-                      aria-label="Notes"
-                      rows={1}
-                      className="w-full bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] resize-none font-normal"
+                      onChange={(value) => updateAddress(a.id, "notes", value)}
                     />
                   </div>
                 </>
@@ -434,13 +471,12 @@ export default function AddressCard({
                   <span className={MOBILE_FIELD_LABEL}>Phone</span>
                   <input
                     value={a.phoneNumber}
-                    onChange={(e) =>
-                      updateAddress(a.id, "phoneNumber", e.target.value.replace(/[^\d+\s()\-]/g, ""))
-                    }
-                    placeholder="+1 123 456 7890"
+                    onChange={(e) => updateAddress(a.id, "phoneNumber", formatPhoneNumber(e.target.value))}
+                    placeholder="123-456-7890"
                     aria-label="Phone number"
                     type="tel"
-                    inputMode="tel"
+                    inputMode="numeric"
+                    maxLength={12}
                     className={mobileInputClass(false)}
                   />
                 </div>
