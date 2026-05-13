@@ -6,7 +6,7 @@ import { useState, useCallback, useMemo } from "react";
 import type { AddressCard } from "../types/delivery";
 import Fuse from "fuse.js";
 
-const ADDRESSES_PER_PAGE = 7;
+export const ADDRESS_PAGE_SIZE_OPTIONS = [5, 10, 20, 30] as const;
 
 export function useAddresses() {
   const [addresses, setAddresses] = useState<AddressCard[]>([]);
@@ -33,10 +33,17 @@ export function useAddresses() {
 
   // Pagination: slice the flat list so the UI only renders one page of cards.
   const [addressPage, setAddressPage] = useState(1);
-  const totalAddressPages = Math.max(1, Math.ceil(filteredAddresses.length / ADDRESSES_PER_PAGE));
+  const [addressesPerPage, _setAddressesPerPage] = useState(10);
+
+  const setAddressesPerPage = useCallback((n: number) => {
+    _setAddressesPerPage(n);
+    setAddressPage(1);
+  }, []);
+
+  const totalAddressPages = Math.max(1, Math.ceil(filteredAddresses.length / addressesPerPage));
   const addressesOnCurrentPage = filteredAddresses.slice(
-    (addressPage - 1) * ADDRESSES_PER_PAGE,
-    addressPage * ADDRESSES_PER_PAGE
+    (addressPage - 1) * addressesPerPage,
+    addressPage * addressesPerPage
   );
 
   const setSearchQuery = useCallback((q: string) => {
@@ -114,7 +121,7 @@ export function useAddresses() {
       setTouchedIds(new Set());
       _setSearchQuery("");
       const newId = prev.reduce((max, a) => Math.max(max, a.id), 0) + 1;
-      setAddressPage(Math.ceil((prev.length + 1) / ADDRESSES_PER_PAGE));
+      setAddressPage(Math.ceil((prev.length + 1) / addressesPerPage));
 
       return [
         ...prev.map((a) => (a.locked ? a : { ...a, locked: true, editingExisting: false })),
@@ -134,13 +141,13 @@ export function useAddresses() {
         },
       ];
     });
-  }, []);
+  }, [addressesPerPage]);
 
   const deleteAddress = useCallback((id: number) => {
     setAddresses((prev) => {
       if (prev.length === 0) return prev;
       const next = prev.filter((a) => a.id !== id);
-      const maxPage = Math.max(1, Math.ceil(next.length / ADDRESSES_PER_PAGE));
+      const maxPage = Math.max(1, Math.ceil(next.length / addressesPerPage));
       setAddressPage((p) => Math.min(p, maxPage));
       return next;
     });
@@ -149,7 +156,7 @@ export function useAddresses() {
       next.delete(id);
       return next;
     });
-  }, []);
+  }, [addressesPerPage]);
 
   // Re-open a saved row for editing (shows Confirm in the card).
   const unlockAddress = useCallback((id: number) => {
@@ -212,6 +219,8 @@ export function useAddresses() {
     setAddressPage,
     totalAddressPages,
     addressesOnCurrentPage,
+    addressesPerPage,
+    setAddressesPerPage,
     addressesCount: addresses.length,
     activeAddressIsValid,
     allAddressesLocked,

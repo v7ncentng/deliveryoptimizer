@@ -367,6 +367,35 @@ export const OVERLAY_FIELD_ERROR_CONTAINER =
 export const OVERLAY_FIELD_ERROR_TEXT =
   "font-normal text-[16px] leading-[1.5] text-[var(--edit-error-border)]";
 
+// ── Pagination V2 (Figma 8083:3520) ──────────────────────────────────────────
+
+export const PAGINATION_V2_ROW =
+  "flex items-center justify-between w-full";
+
+export const PAGINATION_V2_SHOW_CONTAINER =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-between p-[8px] rounded-[6px] w-[112px] relative cursor-pointer overflow-hidden";
+
+export const PAGINATION_V2_SHOW_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap pointer-events-none select-none";
+
+export const PAGINATION_V2_SHOW_CHEVRON =
+  "flex items-center justify-center size-[24px] shrink-0 pointer-events-none";
+
+export const PAGINATION_V2_SHOW_CHEVRON_ICON =
+  "rotate-90";
+
+export const PAGINATION_V2_SHOW_SELECT =
+  "absolute inset-0 w-full h-full opacity-0 cursor-pointer text-[var(--edit-text-primary)]";
+
+export const PAGINATION_V2_NAV_CONTAINER =
+  "flex gap-[8px] items-center";
+
+export const PAGINATION_V2_NAV_BTN =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] cursor-pointer hover:bg-[var(--edit-stone-50)] transition-colors";
+
+export const PAGINATION_V2_NAV_BTN_DISABLED =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] opacity-50 cursor-not-allowed";
+
 // ── Page Footer ───────────────────────────────────────────────────────────────
 
 export const FOOTER_ROOT =
