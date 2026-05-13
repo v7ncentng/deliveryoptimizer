@@ -6,6 +6,7 @@
 
 import { useRef } from "react";
 import AddressCard from "./AddressCard";
+import AddressEmptyState from "./AddressEmptyState";
 import AddressRowHeader from "./AddressRowHeader";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
@@ -64,7 +65,7 @@ export default function AddressSection({
   onCSVUpload,
 }: AddressSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const addEnabled = allAddressesLocked || activeAddressIsValid;
+  const addEnabled = addressesCount === 0 || allAddressesLocked || activeAddressIsValid;
 
   return (
     <section>
@@ -126,52 +127,55 @@ export default function AddressSection({
         </button>
       </div>
 
-      {/* Mobile: spaced cards */}
-      {searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
-        <div className={ADDRESS_EMPTY_STATE}>
-          No Addresses Found
-        </div>
-      ) : (
-        <>
-          {/* Mobile card list */}
-          <div className={`lg:hidden ${ADDRESS_LIST_WRAP}`}>
-            {addressesOnCurrentPage.map((a) => (
-              <AddressCard
-                key={`address-${a.id}`}
-                address={a}
-                addressesCount={addressesCount}
-                updateAddress={updateAddress}
-                deleteAddress={deleteAddress}
-                unlockAddress={unlockAddress}
-                confirmAddress={confirmAddress}
-                addressTouched={touchedIds.has(a.id)}
-                geocodeFailed={geocodeFailedIds.includes(a.id)}
-                outOfRegionFailed={outOfRegionIds.includes(a.id)}
-              />
-            ))}
-          </div>
+      {/* Mobile: stacked cards */}
+      <div className={`lg:hidden ${ADDRESS_LIST_WRAP}`}>
+        {addressesCount === 0 ? (
+          <AddressEmptyState />
+        ) : searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
+          <div className={ADDRESS_EMPTY_STATE}>No Addresses Found</div>
+        ) : (
+          addressesOnCurrentPage.map((a) => (
+            <AddressCard
+              key={`address-${a.id}`}
+              address={a}
+              addressesCount={addressesCount}
+              updateAddress={updateAddress}
+              deleteAddress={deleteAddress}
+              unlockAddress={unlockAddress}
+              confirmAddress={confirmAddress}
+              addressTouched={touchedIds.has(a.id)}
+              geocodeFailed={geocodeFailedIds.includes(a.id)}
+              outOfRegionFailed={outOfRegionIds.includes(a.id)}
+            />
+          ))
+        )}
+      </div>
 
-          {/* Desktop hi-fi container: header + divider + rows */}
-          <div className={ADDRESS_LIST_CONTAINER}>
-            <AddressRowHeader />
-            <div className={ADDRESS_LIST_DIVIDER} />
-            {addressesOnCurrentPage.map((a) => (
-              <AddressCard
-                key={`address-${a.id}`}
-                address={a}
-                addressesCount={addressesCount}
-                updateAddress={updateAddress}
-                deleteAddress={deleteAddress}
-                unlockAddress={unlockAddress}
-                confirmAddress={confirmAddress}
-                addressTouched={touchedIds.has(a.id)}
-                geocodeFailed={geocodeFailedIds.includes(a.id)}
-                outOfRegionFailed={outOfRegionIds.includes(a.id)}
-              />
-            ))}
-          </div>
-        </>
-      )}
+      {/* Desktop hi-fi container: header + divider + rows */}
+      <div className={ADDRESS_LIST_CONTAINER}>
+        <AddressRowHeader />
+        <div className={ADDRESS_LIST_DIVIDER} />
+        {addressesCount === 0 ? (
+          <AddressEmptyState />
+        ) : searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
+          <div className={ADDRESS_EMPTY_STATE}>No Addresses Found</div>
+        ) : (
+          addressesOnCurrentPage.map((a) => (
+            <AddressCard
+              key={`address-${a.id}`}
+              address={a}
+              addressesCount={addressesCount}
+              updateAddress={updateAddress}
+              deleteAddress={deleteAddress}
+              unlockAddress={unlockAddress}
+              confirmAddress={confirmAddress}
+              addressTouched={touchedIds.has(a.id)}
+              geocodeFailed={geocodeFailedIds.includes(a.id)}
+              outOfRegionFailed={outOfRegionIds.includes(a.id)}
+            />
+          ))
+        )}
+      </div>
     </section>
   );
 }

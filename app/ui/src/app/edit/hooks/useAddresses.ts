@@ -9,23 +9,7 @@ import Fuse from "fuse.js";
 const ADDRESSES_PER_PAGE = 7;
 
 export function useAddresses() {
-  // Seed with one editable row; IDs are monotonic as rows are added.
-  const [addresses, setAddresses] = useState<AddressCard[]>([
-    {
-      id: 1,
-      locked: false,
-      editingExisting: false,
-      recipientName: "",
-      phoneNumber: "",
-      recipientAddress: "",
-      cachedLocation: undefined,
-      timeBuffer: 0,
-      deliveryTimeStart: "",
-      deliveryTimeEnd: "",
-      deliveryQuantity: 0,
-      notes: "",
-    },
-  ]);
+  const [addresses, setAddresses] = useState<AddressCard[]>([]);
 
   // Search: fuzzy filter across address and notes fields.
   const [searchQuery, _setSearchQuery] = useState("");
@@ -96,6 +80,25 @@ export function useAddresses() {
   // computed from the latest state and the callback never needs to be recreated.
   const addAddress = useCallback(() => {
     setAddresses((prev) => {
+      if (prev.length === 0) {
+        setTouchedIds(new Set());
+        setAddressPage(1);
+        return [{
+          id: 1,
+          locked: false,
+          editingExisting: false,
+          recipientName: "",
+          phoneNumber: "",
+          recipientAddress: "",
+          cachedLocation: undefined,
+          timeBuffer: 0,
+          deliveryTimeStart: "",
+          deliveryTimeEnd: "",
+          deliveryQuantity: 0,
+          notes: "",
+        }];
+      }
+
       const active = prev.find((a) => !a.locked);
       const allLocked = prev.length > 0 && prev.every((a) => a.locked);
       const isValid =
@@ -133,11 +136,9 @@ export function useAddresses() {
     });
   }, []);
 
-  // At least one address row must remain. Clamp current page synchronously so
-  // there is no extra render from a useEffect.
   const deleteAddress = useCallback((id: number) => {
     setAddresses((prev) => {
-      if (prev.length <= 1) return prev;
+      if (prev.length === 0) return prev;
       const next = prev.filter((a) => a.id !== id);
       const maxPage = Math.max(1, Math.ceil(next.length / ADDRESSES_PER_PAGE));
       setAddressPage((p) => Math.min(p, maxPage));

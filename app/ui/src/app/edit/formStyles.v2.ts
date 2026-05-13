@@ -174,6 +174,21 @@ export const ADDRESS_LIST_CONTAINER =
 export const ADDRESS_LIST_DIVIDER =
   "border-t border-[var(--edit-stone-200)] w-full";
 
+export const ADDRESS_EMPTY_STATE_WRAPPER =
+  "flex flex-col gap-4 items-center justify-center py-[28px] shrink-0 w-full";
+
+export const ADDRESS_EMPTY_STATE_ICON =
+  "size-12 shrink-0";
+
+export const ADDRESS_EMPTY_STATE_TEXT_GROUP =
+  "flex flex-col gap-2 items-center leading-[1.5] text-[16px] text-[var(--edit-text-primary)] whitespace-nowrap";
+
+export const ADDRESS_EMPTY_STATE_TITLE =
+  "font-[650]";
+
+export const ADDRESS_EMPTY_STATE_SUBTITLE =
+  "font-normal";
+
 // ── Address Row Edit State (Figma 7758:2610) ──────────────────────────────────
 
 export const ADDRESS_ROW_EDIT_ROOT =
