@@ -373,6 +373,27 @@ export const OVERLAY_FIELD_ERROR_CONTAINER =
 export const OVERLAY_FIELD_ERROR_TEXT =
   "font-normal text-[16px] leading-[1.5] text-[var(--edit-error-border)]";
 
+export const OVERLAY_AUTOCOMPLETE_DROPDOWN =
+  "fixed z-[100] rounded-[6px] border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] shadow-lg max-h-48 overflow-y-auto";
+
+export const OVERLAY_AUTOCOMPLETE_HEADER =
+  "px-3 py-1 border-b border-[var(--edit-stone-200)] font-semibold text-[12px] leading-5 text-[var(--edit-stone-500)]";
+
+export const OVERLAY_AUTOCOMPLETE_ITEM =
+  "px-3 py-2 cursor-pointer flex items-start gap-2 text-[16px] text-[var(--edit-text-primary)] border-b border-[var(--edit-stone-200)] last:border-b-0 hover:bg-[var(--edit-stone-50)]";
+
+export const OVERLAY_AUTOCOMPLETE_ITEM_ACTIVE =
+  "px-3 py-2 cursor-pointer flex items-start gap-2 text-[16px] text-[var(--edit-text-primary)] border-b border-[var(--edit-stone-200)] last:border-b-0 bg-[var(--edit-container-active)]";
+
+export const OVERLAY_AUTOCOMPLETE_INPUT_WRAPPER =
+  "relative w-full";
+
+export const OVERLAY_AUTOCOMPLETE_PIN_ICON =
+  "shrink-0 mt-0.5 text-[var(--edit-stone-500)]";
+
+export const OVERLAY_AUTOCOMPLETE_ITEM_TEXT =
+  "flex-1 leading-snug";
+
 // ── Pagination V2 (Figma 8083:3520) ──────────────────────────────────────────
 
 export const PAGINATION_V2_ROW =

@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { SUPPORTED_STATES } from "../constants/supportedRegions";
 import OverlayFieldError from "./OverlayFieldError";
+import OverlayAutocompleteDropdown from "./OverlayAutocompleteDropdown";
+import { useAddressAutocomplete } from "../../components/AddressGeocoder/utils/useAddressAutocomplete";
+import type { AddressSuggestion } from "../../components/AddressGeocoder/types";
 import {
   OVERLAY_BACKDROP,
   OVERLAY_BODY,
@@ -27,6 +31,7 @@ import {
   OVERLAY_SELECT_WRAPPER_ERROR,
   OVERLAY_SCROLL_BODY,
   OVERLAY_TITLE,
+  OVERLAY_AUTOCOMPLETE_INPUT_WRAPPER,
 } from "../formStyles.v2";
 import styles from "../edit.module.css";
 
@@ -96,6 +101,45 @@ export default function AddressOverlay({
   const [country, setCountry] = useState(initialAddress?.country ?? "");
   const [submitted, setSubmitted] = useState(false);
 
+  const line1InputRef = useRef<HTMLInputElement>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const ALLOWED_STATES = new Set(["California", "Florida", "Texas"]);
+  const stateFilter = useCallback(
+    (s: AddressSuggestion) => ALLOWED_STATES.has(s.address?.state ?? ""),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+  const { suggestions, showSuggestions, selectedIndex, debouncedFetch, clearSuggestions, handleKeyDown: handleAutocompleteKeyDown } =
+    useAddressAutocomplete(stateFilter);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
+
+  function getDropdownStyle(): CSSProperties {
+    if (!line1InputRef.current) return {};
+    const r = line1InputRef.current.getBoundingClientRect();
+    return { top: r.bottom + 4, left: r.left, width: r.width };
+  }
+
+  function handleLine1Select(s: AddressSuggestion) {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    const a = s.address ?? {};
+    const streetLine = [a.house_number, a.road].filter(Boolean).join(" ") || s.display_name;
+    setLine1(streetLine);
+    setCity(a.city ?? a.town ?? a.village ?? a.municipality ?? "");
+    setState(a.state ?? "");
+    setZipCode((a.postcode ?? "").slice(0, 5));
+    setCountry("United States");
+    clearSuggestions();
+  }
+
   const line1Error = submitted && !line1.trim();
   const cityError = submitted && !city.trim();
   const stateError = submitted && !state;
@@ -104,11 +148,14 @@ export default function AddressOverlay({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (suggestions.length > 0) return;
+        onClose();
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, suggestions]);
 
   function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
     if (e.target === e.currentTarget) onClose();
@@ -157,15 +204,29 @@ export default function AddressOverlay({
               <label htmlFor="start-loc-line1" className={OVERLAY_LABEL}>
                 Address line 1<span className={OVERLAY_REQUIRED_STAR} aria-hidden="true">*</span>
               </label>
-              <input
-                id="start-loc-line1"
-                value={line1}
-                onChange={(e) => setLine1(e.target.value)}
-                placeholder="Street number and name"
-                className={line1Error ? OVERLAY_INPUT_ERROR : OVERLAY_INPUT}
-                aria-required="true"
-                aria-invalid={line1Error}
-              />
+              <div className={OVERLAY_AUTOCOMPLETE_INPUT_WRAPPER}>
+                <input
+                  ref={line1InputRef}
+                  id="start-loc-line1"
+                  value={line1}
+                  onChange={(e) => { setLine1(e.target.value); debouncedFetch(e.target.value); }}
+                  onKeyDown={(e) => handleAutocompleteKeyDown(e, handleLine1Select)}
+                  onBlur={() => { blurTimeoutRef.current = setTimeout(clearSuggestions, 150); }}
+                  placeholder="Street number and name"
+                  className={line1Error ? OVERLAY_INPUT_ERROR : OVERLAY_INPUT}
+                  aria-required="true"
+                  aria-invalid={line1Error}
+                  autoComplete="off"
+                />
+                {showSuggestions && (
+                  <OverlayAutocompleteDropdown
+                    suggestions={suggestions}
+                    selectedIndex={selectedIndex}
+                    onSelect={handleLine1Select}
+                    style={getDropdownStyle()}
+                  />
+                )}
+              </div>
               {line1Error && <OverlayFieldError message="Enter an address" />}
             </div>
 

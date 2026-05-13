@@ -70,6 +70,7 @@ export async function autocompleteAddress(
     format: 'json',
     limit: String(limit),
     addressdetails: '1',
+    countrycodes: 'us',
     email: NOMINATIM_CONTACT_EMAIL,
   });
 
