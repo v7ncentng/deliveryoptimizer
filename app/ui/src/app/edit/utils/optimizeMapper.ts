@@ -62,7 +62,9 @@ export function addressCardToDeliveryInput(
   return {
     id: a.id,
     recipientName: a.recipientName.trim() || undefined,
-    phoneNumber: a.phoneNumber.trim() || undefined,
+    phoneNumber: a.phoneNumber.replace(/\D/g, "").length >= 10
+    ? a.phoneNumber.trim()
+    : undefined,
     address: a.recipientAddress,
     notes: a.notes.trim() ? a.notes : undefined,
     location,
