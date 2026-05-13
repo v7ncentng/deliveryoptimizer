@@ -64,7 +64,7 @@ const CHEVRON_DOWN_ICON = (
 
 const COUNTRIES = ["United States"];
 
-export type StartLocationAddress = {
+export type LocationAddress = {
   line1: string;
   line2: string;
   city: string;
@@ -75,9 +75,9 @@ export type StartLocationAddress = {
 
 type AddressOverlayProps = {
   heading: string;
-  initialAddress?: Partial<StartLocationAddress>;
+  initialAddress?: Partial<LocationAddress>;
   onClose: () => void;
-  onSave: (address: StartLocationAddress) => void;
+  onSave: (address: LocationAddress) => void;
 };
 
 export default function AddressOverlay({

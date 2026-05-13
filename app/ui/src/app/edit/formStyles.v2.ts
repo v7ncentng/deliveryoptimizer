@@ -254,6 +254,12 @@ export const ADDRESS_ROW_LOCKED_RECIPIENT_COL =
 export const ADDRESS_ROW_LOCKED_PLAIN_TEXT =
   "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]";
 
+export const ADDRESS_ROW_LOCKED_FIELD_BTN =
+"text-left bg-transparent border-0 p-0 m-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] rounded-sm";
+
+export const MOBILE_LOCKED_CLICKABLE =
+"cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)]";
+
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
 export const OVERLAY_BACKDROP =

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import AddressOverlay, { type StartLocationAddress } from "./AddressOverlay";
+import AddressOverlay, { type LocationAddress } from "./AddressOverlay";
 import { TIME_OPTIONS } from "../constants/timeOptions";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
@@ -39,8 +39,24 @@ import {
   ADDRESS_ROW_ACTIONS,
   ADDRESS_ROW_LOCKED_RECIPIENT_COL,
   ADDRESS_ROW_LOCKED_PLAIN_TEXT,
+  ADDRESS_ROW_LOCKED_FIELD_BTN,
+  MOBILE_LOCKED_CLICKABLE,
 } from "../formStyles.v2";
 import { EditIconButton, ConfirmIconButton, DeleteIconButton } from "./RowIconButtons";
+
+function parseRecipientAddress(addr: string): Partial<LocationAddress> {
+  const parts = addr.split(", ");
+  if (parts.length < 4) return {};
+  const country = parts[parts.length - 1];
+  const stateZip = parts[parts.length - 2];
+  const city = parts[parts.length - 3];
+  const lastSpace = stateZip.lastIndexOf(" ");
+  const state = lastSpace > -1 ? stateZip.slice(0, lastSpace) : "";
+  const zipCode = lastSpace > -1 ? stateZip.slice(lastSpace + 1) : stateZip;
+  const line1 = parts[0];
+  const line2 = parts.length >= 5 ? parts[1] : "";
+  return { line1, line2, city, state, zipCode, country };
+}
 
 type AddressCardProps = {
   address: AddressCardType;
@@ -138,36 +154,40 @@ export default function AddressCard({
                   {/* Recipient column — locked */}
                   <div className={ADDRESS_ROW_LOCKED_RECIPIENT_COL}>
                     {(a.recipientName || a.phoneNumber) && (
-                      <p className={ADDRESS_ROW_LOCKED_PLAIN_TEXT}>
+                      <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN}`}>
                         {[a.recipientName, a.phoneNumber].filter(Boolean).join(", ")}
-                      </p>
+                      </button>
                     )}
-                    <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
+                    <button
+                      type="button"
+                      onClick={() => { unlockAddress(a.id); setOverlayOpen(true); }}
+                      className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}
+                    >
                       {a.recipientAddress || "—"}
-                    </p>
+                    </button>
                   </div>
 
                   {/* Quantity — locked */}
-                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[72px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[72px] shrink-0`}>
                     {a.deliveryQuantity}
-                  </p>
+                  </button>
 
                   {/* Delivery estimation — locked */}
-                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[150px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[130px] shrink-0`}>
                     {a.timeBuffer > 0 ? `${a.timeBuffer} minutes` : "—"}
-                  </p>
+                  </button>
 
                   {/* Delivery time — locked */}
-                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[247px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[247px] shrink-0`}>
                     {a.deliveryTimeStart && a.deliveryTimeEnd
                       ? `${a.deliveryTimeStart} – ${a.deliveryTimeEnd}`
                       : a.deliveryTimeStart || a.deliveryTimeEnd || "—"}
-                  </p>
+                  </button>
 
                   {/* Notes — locked */}
-                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[246px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[190px] shrink-0`}>
                     {a.notes || "—"}
-                  </p>
+                  </button>
                 </>
               ) : (
                 <>
@@ -343,51 +363,51 @@ export default function AddressCard({
               <>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Name</span>
-                  <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${MOBILE_ADDRESS_LOCKED_ROW} ${MOBILE_LOCKED_CLICKABLE}`}>
                     <span className="text-sm text-black truncate">{a.recipientName || "—"}</span>
-                  </div>
+                  </button>
                 </div>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Phone</span>
-                  <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${MOBILE_ADDRESS_LOCKED_ROW} ${MOBILE_LOCKED_CLICKABLE}`}>
                     <span className="text-sm text-black truncate">{a.phoneNumber || "—"}</span>
-                  </div>
+                  </button>
                 </div>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Address</span>
-                  <div className={`${MOBILE_ADDRESS_LOCKED_ROW}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
+                  <button type="button" onClick={() => { unlockAddress(a.id); setOverlayOpen(true); }} className={`${MOBILE_ADDRESS_LOCKED_ROW} ${MOBILE_LOCKED_CLICKABLE}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
                     <span className="text-sm text-black truncate">{a.recipientAddress}</span>
-                  </div>
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <span className={MOBILE_FIELD_LABEL}>Delivery estimation</span>
-                    <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                    <button type="button" onClick={() => unlockAddress(a.id)} className={`${MOBILE_ADDRESS_LOCKED_ROW} ${MOBILE_LOCKED_CLICKABLE}`}>
                       <span className="text-sm text-black truncate">{a.timeBuffer > 0 ? `${a.timeBuffer} min` : "—"}</span>
-                    </div>
+                    </button>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className={MOBILE_FIELD_LABEL}>Delivery time</span>
-                    <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                    <button type="button" onClick={() => unlockAddress(a.id)} className={`${MOBILE_ADDRESS_LOCKED_ROW} ${MOBILE_LOCKED_CLICKABLE}`}>
                       <span className="text-sm text-black truncate">
                         {a.deliveryTimeStart && a.deliveryTimeEnd
                           ? `${a.deliveryTimeStart} – ${a.deliveryTimeEnd}`
                           : a.deliveryTimeStart || a.deliveryTimeEnd || "—"}
                       </span>
-                    </div>
+                    </button>
                   </div>
                 </div>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Quantity</span>
-                  <div className={MOBILE_ADDRESS_LOCKED_ROW}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${MOBILE_ADDRESS_LOCKED_ROW} ${MOBILE_LOCKED_CLICKABLE}`}>
                     <span className="text-sm text-black truncate">{a.deliveryQuantity}</span>
-                  </div>
+                  </button>
                 </div>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Notes</span>
-                  <div className={MOBILE_ADDRESS_NOTES_AREA}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${MOBILE_ADDRESS_NOTES_AREA} ${MOBILE_LOCKED_CLICKABLE}`}>
                     <span className="text-sm text-black leading-6 line-clamp-6">{a.notes}</span>
-                  </div>
+                  </button>
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={() => unlockAddress(a.id)} className={PILL_ROW_HALF_NEUTRAL}>
@@ -522,8 +542,9 @@ export default function AddressCard({
       {overlayOpen && (
         <AddressOverlay
           heading="Enter Address"
+          initialAddress={parseRecipientAddress(a.recipientAddress)}
           onClose={() => setOverlayOpen(false)}
-          onSave={(addr: StartLocationAddress) => {
+          onSave={(addr: LocationAddress) => {
             const parts = [addr.line1];
             if (addr.line2.trim()) parts.push(addr.line2);
             parts.push(addr.city, `${addr.state} ${addr.zipCode}`, addr.country);

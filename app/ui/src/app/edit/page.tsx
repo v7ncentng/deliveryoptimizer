@@ -29,7 +29,7 @@ import {
   mapOptimizeRequestToEditState,
 } from "./utils/sessionMapper";
 import { useRouter } from "next/navigation";
-import AddressOverlay, { type StartLocationAddress } from "./components/AddressOverlay";
+import AddressOverlay, { type LocationAddress } from "./components/AddressOverlay";
 
 type StoredUploadFile = {
   name: string;
@@ -166,7 +166,7 @@ export default function Page() {
     setSessionError(null);
   }, []);
 
-  const handleStartLocationSave = useCallback((addr: StartLocationAddress) => {
+  const handleStartLocationSave = useCallback((addr: LocationAddress) => {
     const parts = [addr.line1];
     if (addr.line2.trim()) parts.push(addr.line2);
     parts.push(addr.city, `${addr.state} ${addr.zipCode}`, addr.country);
