@@ -62,6 +62,21 @@ export const VEHICLE_INFO_DIVIDER = "border-t border-[var(--edit-stone-200)]";
 export const VEHICLE_INFO_ROWS =
   "flex flex-col gap-3";
 
+export const VEHICLE_EMPTY_STATE_WRAPPER =
+  "flex flex-col gap-4 items-center justify-center py-[28px] shrink-0 w-full";
+
+export const VEHICLE_EMPTY_STATE_ICON =
+  "size-12 shrink-0";
+
+export const VEHICLE_EMPTY_STATE_TEXT_GROUP =
+  "flex flex-col gap-2 items-center leading-[1.5] text-[16px] text-[var(--edit-text-primary)] whitespace-nowrap";
+
+export const VEHICLE_EMPTY_STATE_TITLE =
+  "font-[650]";
+
+export const VEHICLE_EMPTY_STATE_SUBTITLE =
+  "font-normal";
+
 export const VEHICLE_ROW_DESKTOP =
   "grid w-full grid-cols-[minmax(7rem,1.2fr)_minmax(5rem,0.8fr)_minmax(6rem,0.9fr)_minmax(7rem,0.9fr)_minmax(7rem,1fr)_5.25rem] gap-4 items-center";
 
@@ -100,6 +115,150 @@ export const VEHICLE_SECTION_HEADING =
 
 export const VEHICLE_SECTION_SUBHEADING =
   "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
+
+export const ADDRESS_SECTION_HEADER =
+  "flex flex-col gap-2 mb-4";
+
+export const ADDRESS_SECTION_HEADING =
+  "font-bold text-[20px] leading-[28px] text-[var(--edit-text-primary)]";
+
+export const ADDRESS_SECTION_SUBHEADING =
+  "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
+
+export const ADDRESS_BTN_V2_DESKTOP_ENABLED =
+  "h-10 px-4 shrink-0 rounded-[80px] border border-[var(--edit-stone-700)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-secondary-btn-hover)] active:bg-[var(--edit-secondary-btn-pressed)] transition-colors cursor-pointer";
+
+export const ADDRESS_BTN_V2_DESKTOP_DISABLED =
+  "h-10 px-4 shrink-0 rounded-[80px] border border-[var(--edit-stone-200)] font-semibold text-[14px] leading-5 text-[var(--edit-stone-500)] whitespace-nowrap cursor-not-allowed opacity-50";
+
+export const ADDRESS_BTN_V2_MOBILE_ENABLED =
+  "w-full h-10 px-4 rounded-[80px] border border-[var(--edit-stone-700)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-secondary-btn-hover)] active:bg-[var(--edit-secondary-btn-pressed)] transition-colors cursor-pointer";
+
+export const ADDRESS_BTN_V2_MOBILE_DISABLED =
+  "w-full h-10 px-4 rounded-[80px] border border-[var(--edit-stone-200)] font-semibold text-[14px] leading-5 text-[var(--edit-stone-500)] whitespace-nowrap cursor-not-allowed opacity-50";
+
+export const ADDRESS_SEARCH_BAR =
+  "flex items-center gap-2 px-4 py-[11px] rounded-[80px] border border-[var(--edit-stone-200)] bg-[var(--edit-stone-50)] focus-within:border-[var(--edit-teal-300)] transition-colors";
+
+export const ADDRESS_SEARCH_INPUT =
+  "flex-1 font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent min-w-0 [&::-webkit-search-cancel-button]:hidden";
+
+// ── Address Row Header (Figma 8012:2303) ──────────────────────────────────────
+
+export const ADDRESS_ROW_HEADER_ROOT =
+  "hidden lg:flex gap-4 items-start w-full";
+
+export const ADDRESS_ROW_HEADER_COLS =
+  "flex gap-10 items-center font-semibold text-[16px] leading-[1.5] text-[var(--edit-text-primary)] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_RECIPIENT =
+  "w-[328px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_QUANTITY =
+  "w-[72px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_DELIVERY_EST =
+  "w-[150px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_DELIVERY_TIME =
+  "w-[247px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_NOTES =
+  "w-[246px] shrink-0";
+
+// ── Address List Container (Figma 7758:2602) ──────────────────────────────────
+
+export const ADDRESS_LIST_CONTAINER =
+  "hidden lg:flex flex-col gap-4 border border-[var(--edit-stone-200)] rounded-[8px] overflow-x-auto p-4";
+
+export const ADDRESS_LIST_DIVIDER =
+  "border-t border-[var(--edit-stone-200)] w-full";
+
+export const ADDRESS_EMPTY_STATE_WRAPPER =
+  "flex flex-col gap-4 items-center justify-center py-[28px] shrink-0 w-full";
+
+export const ADDRESS_EMPTY_STATE_ICON =
+  "size-12 shrink-0";
+
+export const ADDRESS_EMPTY_STATE_TEXT_GROUP =
+  "flex flex-col gap-2 items-center leading-[1.5] text-[16px] text-[var(--edit-text-primary)] whitespace-nowrap";
+
+export const ADDRESS_EMPTY_STATE_TITLE =
+  "font-[650]";
+
+export const ADDRESS_EMPTY_STATE_SUBTITLE =
+  "font-normal";
+
+// ── Address Row Edit State (Figma 7758:2610) ──────────────────────────────────
+
+export const ADDRESS_ROW_EDIT_ROOT =
+  "flex items-start justify-between w-full";
+
+export const ADDRESS_ROW_EDIT_LEFT =
+  "flex gap-4 items-start py-2";
+
+export const ADDRESS_ROW_EDIT_COLS =
+  "flex gap-10 items-start";
+
+export const ADDRESS_ROW_RECIPIENT_COL =
+  "flex flex-col gap-2 w-[328px] shrink-0";
+
+export const ADDRESS_ROW_NAME_ROW =
+  "flex items-center gap-[11px] w-full";
+
+export const ADDRESS_ROW_FIELD_INPUT =
+  "border border-[var(--edit-stone-200)] h-11 px-2 py-[10px] rounded-[6px] font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none focus:border-[var(--edit-teal-300)] bg-[var(--edit-bg-primary)] transition-colors min-w-0";
+
+export const ADDRESS_ROW_ADDR_WRAP =
+  "relative border border-[var(--edit-stone-200)] flex h-11 items-center rounded-[6px] overflow-hidden w-full cursor-pointer";
+
+export const ADDRESS_ROW_ADDR_GRADIENT =
+  "pointer-events-none absolute right-0 top-0 h-full w-[72px] bg-gradient-to-l from-[var(--edit-bg-primary)] from-[60%] to-transparent flex items-center justify-end pr-2";
+
+export const ADDRESS_ROW_ADDR_TRIGGER_TEXT =
+  "flex-1 h-full px-2 text-[16px] leading-[1.5] font-normal text-left text-[var(--edit-text-primary)] truncate flex items-center";
+
+export const ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER =
+  "text-[var(--edit-stone-500)]";
+
+export const ADDRESS_ROW_STEPPER_CONTAINER =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-2 py-[10px] rounded-[6px] shrink-0";
+
+export const ADDRESS_ROW_EST_GROUP =
+  "flex gap-2 items-center shrink-0";
+
+export const ADDRESS_ROW_TIME_GROUP =
+  "flex gap-2 items-center shrink-0";
+
+export const ADDRESS_ROW_TIME_SELECT_WRAP =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-2 py-[10px] rounded-[6px] w-[111px] shrink-0 relative overflow-hidden cursor-pointer";
+
+export const ADDRESS_ROW_TIME_SELECT =
+  "absolute inset-0 w-full h-full opacity-0 cursor-pointer text-[var(--edit-text-primary)]";
+
+export const ADDRESS_ROW_NOTES_WRAP =
+  "border border-[var(--edit-stone-200)] flex items-start overflow-hidden px-2 py-[10px] rounded-[6px] w-[240px] shrink-0";
+
+export const ADDRESS_ROW_ACTIONS =
+  "flex gap-2 items-center shrink-0 self-start pt-2";
+
+export const ADDRESS_ROW_ACTION_BTN =
+  "relative size-10 shrink-0 overflow-hidden rounded-[4px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--edit-bg-primary)]";
+
+export const ADDRESS_ROW_LOCKED_CELL =
+  "bg-[var(--edit-stone-50)] flex h-11 items-center px-2 py-[10px] rounded-[6px] shrink-0 overflow-hidden";
+
+export const ADDRESS_ROW_LOCKED_RECIPIENT_COL =
+  "flex flex-col gap-[4px] w-[328px] shrink-0";
+
+export const ADDRESS_ROW_LOCKED_PLAIN_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]";
+
+export const ADDRESS_ROW_LOCKED_FIELD_BTN =
+"text-left bg-transparent border-0 p-0 m-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] rounded-sm";
+
+export const MOBILE_LOCKED_CLICKABLE =
+"cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)]";
 
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
@@ -213,3 +372,43 @@ export const OVERLAY_FIELD_ERROR_CONTAINER =
 
 export const OVERLAY_FIELD_ERROR_TEXT =
   "font-normal text-[16px] leading-[1.5] text-[var(--edit-error-border)]";
+
+// ── Pagination V2 (Figma 8083:3520) ──────────────────────────────────────────
+
+export const PAGINATION_V2_ROW =
+  "flex items-center justify-between w-full";
+
+export const PAGINATION_V2_SHOW_CONTAINER =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-between p-[8px] rounded-[6px] w-[112px] relative cursor-pointer overflow-hidden";
+
+export const PAGINATION_V2_SHOW_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap pointer-events-none select-none";
+
+export const PAGINATION_V2_SHOW_CHEVRON =
+  "flex items-center justify-center size-[24px] shrink-0 pointer-events-none";
+
+export const PAGINATION_V2_SHOW_CHEVRON_ICON =
+  "rotate-90";
+
+export const PAGINATION_V2_SHOW_SELECT =
+  "absolute inset-0 w-full h-full opacity-0 cursor-pointer text-[var(--edit-text-primary)]";
+
+export const PAGINATION_V2_NAV_CONTAINER =
+  "flex gap-[8px] items-center";
+
+export const PAGINATION_V2_NAV_BTN =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] cursor-pointer hover:bg-[var(--edit-stone-50)] transition-colors";
+
+export const PAGINATION_V2_NAV_BTN_DISABLED =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] opacity-50 cursor-not-allowed";
+
+// ── Page Footer ───────────────────────────────────────────────────────────────
+
+export const FOOTER_ROOT =
+  "flex items-center justify-between px-4 py-3";
+
+export const FOOTER_LOGO =
+  "shrink-0 w-[25.326px] h-[28px] [aspect-ratio:25.33/28] [background:var(--edit-footer-logo-bg)]";
+
+export const FOOTER_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap";

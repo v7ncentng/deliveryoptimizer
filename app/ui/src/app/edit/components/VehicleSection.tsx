@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import VehicleRow from "./VehicleRow";
+import VehicleEmptyState from "./VehicleEmptyState";
 import VehicleDetailsOverlay from "./VehicleDetailsOverlay";
 import ConfirmVehicleDeletionOverlay from "./ConfirmVehicleDeletionOverlay";
 import type { VehicleRow as VehicleRowType } from "../types/delivery";
@@ -121,40 +122,48 @@ export default function VehicleSection({
         </div>
         <hr className={VEHICLE_INFO_DIVIDER} />
         <div className={VEHICLE_INFO_ROWS}>
-          {vehicles.map((v) => (
-            <VehicleRow
-              key={`vehicle-${v.id}`}
-              layout="desktop"
-              vehicle={v}
-              updateVehicle={updateVehicle}
-              deleteVehicle={handleDeleteRequest}
-              unlockVehicle={unlockVehicle}
-              confirmVehicle={confirmVehicle}
-              onEditVehicle={setEditingVehicle}
-              vehicleTouched={touchedIds.has(v.id)}
-              geocodeFailed={geocodeFailedSet.has(v.id)}
-              outOfRegionFailed={outOfRegionSet.has(v.id)}
-            />
-          ))}
+          {vehicles.length === 0 ? (
+            <VehicleEmptyState />
+          ) : (
+            vehicles.map((v) => (
+              <VehicleRow
+                key={`vehicle-${v.id}`}
+                layout="desktop"
+                vehicle={v}
+                updateVehicle={updateVehicle}
+                deleteVehicle={handleDeleteRequest}
+                unlockVehicle={unlockVehicle}
+                confirmVehicle={confirmVehicle}
+                onEditVehicle={setEditingVehicle}
+                vehicleTouched={touchedIds.has(v.id)}
+                geocodeFailed={geocodeFailedSet.has(v.id)}
+                outOfRegionFailed={outOfRegionSet.has(v.id)}
+              />
+            ))
+          )}
         </div>
       </div>
 
       {/* Mobile: stacked cards */}
       <div className="lg:hidden space-y-6">
-        {vehicles.map((v) => (
-          <VehicleRow
-            key={`vehicle-mobile-${v.id}`}
-            layout="mobile"
-            vehicle={v}
-            updateVehicle={updateVehicle}
-            deleteVehicle={handleDeleteRequest}
-            unlockVehicle={unlockVehicle}
-            confirmVehicle={confirmVehicle}
-            vehicleTouched={touchedIds.has(v.id)}
-            geocodeFailed={geocodeFailedSet.has(v.id)}
-            outOfRegionFailed={outOfRegionSet.has(v.id)}
-          />
-        ))}
+        {vehicles.length === 0 ? (
+          <VehicleEmptyState />
+        ) : (
+          vehicles.map((v) => (
+            <VehicleRow
+              key={`vehicle-mobile-${v.id}`}
+              layout="mobile"
+              vehicle={v}
+              updateVehicle={updateVehicle}
+              deleteVehicle={handleDeleteRequest}
+              unlockVehicle={unlockVehicle}
+              confirmVehicle={confirmVehicle}
+              vehicleTouched={touchedIds.has(v.id)}
+              geocodeFailed={geocodeFailedSet.has(v.id)}
+              outOfRegionFailed={outOfRegionSet.has(v.id)}
+            />
+          ))
+        )}
       </div>
 
       {isAddOverlayOpen && (

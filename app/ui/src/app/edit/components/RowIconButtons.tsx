@@ -12,6 +12,11 @@ type DeleteIconButtonProps = {
   onClick: () => void;
 };
 
+type ConfirmIconButtonProps = {
+  name?: string;
+  onClick: () => void;
+};
+
 export function EditIconButton({ name, onClick }: EditIconButtonProps) {
   return (
     <button
@@ -23,6 +28,25 @@ export function EditIconButton({ name, onClick }: EditIconButtonProps) {
     >
       <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
         <path d="M10 32V28H30V32H10ZM14 24H15.4L23.2 16.225L21.775 14.8L14 22.6V24ZM12 26V21.75L23.2 10.575C23.3833 10.3917 23.5958 10.25 23.8375 10.15C24.0792 10.05 24.3333 10 24.6 10C24.8667 10 25.125 10.05 25.375 10.15C25.625 10.25 25.85 10.4 26.05 10.6L27.425 12C27.625 12.1833 27.7708 12.4 27.8625 12.65C27.9542 12.9 28 13.1583 28 13.425C28 13.675 27.9542 13.9208 27.8625 14.1625C27.7708 14.4042 27.625 14.625 27.425 14.825L16.25 26H12Z" fill="var(--edit-icon-edit)"/>
+      </svg>
+    </button>
+  );
+}
+
+export function ConfirmIconButton({ name, onClick }: ConfirmIconButtonProps) {
+  return (
+    <button
+      type="button"
+      className={VEHICLE_ROW_ICON_BUTTON}
+      onClick={onClick}
+      aria-label={`Confirm ${name || "row"}`}
+      title={`Confirm ${name || "row"}`}
+    >
+      <svg viewBox="0 0 40 40" width="40" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M17.5501 26.0001L11.8501 20.3001L13.2751 18.8751L17.5501 23.1501L26.7251 13.9751L28.1501 15.4001L17.5501 26.0001Z"
+          fill="var(--edit-icon-edit)"
+        />
       </svg>
     </button>
   );
