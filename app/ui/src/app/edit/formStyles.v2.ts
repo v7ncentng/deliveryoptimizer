@@ -225,7 +225,7 @@ export const ADDRESS_ROW_STEPPER_CONTAINER =
   "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-2 py-[10px] rounded-[6px] shrink-0";
 
 export const ADDRESS_ROW_EST_GROUP =
-  "flex gap-2 items-center shrink-0";
+  "flex gap-2 items-center shrink-0 w-[150px]";
 
 export const ADDRESS_ROW_TIME_GROUP =
   "flex gap-2 items-center shrink-0";
@@ -259,6 +259,9 @@ export const ADDRESS_ROW_LOCKED_PLAIN_TEXT =
 
 export const ADDRESS_ROW_LOCKED_FIELD_BTN =
 "text-left bg-transparent border-0 p-0 m-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] rounded-sm";
+
+export const ADDRESS_ROW_LOCKED_CELL_DELIVERY_EST =
+  `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[150px] shrink-0`;
 
 export const ADDRESS_ROW_LOCKED_NOTES_BTN =
   `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[240px] shrink-0`;

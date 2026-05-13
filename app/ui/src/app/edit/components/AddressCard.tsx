@@ -41,6 +41,7 @@ import {
   ADDRESS_ROW_LOCKED_RECIPIENT_COL,
   ADDRESS_ROW_LOCKED_PLAIN_TEXT,
   ADDRESS_ROW_LOCKED_FIELD_BTN,
+  ADDRESS_ROW_LOCKED_CELL_DELIVERY_EST,
   ADDRESS_ROW_LOCKED_NOTES_BTN,
   ADDRESS_ROW_LOCKED_NOTES_TEXT,
   MOBILE_LOCKED_CLICKABLE,
@@ -216,7 +217,7 @@ export default function AddressCard({
                   </button>
 
                   {/* Delivery estimation — locked */}
-                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[130px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={ADDRESS_ROW_LOCKED_CELL_DELIVERY_EST}>
                     {a.timeBuffer > 0 ? `${a.timeBuffer} minutes` : "—"}
                   </button>
 
