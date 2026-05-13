@@ -104,10 +104,8 @@ export default function AddressOverlay({
   const line1InputRef = useRef<HTMLInputElement>(null);
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const ALLOWED_STATES = new Set(["California", "Florida", "Texas"]);
   const stateFilter = useCallback(
-    (s: AddressSuggestion) => ALLOWED_STATES.has(s.address?.state ?? ""),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    (s: AddressSuggestion) => SUPPORTED_STATES.has(s.address?.state ?? ""),
     []
   );
   const { suggestions, showSuggestions, selectedIndex, debouncedFetch, clearSuggestions, handleKeyDown: handleAutocompleteKeyDown } =
