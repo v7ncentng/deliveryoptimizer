@@ -6,7 +6,6 @@ import { TIME_OPTIONS } from "../constants/timeOptions";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
   ADDRESS_CARD_ROOT_BASE,
-  ADDRESS_DESKTOP_FIELD,
   GEOCODE_ERROR_LOCKED,
   ACCORDION_TRIGGER,
   CONFIRM_PILL_MOBILE,
@@ -36,7 +35,8 @@ import {
   ADDRESS_ROW_TIME_SELECT,
   ADDRESS_ROW_NOTES_WRAP,
   ADDRESS_ROW_ACTIONS,
-  ADDRESS_ROW_LOCKED_CELL,
+  ADDRESS_ROW_LOCKED_RECIPIENT_COL,
+  ADDRESS_ROW_LOCKED_PLAIN_TEXT,
 } from "../formStyles.v2";
 import { EditIconButton, ConfirmIconButton, DeleteIconButton } from "./RowIconButtons";
 
@@ -133,50 +133,38 @@ export default function AddressCard({
               {a.locked ? (
                 <>
                   {/* Recipient column — locked */}
-                  <div className={ADDRESS_ROW_RECIPIENT_COL}>
+                  <div className={ADDRESS_ROW_LOCKED_RECIPIENT_COL}>
                     {(a.recipientName || a.phoneNumber) && (
-                      <div className={ADDRESS_ROW_NAME_ROW}>
-                        <div className={`${ADDRESS_ROW_LOCKED_CELL} flex-1`}>
-                          <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.recipientName || "—"}</span>
-                        </div>
-                        <div className={`${ADDRESS_ROW_LOCKED_CELL} flex-1`}>
-                          <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.phoneNumber || "—"}</span>
-                        </div>
-                      </div>
+                      <p className={ADDRESS_ROW_LOCKED_PLAIN_TEXT}>
+                        {[a.recipientName, a.phoneNumber].filter(Boolean).join(", ")}
+                      </p>
                     )}
-                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-full${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
-                      <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.recipientAddress}</span>
-                    </div>
+                    <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}>
+                      {a.recipientAddress || "—"}
+                    </p>
                   </div>
 
                   {/* Quantity — locked */}
-                  <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[72px]`}>
-                    <span className={ADDRESS_DESKTOP_FIELD}>{a.deliveryQuantity}</span>
-                  </div>
+                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[72px] shrink-0`}>
+                    {a.deliveryQuantity}
+                  </p>
 
                   {/* Delivery estimation — locked */}
-                  <div className={ADDRESS_ROW_EST_GROUP}>
-                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[72px]`}>
-                      <span className={ADDRESS_DESKTOP_FIELD}>{a.timeBuffer > 0 ? a.timeBuffer : "—"}</span>
-                    </div>
-                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]">minutes</span>
-                  </div>
+                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[150px] shrink-0`}>
+                    {a.timeBuffer > 0 ? `${a.timeBuffer} minutes` : "—"}
+                  </p>
 
                   {/* Delivery time — locked */}
-                  <div className={ADDRESS_ROW_TIME_GROUP}>
-                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[111px]`}>
-                      <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.deliveryTimeStart || "—"}</span>
-                    </div>
-                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]" aria-hidden>–</span>
-                    <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[111px]`}>
-                      <span className={`${ADDRESS_DESKTOP_FIELD} truncate`}>{a.deliveryTimeEnd || "—"}</span>
-                    </div>
-                  </div>
+                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[247px] shrink-0`}>
+                    {a.deliveryTimeStart && a.deliveryTimeEnd
+                      ? `${a.deliveryTimeStart} – ${a.deliveryTimeEnd}`
+                      : a.deliveryTimeStart || a.deliveryTimeEnd || "—"}
+                  </p>
 
                   {/* Notes — locked */}
-                  <div className={`${ADDRESS_ROW_LOCKED_CELL} w-[240px] items-start`}>
-                    <span className={`${ADDRESS_DESKTOP_FIELD} line-clamp-3`}>{a.notes || "—"}</span>
-                  </div>
+                  <p className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} w-[246px] shrink-0`}>
+                    {a.notes || "—"}
+                  </p>
                 </>
               ) : (
                 <>

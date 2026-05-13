@@ -143,7 +143,7 @@ export const ADDRESS_ROW_HEADER_CELL_QUANTITY =
   "w-[72px] shrink-0";
 
 export const ADDRESS_ROW_HEADER_CELL_DELIVERY_EST =
-  "shrink-0 whitespace-nowrap";
+  "w-[150px] shrink-0";
 
 export const ADDRESS_ROW_HEADER_CELL_DELIVERY_TIME =
   "w-[247px] shrink-0";
@@ -211,6 +211,12 @@ export const ADDRESS_ROW_ACTION_BTN =
 
 export const ADDRESS_ROW_LOCKED_CELL =
   "bg-[var(--edit-stone-50)] flex h-11 items-center px-2 py-[10px] rounded-[6px] shrink-0 overflow-hidden";
+
+export const ADDRESS_ROW_LOCKED_RECIPIENT_COL =
+  "flex flex-col gap-[4px] w-[328px] shrink-0";
+
+export const ADDRESS_ROW_LOCKED_PLAIN_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]";
 
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
