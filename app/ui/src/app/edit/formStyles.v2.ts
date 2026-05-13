@@ -180,10 +180,16 @@ export const ADDRESS_ROW_FIELD_INPUT =
   "border border-[var(--edit-stone-200)] h-11 px-2 py-[10px] rounded-[6px] font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none focus:border-[var(--edit-teal-300)] bg-[var(--edit-bg-primary)] transition-colors min-w-0";
 
 export const ADDRESS_ROW_ADDR_WRAP =
-  "relative border border-[var(--edit-stone-200)] flex h-11 items-center rounded-[6px] overflow-hidden w-full";
+  "relative border border-[var(--edit-stone-200)] flex h-11 items-center rounded-[6px] overflow-hidden w-full cursor-pointer";
 
 export const ADDRESS_ROW_ADDR_GRADIENT =
   "pointer-events-none absolute right-0 top-0 h-full w-[72px] bg-gradient-to-l from-[var(--edit-bg-primary)] from-[60%] to-transparent flex items-center justify-end pr-2";
+
+export const ADDRESS_ROW_ADDR_TRIGGER_TEXT =
+  "flex-1 h-full px-2 text-[16px] leading-[1.5] font-normal text-left text-[var(--edit-text-primary)] truncate flex items-center";
+
+export const ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER =
+  "text-[var(--edit-stone-500)]";
 
 export const ADDRESS_ROW_STEPPER_CONTAINER =
   "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-2 py-[10px] rounded-[6px] shrink-0";

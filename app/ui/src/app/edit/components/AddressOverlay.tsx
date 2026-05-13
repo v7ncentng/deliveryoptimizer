@@ -73,17 +73,19 @@ export type StartLocationAddress = {
   country: string;
 };
 
-type VehicleStartLocationOverlayProps = {
+type AddressOverlayProps = {
+  heading: string;
   initialAddress?: Partial<StartLocationAddress>;
   onClose: () => void;
   onSave: (address: StartLocationAddress) => void;
 };
 
-export default function VehicleStartLocationOverlay({
+export default function AddressOverlay({
+  heading,
   initialAddress,
   onClose,
   onSave,
-}: VehicleStartLocationOverlayProps) {
+}: AddressOverlayProps) {
   const panelRef = useFocusTrap<HTMLDivElement>(true);
 
   const [line1, setLine1] = useState(initialAddress?.line1 ?? "");
@@ -136,7 +138,7 @@ export default function VehicleStartLocationOverlay({
           {/* Header */}
           <div className={OVERLAY_HEADER}>
             <h2 id="start-location-overlay-title" className={OVERLAY_TITLE}>
-              Enter starting address
+              {heading}
             </h2>
             <button
               type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import AddressAutocompleteInput from "./AddressAutocompleteInput";
+import AddressOverlay, { type StartLocationAddress } from "./AddressOverlay";
 import { TIME_OPTIONS } from "../constants/timeOptions";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
@@ -28,6 +28,8 @@ import {
   ADDRESS_ROW_FIELD_INPUT,
   ADDRESS_ROW_ADDR_WRAP,
   ADDRESS_ROW_ADDR_GRADIENT,
+  ADDRESS_ROW_ADDR_TRIGGER_TEXT,
+  ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER,
   ADDRESS_ROW_STEPPER_CONTAINER,
   ADDRESS_ROW_EST_GROUP,
   ADDRESS_ROW_TIME_GROUP,
@@ -107,6 +109,7 @@ export default function AddressCard({
   outOfRegionFailed,
 }: AddressCardProps) {
   const [manualExpanded, setManualExpanded] = useState(false);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const expanded = !a.locked || manualExpanded;
 
   const addrInvalid = geocodeFailed || (addressTouched && !a.recipientAddress.trim());
@@ -190,15 +193,15 @@ export default function AddressCard({
                         className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
                       />
                     </div>
-                    <div className={`${ADDRESS_ROW_ADDR_WRAP}${addrInvalid ? " border-[var(--edit-error-border)]" : ""}`}>
-                      <AddressAutocompleteInput
-                        value={a.recipientAddress}
-                        onChange={(val) => updateAddress(a.id, "recipientAddress", val)}
-                        placeholder="Enter address"
-                        ariaLabel="Recipient address"
-                        className="flex-1 h-full px-2 text-[16px] leading-[1.5] font-normal text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent"
-                      />
-                      {/* Gradient fade + static chevron */}
+                    <button
+                      type="button"
+                      onClick={() => setOverlayOpen(true)}
+                      className={`${ADDRESS_ROW_ADDR_WRAP}${addrInvalid ? " border-[var(--edit-error-border)]" : ""}`}
+                      aria-label="Edit recipient address"
+                    >
+                      <span className={ADDRESS_ROW_ADDR_TRIGGER_TEXT}>
+                        {a.recipientAddress || <span className={ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER}>Enter address</span>}
+                      </span>
                       <div className={ADDRESS_ROW_ADDR_GRADIENT} aria-hidden>
                         <svg viewBox="0 0 24 24" width="24" height="24">
                           <path
@@ -207,7 +210,7 @@ export default function AddressCard({
                           />
                         </svg>
                       </div>
-                    </div>
+                    </button>
                   </div>
 
                   {/* Quantity — edit */}
@@ -423,13 +426,14 @@ export default function AddressCard({
                 </div>
                 <div>
                   <span className={MOBILE_FIELD_LABEL}>Address</span>
-                  <AddressAutocompleteInput
-                    value={a.recipientAddress}
-                    onChange={(val) => updateAddress(a.id, "recipientAddress", val)}
-                    placeholder="Address"
-                    ariaLabel="Recipient address"
-                    className={mobileInputClass(addrInvalid)}
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setOverlayOpen(true)}
+                    className={`${mobileInputClass(addrInvalid)} text-left cursor-pointer w-full`}
+                    aria-label="Edit recipient address"
+                  >
+                    {a.recipientAddress || <span className={ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER}>Address</span>}
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -515,6 +519,19 @@ export default function AddressCard({
           </div>
         )}
       </div>
+      {overlayOpen && (
+        <AddressOverlay
+          heading="Enter Address"
+          onClose={() => setOverlayOpen(false)}
+          onSave={(addr: StartLocationAddress) => {
+            const parts = [addr.line1];
+            if (addr.line2.trim()) parts.push(addr.line2);
+            parts.push(addr.city, `${addr.state} ${addr.zipCode}`, addr.country);
+            updateAddress(a.id, "recipientAddress", parts.join(", "));
+            setOverlayOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }
