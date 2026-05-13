@@ -29,7 +29,7 @@ import {
   mapOptimizeRequestToEditState,
 } from "./utils/sessionMapper";
 import { useRouter } from "next/navigation";
-import VehicleStartLocationOverlay, { type StartLocationAddress } from "./components/VehicleStartLocationOverlay";
+import VehicleStartLocationOverlay, { type StartLocationAddress } from "./components/AddressOverlay";
 
 type StoredUploadFile = {
   name: string;
