@@ -244,6 +244,7 @@ export default function AddressCard({
                         onChange={(e) => updateAddress(a.id, "recipientName", e.target.value)}
                         placeholder="First and last name"
                         aria-label="Recipient name"
+                        maxLength={50}
                         className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
                       />
                       <input
