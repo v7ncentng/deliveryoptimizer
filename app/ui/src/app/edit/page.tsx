@@ -29,7 +29,7 @@ import {
   mapOptimizeRequestToEditState,
 } from "./utils/sessionMapper";
 import { useRouter } from "next/navigation";
-import VehicleStartLocationOverlay, { type StartLocationAddress } from "./components/AddressOverlay";
+import AddressOverlay, { type StartLocationAddress } from "./components/AddressOverlay";
 
 type StoredUploadFile = {
   name: string;
@@ -178,7 +178,7 @@ export default function Page() {
     <div className={`min-h-screen flex flex-col bg-[var(--edit-stone-50)] font-sans-manrope ${styles.root}`}>
       <OptimizingModal isOpen={isOptimizing} />
       {needsDepotAddress && (
-        <VehicleStartLocationOverlay
+        <AddressOverlay
           onClose={dismissDepotAddressPrompt}
           onSave={handleStartLocationSave}
         />
