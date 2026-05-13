@@ -10,6 +10,8 @@ import {
   PAGINATION_V2_NAV_CONTAINER,
   PAGINATION_V2_NAV_BTN,
   PAGINATION_V2_NAV_BTN_DISABLED,
+  PAGINATION_V2_PAGE_ACTIVE,
+  PAGINATION_V2_PAGE_INACTIVE,
 } from "../formStyles.v2";
 import { ADDRESS_PAGE_SIZE_OPTIONS } from "../hooks/useAddresses";
 
@@ -19,7 +21,15 @@ type AddressPaginationProps = {
   totalAddressPages: number;
   addressesPerPage: number;
   setAddressesPerPage: (n: number) => void;
+  addressesCount: number;
 };
+
+function getVisiblePages(current: number, total: number): number[] {
+  if (total === 0) return [];
+  const count = Math.min(total, 5);
+  const start = Math.max(1, Math.min(current - 2, total - count + 1));
+  return Array.from({ length: count }, (_, i) => start + i);
+}
 
 export default function AddressPagination({
   addressPage,
@@ -27,9 +37,13 @@ export default function AddressPagination({
   totalAddressPages,
   addressesPerPage,
   setAddressesPerPage,
+  addressesCount,
 }: AddressPaginationProps) {
+  if (addressesCount === 0) return null;
+
   const isFirst = addressPage <= 1;
   const isLast = addressPage >= totalAddressPages;
+  const visiblePages = getVisiblePages(addressPage, totalAddressPages);
 
   return (
     <div className={PAGINATION_V2_ROW}>
@@ -64,7 +78,7 @@ export default function AddressPagination({
         </select>
       </label>
 
-      {/* First / Prev / Next / Last */}
+      {/* |< < [page numbers] > >| */}
       <div className={PAGINATION_V2_NAV_CONTAINER}>
         <button
           type="button"
@@ -95,6 +109,24 @@ export default function AddressPagination({
             />
           </svg>
         </button>
+
+        {visiblePages.map((n) =>
+          n === addressPage ? (
+            <span key={n} className={PAGINATION_V2_PAGE_ACTIVE} aria-current="page">
+              {n}
+            </span>
+          ) : (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setAddressPage(n)}
+              className={PAGINATION_V2_PAGE_INACTIVE}
+              aria-label={`Page ${n}`}
+            >
+              {n}
+            </button>
+          )
+        )}
 
         <button
           type="button"

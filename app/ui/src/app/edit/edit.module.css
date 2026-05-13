@@ -20,6 +20,7 @@
   --edit-teal-600:    #267B67;
   --edit-teal-700:    #265749;
   --edit-teal-alpha:  #39746126;
+  --edit-pagination-active-bg: rgba(26, 173, 144, 0.24);
 
   /* ── Stone neutrals (Figma Stone scale) ─────────────────────── */
   --edit-bg-primary:  #fdfdfc;

@@ -430,7 +430,13 @@ export const PAGINATION_V2_NAV_BTN =
   "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] cursor-pointer hover:bg-[var(--edit-stone-50)] transition-colors";
 
 export const PAGINATION_V2_NAV_BTN_DISABLED =
-  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] opacity-50 cursor-not-allowed";
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] opacity-[0.48] cursor-not-allowed";
+
+export const PAGINATION_V2_PAGE_ACTIVE =
+  "bg-[var(--edit-pagination-active-bg)] flex items-center justify-center rounded-[100px] size-[40px] font-['Manrope',sans-serif] font-semibold text-[14px] leading-[20px] text-[var(--edit-text-primary)] shrink-0 select-none";
+
+export const PAGINATION_V2_PAGE_INACTIVE =
+  "flex items-center justify-center size-[40px] font-['Manrope',sans-serif] font-semibold text-[14px] leading-[20px] text-[var(--edit-text-primary)] shrink-0 cursor-pointer hover:bg-[var(--edit-stone-50)] rounded-[6px] transition-colors";
 
 // ── Page Footer ───────────────────────────────────────────────────────────────
 
