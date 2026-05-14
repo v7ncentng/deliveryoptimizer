@@ -14,10 +14,12 @@ import {
   NAVBAR_V2_BTN_OUTLINE,
   VEHICLE_INFO_CONTAINER,
   VEHICLE_INFO_DIVIDER,
+  VEHICLE_INFO_HEADER_ACTIONS,
   VEHICLE_INFO_HEADER_CELL,
   VEHICLE_INFO_HEADER_ROW,
   VEHICLE_INFO_ROWS,
   VEHICLE_SECTION_BTN_GHOST,
+  VEHICLE_SECTION_ACTIONS,
   VEHICLE_SECTION_HEADER,
   VEHICLE_SECTION_HEADING,
   VEHICLE_SECTION_SUBHEADING,
@@ -96,7 +98,7 @@ export default function VehicleSection({
         <p className={VEHICLE_SECTION_SUBHEADING}>Manage your delivery fleet</p>
       </div>
 
-      <div className="flex items-center justify-end gap-2 mb-4">
+      <div className={VEHICLE_SECTION_ACTIONS}>
         <button type="button" onClick={markAllAvailable} className={VEHICLE_SECTION_BTN_GHOST}>
           Mark all available
         </button>
@@ -104,7 +106,7 @@ export default function VehicleSection({
           type="button"
           onClick={() => setIsAddOverlayOpen(true)}
           disabled={!addEnabled}
-          className={`${NAVBAR_V2_BTN_OUTLINE} disabled:opacity-50 disabled:cursor-not-allowed`}
+          className={NAVBAR_V2_BTN_OUTLINE}
         >
           Add vehicle
         </button>
@@ -118,7 +120,7 @@ export default function VehicleSection({
           <span className={VEHICLE_INFO_HEADER_CELL}>Capacity</span>
           <span className={VEHICLE_INFO_HEADER_CELL}>Status</span>
           <span className={VEHICLE_INFO_HEADER_CELL}>Departure time</span>
-          <span className="sr-only">Actions</span>
+          <span className={VEHICLE_INFO_HEADER_ACTIONS}>Actions</span>
         </div>
         <hr className={VEHICLE_INFO_DIVIDER} />
         <div className={VEHICLE_INFO_ROWS}>

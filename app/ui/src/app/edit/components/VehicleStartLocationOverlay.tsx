@@ -23,6 +23,7 @@ import {
   OVERLAY_SELECT,
   OVERLAY_SELECT_PLACEHOLDER,
   OVERLAY_SELECT_VALUE,
+  OVERLAY_SELECT_ICON,
   OVERLAY_SELECT_WRAPPER,
   OVERLAY_SELECT_WRAPPER_ERROR,
   OVERLAY_SCROLL_BODY,
@@ -207,7 +208,7 @@ export default function VehicleStartLocationOverlay({
                   <span className={state ? OVERLAY_SELECT_VALUE : OVERLAY_SELECT_PLACEHOLDER}>
                     {state || "Select"}
                   </span>
-                  <span className="pointer-events-none shrink-0 text-[var(--edit-text-primary)]">
+                  <span className={OVERLAY_SELECT_ICON}>
                     {CHEVRON_DOWN_ICON}
                   </span>
                   <select
@@ -256,7 +257,7 @@ export default function VehicleStartLocationOverlay({
                   <span className={country ? OVERLAY_SELECT_VALUE : OVERLAY_SELECT_PLACEHOLDER}>
                     {country || "Select"}
                   </span>
-                  <span className="pointer-events-none shrink-0 text-[var(--edit-text-primary)]">
+                  <span className={OVERLAY_SELECT_ICON}>
                     {CHEVRON_DOWN_ICON}
                   </span>
                   <select

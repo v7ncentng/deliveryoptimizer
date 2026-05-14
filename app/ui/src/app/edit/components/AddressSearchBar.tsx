@@ -1,6 +1,6 @@
 "use client";
 
-import { ADDRESS_SEARCH_BAR, ADDRESS_SEARCH_INPUT } from "../formStyles.v2";
+import { ADDRESS_SEARCH_BAR, ADDRESS_SEARCH_ICON, ADDRESS_SEARCH_INPUT } from "../formStyles.v2";
 
 type Props = {
   value: string;
@@ -12,7 +12,7 @@ export default function AddressSearchBar({ value, onChange, className }: Props) 
   return (
     <div className={`${ADDRESS_SEARCH_BAR}${className ? ` ${className}` : ""}`}>
       <svg
-        className="shrink-0 size-6"
+        className={ADDRESS_SEARCH_ICON}
         viewBox="0 0 24 24"
         fill="none"
         aria-hidden="true"

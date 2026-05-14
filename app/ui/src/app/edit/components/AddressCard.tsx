@@ -21,20 +21,30 @@ import {
 } from "../formStyles";
 import {
   ADDRESS_ROW_EDIT_ROOT,
+  ADDRESS_ROW_DESKTOP_WRAPPER,
   ADDRESS_ROW_EDIT_LEFT,
   ADDRESS_ROW_EDIT_COLS,
   ADDRESS_ROW_RECIPIENT_COL,
   ADDRESS_ROW_NAME_ROW,
-  ADDRESS_ROW_FIELD_INPUT,
+  ADDRESS_ROW_FIELD_INPUT_FILL,
   ADDRESS_ROW_ADDR_WRAP,
+  ADDRESS_ROW_ADDR_WRAP_ERROR,
   ADDRESS_ROW_ADDR_GRADIENT,
   ADDRESS_ROW_ADDR_TRIGGER_TEXT,
   ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER,
-  ADDRESS_ROW_STEPPER_CONTAINER,
+  ADDRESS_ROW_STEPPER_CONTAINER_NARROW,
+  ADDRESS_ROW_STEPPER_INPUT,
+  ADDRESS_ROW_STEPPER_CONTROLS,
+  ADDRESS_ROW_STEPPER_BUTTON,
+  ADDRESS_ROW_STEPPER_BUTTON_BORDER,
+  ADDRESS_ROW_ICON_FILL,
   ADDRESS_ROW_EST_GROUP,
   ADDRESS_ROW_TIME_GROUP,
   ADDRESS_ROW_TIME_SELECT_WRAP,
   ADDRESS_ROW_TIME_SELECT,
+  ADDRESS_ROW_INLINE_TEXT,
+  ADDRESS_ROW_TIME_SELECT_TEXT,
+  ADDRESS_ROW_TIME_SELECT_CHEVRON,
   ADDRESS_ROW_NOTES_WRAP,
   ADDRESS_ROW_NOTES_TEXTAREA,
   ADDRESS_ROW_ACTIONS,
@@ -42,8 +52,11 @@ import {
   ADDRESS_ROW_LOCKED_PLAIN_TEXT,
   ADDRESS_ROW_LOCKED_FIELD_BTN,
   ADDRESS_ROW_LOCKED_CELL_DELIVERY_EST,
+  ADDRESS_ROW_LOCKED_CELL_QUANTITY,
+  ADDRESS_ROW_LOCKED_CELL_DELIVERY_TIME,
   ADDRESS_ROW_LOCKED_NOTES_BTN,
   ADDRESS_ROW_LOCKED_NOTES_TEXT,
+  ADDRESS_ROW_GEOCODE_ERROR_LOCKED,
   MOBILE_LOCKED_CLICKABLE,
 } from "../formStyles.v2";
 import { EditIconButton, ConfirmIconButton, DeleteIconButton } from "./RowIconButtons";
@@ -97,7 +110,7 @@ function StepperInput({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className={`${ADDRESS_ROW_STEPPER_CONTAINER} w-[72px]`}>
+    <div className={ADDRESS_ROW_STEPPER_CONTAINER_NARROW}>
       <input
         type="number"
         min={min}
@@ -107,19 +120,19 @@ function StepperInput({
           onChange(Number.isNaN(parsed) ? min : Math.max(min, parsed));
         }}
         aria-label={ariaLabel}
-        className="flex-1 min-w-0 bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className={ADDRESS_ROW_STEPPER_INPUT}
       />
-      <div className="flex flex-col shrink-0">
-        <button type="button" onClick={onIncrement} aria-label={`Increase ${ariaLabel}`} className="cursor-pointer focus:outline-none">
+      <div className={ADDRESS_ROW_STEPPER_CONTROLS}>
+        <button type="button" onClick={onIncrement} aria-label={`Increase ${ariaLabel}`} className={ADDRESS_ROW_STEPPER_BUTTON}>
           <svg viewBox="0 0 24 12" width="24" height="12">
-            <path fill="none" className="stroke-[var(--edit-stone-200)]" d="M6 0.5H18C21.0376 0.5 23.5 2.96243 23.5 6V11.5H0.5V6C0.5 2.96243 2.96243 0.5 6 0.5Z" />
-            <path className="fill-[var(--edit-primary-icon)]" d="M12 5.39189L8.93333 8.5L8 7.55405L12 3.5L16 7.55405L15.0667 8.5L12 5.39189Z" />
+            <path fill="none" className={ADDRESS_ROW_STEPPER_BUTTON_BORDER} d="M6 0.5H18C21.0376 0.5 23.5 2.96243 23.5 6V11.5H0.5V6C0.5 2.96243 2.96243 0.5 6 0.5Z" />
+            <path className={ADDRESS_ROW_ICON_FILL} d="M12 5.39189L8.93333 8.5L8 7.55405L12 3.5L16 7.55405L15.0667 8.5L12 5.39189Z" />
           </svg>
         </button>
-        <button type="button" onClick={onDecrement} aria-label={`Decrease ${ariaLabel}`} className="cursor-pointer focus:outline-none">
+        <button type="button" onClick={onDecrement} aria-label={`Decrease ${ariaLabel}`} className={ADDRESS_ROW_STEPPER_BUTTON}>
           <svg viewBox="0 0 24 12" width="24" height="12">
-            <path fill="none" className="stroke-[var(--edit-stone-200)]" d="M18 11.5H6C2.96243 11.5 0.5 9.03757 0.5 6V0.5H23.5V6C23.5 9.03757 21.0376 11.5 18 11.5Z" />
-            <path className="fill-[var(--edit-primary-icon)]" d="M12 6.60811L8.93333 3.5L8 4.44595L12 8.5L16 4.44595L15.0667 3.5L12 6.60811Z" />
+            <path fill="none" className={ADDRESS_ROW_STEPPER_BUTTON_BORDER} d="M18 11.5H6C2.96243 11.5 0.5 9.03757 0.5 6V0.5H23.5V6C23.5 9.03757 21.0376 11.5 18 11.5Z" />
+            <path className={ADDRESS_ROW_ICON_FILL} d="M12 6.60811L8.93333 3.5L8 4.44595L12 8.5L16 4.44595L15.0667 3.5L12 6.60811Z" />
           </svg>
         </button>
       </div>
@@ -190,7 +203,7 @@ export default function AddressCard({
   return (
     <>
       {/* ── Desktop hi-fi layout ── */}
-      <div className="hidden lg:block">
+      <div className={ADDRESS_ROW_DESKTOP_WRAPPER}>
         <div className={ADDRESS_ROW_EDIT_ROOT}>
           {/* Left: all columns */}
           <div className={ADDRESS_ROW_EDIT_LEFT}>
@@ -208,14 +221,14 @@ export default function AddressCard({
                     <button
                       type="button"
                       onClick={() => { unlockAddress(a.id); setOverlayOpen(true); }}
-                      className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN}${geocodeFailed || outOfRegionFailed ? ` ${GEOCODE_ERROR_LOCKED}` : ""}`}
+                      className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN}${geocodeFailed || outOfRegionFailed ? ` ${ADDRESS_ROW_GEOCODE_ERROR_LOCKED}` : ""}`}
                     >
                       {a.recipientAddress || "—"}
                     </button>
                   </div>
 
                   {/* Quantity — locked */}
-                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[72px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={ADDRESS_ROW_LOCKED_CELL_QUANTITY}>
                     {a.deliveryQuantity}
                   </button>
 
@@ -225,7 +238,7 @@ export default function AddressCard({
                   </button>
 
                   {/* Delivery time — locked */}
-                  <button type="button" onClick={() => unlockAddress(a.id)} className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[247px] shrink-0`}>
+                  <button type="button" onClick={() => unlockAddress(a.id)} className={ADDRESS_ROW_LOCKED_CELL_DELIVERY_TIME}>
                     {a.deliveryTimeStart && a.deliveryTimeEnd
                       ? `${a.deliveryTimeStart} – ${a.deliveryTimeEnd}`
                       : a.deliveryTimeStart || a.deliveryTimeEnd || "—"}
@@ -249,7 +262,7 @@ export default function AddressCard({
                         placeholder="First and last name"
                         aria-label="Recipient name"
                         maxLength={50}
-                        className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
+                        className={ADDRESS_ROW_FIELD_INPUT_FILL}
                       />
                       <input
                         value={a.phoneNumber}
@@ -259,13 +272,13 @@ export default function AddressCard({
                         type="tel"
                         inputMode="numeric"
                         maxLength={12}
-                        className={`${ADDRESS_ROW_FIELD_INPUT} flex-1`}
+                        className={ADDRESS_ROW_FIELD_INPUT_FILL}
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => setOverlayOpen(true)}
-                      className={`${ADDRESS_ROW_ADDR_WRAP}${addrInvalid ? " border-[var(--edit-error-border)]" : ""}`}
+                      className={addrInvalid ? ADDRESS_ROW_ADDR_WRAP_ERROR : ADDRESS_ROW_ADDR_WRAP}
                       aria-label="Edit recipient address"
                     >
                       <span className={ADDRESS_ROW_ADDR_TRIGGER_TEXT}>
@@ -274,7 +287,7 @@ export default function AddressCard({
                       <div className={ADDRESS_ROW_ADDR_GRADIENT} aria-hidden>
                         <svg viewBox="0 0 24 24" width="24" height="24">
                           <path
-                            className="fill-[var(--edit-primary-icon)]"
+                            className={ADDRESS_ROW_ICON_FILL}
                             d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z"
                           />
                         </svg>
@@ -302,7 +315,7 @@ export default function AddressCard({
                       onIncrement={() => updateAddress(a.id, "timeBuffer", (a.timeBuffer || 0) + 1)}
                       onDecrement={() => updateAddress(a.id, "timeBuffer", Math.max(0, (a.timeBuffer || 0) - 1))}
                     />
-                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]">minutes</span>
+                    <span className={ADDRESS_ROW_INLINE_TEXT}>minutes</span>
                   </div>
 
                   {/* Delivery time — edit */}
@@ -325,14 +338,14 @@ export default function AddressCard({
                           <option key={t} value={t}>{t}</option>
                         ))}
                       </select>
-                      <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] pointer-events-none truncate flex-1">
+                      <span className={ADDRESS_ROW_TIME_SELECT_TEXT}>
                         {a.deliveryTimeStart || "Start"}
                       </span>
-                      <svg viewBox="0 0 24 24" width="24" height="24" className="rotate-90 shrink-0 pointer-events-none" aria-hidden>
-                        <path className="fill-[var(--edit-primary-icon)]" d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z" />
+                      <svg viewBox="0 0 24 24" width="24" height="24" className={ADDRESS_ROW_TIME_SELECT_CHEVRON} aria-hidden>
+                        <path className={ADDRESS_ROW_ICON_FILL} d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z" />
                       </svg>
                     </div>
-                    <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]" aria-hidden>–</span>
+                    <span className={ADDRESS_ROW_INLINE_TEXT} aria-hidden>–</span>
                     <div className={ADDRESS_ROW_TIME_SELECT_WRAP}>
                       <select
                         value={a.deliveryTimeEnd}
@@ -351,11 +364,11 @@ export default function AddressCard({
                           <option key={t} value={t}>{t}</option>
                         ))}
                       </select>
-                      <span className="font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] pointer-events-none truncate flex-1">
+                      <span className={ADDRESS_ROW_TIME_SELECT_TEXT}>
                         {a.deliveryTimeEnd || "End"}
                       </span>
-                      <svg viewBox="0 0 24 24" width="24" height="24" className="rotate-90 shrink-0 pointer-events-none" aria-hidden>
-                        <path className="fill-[var(--edit-primary-icon)]" d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z" />
+                      <svg viewBox="0 0 24 24" width="24" height="24" className={ADDRESS_ROW_TIME_SELECT_CHEVRON} aria-hidden>
+                        <path className={ADDRESS_ROW_ICON_FILL} d="M14.6 12L10 7.4L11.4 6L17.4 12L11.4 18L10 16.6L14.6 12Z" />
                       </svg>
                     </div>
                   </div>

@@ -28,6 +28,8 @@ import {
   ADDRESS_LIST_CONTAINER,
   ADDRESS_LIST_CONTAINER_INNER,
   ADDRESS_LIST_DIVIDER,
+  ADDRESS_SEARCH_DESKTOP_SIZE,
+  ADDRESS_TOOLBAR_SPACER,
 } from "../formStyles.v2";
 
 type AddressSectionProps = {
@@ -109,8 +111,8 @@ export default function AddressSection({
 
       {/* Desktop: Search left, spacer, Add right */}
       <div className={ADDRESS_TOOLBAR_DESKTOP}>
-        <AddressSearchBar value={searchQuery} onChange={setSearchQuery} className="shrink-0 w-56 xl:w-72" />
-        <div className="flex-1 min-w-0" />
+        <AddressSearchBar value={searchQuery} onChange={setSearchQuery} className={ADDRESS_SEARCH_DESKTOP_SIZE} />
+        <div className={ADDRESS_TOOLBAR_SPACER} />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
