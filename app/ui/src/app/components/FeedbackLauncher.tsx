@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import {
   feedbackCategoryLabels,
@@ -39,6 +40,7 @@ type FeedbackResponse = {
 const categories: FeedbackCategory[] = ["bug", "enhancement", "general", "question"];
 
 export default function FeedbackLauncher() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [category, setCategory] = useState<FeedbackCategory>("bug");
   const [message, setMessage] = useState("");
@@ -54,6 +56,7 @@ export default function FeedbackLauncher() {
     () => submitState.kind !== "submitting" && message.trim().length >= 8,
     [message, submitState.kind]
   );
+  const shouldClearFooter = pathname === "/" || pathname === "/welcome";
 
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_FEEDBACK_RECAPTCHA_SITE_KEY;
@@ -209,7 +212,9 @@ export default function FeedbackLauncher() {
     <>
       <button
         type="button"
-        className={styles.launcher}
+        className={`${styles.launcher} ${
+          shouldClearFooter ? styles.launcherAboveFooter : ""
+        }`}
         onClick={() => setIsOpen(true)}
         aria-haspopup="dialog"
         aria-label="Report bug or feedback"

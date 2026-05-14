@@ -1,6 +1,6 @@
 .launcher {
   --feedback-launcher-offset: 40px;
-  --feedback-footer-clearance: 84px;
+  --feedback-footer-clearance: 0px;
 
   position: fixed;
   right: var(--feedback-launcher-offset);
@@ -32,6 +32,10 @@
     padding 180ms ease,
     transform 150ms ease,
     width 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.launcherAboveFooter {
+  --feedback-footer-clearance: 84px;
 }
 
 .launcher:hover,
