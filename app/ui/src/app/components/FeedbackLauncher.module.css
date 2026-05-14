@@ -1,12 +1,10 @@
 .launcher {
   position: fixed;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 32px;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   z-index: 70;
   border: 1px solid #dcdbd8;
-  border-right: 0;
-  border-radius: 999px 0 0 999px;
+  border-radius: 999px;
   background: #fdfdfc;
   color: #272725;
   box-shadow: 0 10px 30px rgba(39, 39, 37, 0.12);
@@ -14,7 +12,7 @@
   align-items: center;
   gap: 8px;
   height: 44px;
-  padding: 0 14px 0 16px;
+  padding: 0 16px;
   font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -31,7 +29,7 @@
 }
 
 .launcher:active {
-  transform: translateY(calc(-50% + 1px));
+  transform: translateY(1px);
 }
 
 .launcher:focus-visible,
@@ -322,14 +320,7 @@
 @media (max-width: 560px) {
   .launcher {
     right: 14px;
-    top: auto;
     bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-    border-right: 1px solid #dcdbd8;
-    border-radius: 999px;
-  }
-
-  .launcher:active {
-    transform: translateY(1px);
   }
 
   .backdrop {
