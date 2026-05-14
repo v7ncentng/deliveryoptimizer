@@ -1,34 +1,46 @@
 // app/upload-save-point/page.tsx
 "use client";
-import { useState, useRef } from "react";
+
+export const dynamic = "force-dynamic";
+
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
 import { formatSize } from "@/app/utils/routeUtils";
+import { CSVImportModal } from "@/app/edit/components/CSVImportModal";
+import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
+import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
 
 export default function UploadSavePointPage() {
   const router = useRouter();
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
-  const dragDepth = useRef(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const dragDepth = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { csvData, isImportModalOpen, parseError, openImportModal, closeImportModal } =
+    useCSVImport();
+
   const handleFile = (f: File) => {
-    if (f.name.endsWith(".json")) setFile(f);
+    if (f.name.endsWith(".json") || f.name.endsWith(".csv")) {
+      setFile(f);
+    }
   };
 
-  const handleDragEnter = (e: React.DragEvent) => {
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     dragDepth.current += 1;
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     dragDepth.current -= 1;
     if (dragDepth.current === 0) setIsDragging(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     dragDepth.current = 0;
     setIsDragging(false);
@@ -36,12 +48,39 @@ export default function UploadSavePointPage() {
     if (f) handleFile(f);
   };
 
-  const handleContinue = async () => {
-    if (!file) return;
-    const text = await file.text();
-    sessionStorage.setItem("savePointFile", JSON.stringify({ name: file.name, content: text }));
-    router.push("/edit");
-  };
+  const handleContinue = useCallback(async () => {
+    if (!file || isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      if (file.name.endsWith(".json")) {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+
+        // Try to validate as a proper session save.
+        // If it passes, store under savePointFile and let edit/page.tsx
+        // restore the full session state via loadSessionFromFile.
+        try {
+          migrateSessionSaveFile(parsed);
+          sessionStorage.setItem(
+            "savePointFile",
+            JSON.stringify({ name: file.name, content: text })
+          );
+          router.push("/edit");
+          return;
+        } catch {
+          // Not a session save — fall through to the modal flow below
+        }
+      }
+
+      // CSV or raw JSON array: open the two-step modal (column mapper →
+      // row selector). On Confirm, modal writes "addressFiles" to
+      // sessionStorage and navigates to /edit automatically.
+      openImportModal(file);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [file, isProcessing, openImportModal, router]);
 
   return (
     <>
@@ -167,14 +206,7 @@ export default function UploadSavePointPage() {
           cursor: pointer;
           font-size: 14px;
           color: #555;
-          font-family: 'DM Sans', sans-serif;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 0;
         }
-
-        .upload-back-btn:hover { color: #111; }
 
         .upload-continue-btn {
           background: #4a8c7a;
@@ -184,9 +216,7 @@ export default function UploadSavePointPage() {
           padding: 10px 28px;
           font-size: 14px;
           font-weight: 500;
-          font-family: 'DM Sans', sans-serif;
           cursor: pointer;
-          transition: background 0.15s, opacity 0.15s;
         }
 
         .upload-continue-btn:disabled {
@@ -194,17 +224,33 @@ export default function UploadSavePointPage() {
           cursor: not-allowed;
         }
 
-        .upload-continue-btn:not(:disabled):hover {
-          background: #3d7a6a;
+        .upload-parse-error {
+          width: 100%;
+          max-width: 580px;
+          font-size: 13px;
+          color: #c0392b;
+          margin-bottom: 12px;
+          text-align: center;
         }
       `}</style>
 
       <div className="upload-root">
         <ShellNavbar />
 
+        {/* Modal renders over the upload page — navigation only happens after Confirm */}
+        {isImportModalOpen && (
+          <CSVImportModal
+            csvData={csvData}
+            onClose={closeImportModal}
+            onConfirmAndNavigate
+          />
+        )}
+
         <div className="upload-content">
           <h2 className="upload-title">Upload your save point</h2>
-          <p className="upload-subtitle">Continue editing from where you left off.</p>
+          <p className="upload-subtitle">
+            Continue editing from where you left off.
+          </p>
 
           <div
             className={`upload-dropzone${isDragging ? " dragging" : ""}`}
@@ -214,20 +260,15 @@ export default function UploadSavePointPage() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="upload-dropzone-icon">
-              <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
-                <path d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M18 2v12h12" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M16 22v-6M13 19l3-3 3 3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            {/* Fixed: label now says ".json files" to match accept=".json" */}
-            <p className="upload-dropzone-text">Drag and drop .json files here, or</p>
+            <div className="upload-dropzone-icon">📄</div>
+            <p className="upload-dropzone-text">
+              Drag and drop .json or .csv files here, or
+            </p>
             <p className="upload-dropzone-browse">Browse files</p>
             <input
               ref={inputRef}
               type="file"
-              accept=".json"
+              accept=".json,.csv"
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -238,34 +279,31 @@ export default function UploadSavePointPage() {
 
           {file && (
             <div className="upload-file-row">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: "#4a8c7a", flexShrink: 0 }}>
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
               <span className="upload-file-name">{file.name}</span>
               <span className="upload-file-size">{formatSize(file.size)}</span>
               <button
                 className="upload-file-remove"
                 onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                aria-label="Remove file"
               >
                 ×
               </button>
             </div>
           )}
 
+          {parseError && (
+            <p className="upload-parse-error">{parseError}</p>
+          )}
+
           <div className="upload-actions">
             <button className="upload-back-btn" onClick={() => router.back()}>
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
               Back
             </button>
             <button
               className="upload-continue-btn"
-              onClick={handleContinue}
-              disabled={!file}
+              onClick={() => void handleContinue()}
+              disabled={!file || isProcessing}
             >
-              Continue
+              {isProcessing ? "Processing..." : "Continue"}
             </button>
           </div>
         </div>
