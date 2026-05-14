@@ -3,7 +3,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { autocompleteAddress } from '../utils/nominatim';
 import type { AddressSuggestion } from '../types';
 
-export const useAddressAutocomplete = () => {
+export const useAddressAutocomplete = (
+  filterFn?: (s: AddressSuggestion) => boolean
+) => {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -22,7 +24,8 @@ export const useAddressAutocomplete = () => {
       return;
     }
     try {
-      const data = await autocompleteAddress(query) as AddressSuggestion[];
+      const raw = await autocompleteAddress(query) as AddressSuggestion[];
+      const data = filterFn ? raw.filter(filterFn) : raw;
       setSuggestions(data);
       setShowSuggestions(data.length > 0);
     } catch (error) {
@@ -30,7 +33,7 @@ export const useAddressAutocomplete = () => {
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, []);
+  }, [filterFn]);
 
   const debouncedFetch = useCallback((query: string) => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -65,6 +68,7 @@ export const useAddressAutocomplete = () => {
         }
         break;
       case 'Escape':
+        e.stopPropagation();
         clearSuggestions();
         break;
     }

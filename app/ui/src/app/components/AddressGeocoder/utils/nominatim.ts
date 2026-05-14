@@ -37,6 +37,7 @@ export async function geocodeAddress(
     limit: '1',
     addressdetails: '1',
     email: NOMINATIM_CONTACT_EMAIL,
+    countrycodes: 'us',
   });
 
   const geocodeUrl = `https://nominatim.openstreetmap.org/search?${params}`;
@@ -70,6 +71,7 @@ export async function autocompleteAddress(
     format: 'json',
     limit: String(limit),
     addressdetails: '1',
+    countrycodes: 'us',
     email: NOMINATIM_CONTACT_EMAIL,
   });
 
