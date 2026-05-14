@@ -213,8 +213,8 @@ export default function FeedbackLauncher() {
         onClick={() => setIsOpen(true)}
         aria-haspopup="dialog"
       >
-        <span className={styles.mark} aria-hidden="true">?</span>
-        Feedback
+        <span className={styles.mark} aria-hidden="true">!</span>
+        Report bug / feedback
       </button>
 
       {isOpen && (
@@ -228,8 +228,8 @@ export default function FeedbackLauncher() {
           >
             <div className={styles.header}>
               <div>
-                <p className={styles.eyebrow}>Feedback</p>
-                <h2 className={styles.title} id="feedback-title">Report something</h2>
+                <p className={styles.eyebrow}>Bug reports and feedback</p>
+                <h2 className={styles.title} id="feedback-title">Report a bug or idea</h2>
                 <p className={styles.subtitle}>
                   Send a bug, enhancement, or note without leaving your route work.
                 </p>
