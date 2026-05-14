@@ -163,8 +163,10 @@ export default function AddressOverlay({
 
   function handleSave() {
     setSubmitted(true);
-    if (!line1.trim() || !city.trim() || !state || zipCode.length !== 5 || !country) return;
-    onSave({ line1, line2, city, state, zipCode, country });
+    const trimmedLine1 = line1.trim();
+    const trimmedCity = city.trim();
+    if (!trimmedLine1 || !trimmedCity || !state || zipCode.length !== 5 || !country) return;
+    onSave({ line1: trimmedLine1, line2: line2.trim(), city: trimmedCity, state, zipCode, country });
   }
 
   return (

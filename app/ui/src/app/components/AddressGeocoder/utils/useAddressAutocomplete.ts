@@ -1,4 +1,4 @@
-// app/components/hooks/useAddressAutocomplete.ts
+// app/components/AddressGeocoder/utils/useAddressAutocomplete.ts
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { autocompleteAddress } from '../utils/nominatim';
 import type { AddressSuggestion } from '../types';
@@ -10,6 +10,11 @@ export const useAddressAutocomplete = (
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const filterFnRef = useRef(filterFn);
+
+  useEffect(() => {
+    filterFnRef.current = filterFn;
+  });
 
   useEffect(() => {
     return () => {
@@ -25,7 +30,8 @@ export const useAddressAutocomplete = (
     }
     try {
       const raw = await autocompleteAddress(query) as AddressSuggestion[];
-      const data = filterFn ? raw.filter(filterFn) : raw;
+      const fn = filterFnRef.current;
+      const data = fn ? raw.filter(fn) : raw;
       setSuggestions(data);
       setShowSuggestions(data.length > 0);
     } catch (error) {
@@ -33,7 +39,7 @@ export const useAddressAutocomplete = (
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [filterFn]);
+  }, []);
 
   const debouncedFetch = useCallback((query: string) => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);

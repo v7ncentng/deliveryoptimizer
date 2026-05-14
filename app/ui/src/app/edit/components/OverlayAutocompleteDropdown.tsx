@@ -44,11 +44,13 @@ export default function OverlayAutocompleteDropdown({
   if (suggestions.length === 0) return null;
 
   return (
-    <div className={OVERLAY_AUTOCOMPLETE_DROPDOWN} style={style}>
-      <div className={OVERLAY_AUTOCOMPLETE_HEADER}>Suggestions</div>
+    <div className={OVERLAY_AUTOCOMPLETE_DROPDOWN} role="listbox" aria-label="Address suggestions" style={style}>
+      <div className={OVERLAY_AUTOCOMPLETE_HEADER} role="presentation">Suggestions</div>
       {suggestions.map((s, idx) => (
         <div
           key={s.place_id}
+          role="option"
+          aria-selected={idx === selectedIndex}
           className={
             idx === selectedIndex
               ? OVERLAY_AUTOCOMPLETE_ITEM_ACTIVE
