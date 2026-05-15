@@ -1,9 +1,9 @@
 .launcher {
-  --feedback-launcher-offset: 40px;
+  --feedback-launcher-offset: 12px;
   --feedback-footer-clearance: 0px;
 
   position: fixed;
-  right: var(--feedback-launcher-offset);
+  left: var(--feedback-launcher-offset);
   bottom: calc(
     var(--feedback-footer-clearance) + var(--feedback-launcher-offset) +
       env(safe-area-inset-bottom, 0px)
@@ -20,7 +20,7 @@
   height: 44px;
   width: 44px;
   overflow: hidden;
-  padding: 0 10px;
+  padding: 0 9px;
   font-family: var(--font-manrope), Arial, Helvetica, sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -44,7 +44,7 @@
   box-shadow: 0 14px 36px rgba(39, 39, 37, 0.16);
   gap: 8px;
   width: 214px;
-  padding: 0 16px;
+  padding: 0 16px 0 9px;
 }
 
 .launcher:active {
@@ -63,14 +63,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
-  border-radius: 50%;
-  background: #d5f2e8;
-  color: #265749;
-  font-size: 14px;
-  line-height: 1;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.markIcon {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
 .launcherLabel {

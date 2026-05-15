@@ -219,7 +219,9 @@ export default function FeedbackLauncher() {
         aria-haspopup="dialog"
         aria-label="Report bug or feedback"
       >
-        <span className={styles.mark} aria-hidden="true">?</span>
+        <span className={styles.mark} aria-hidden="true">
+          <img className={styles.markIcon} src="/Manage/warning.svg" alt="" />
+        </span>
         <span className={styles.launcherLabel} aria-hidden="true">
           Report bug / feedback
         </span>
