@@ -8,7 +8,7 @@ import { useState } from "react";
 import VehicleRow from "./VehicleRow";
 import VehicleEmptyState from "./VehicleEmptyState";
 import VehicleDetailsOverlay from "./VehicleDetailsOverlay";
-import ConfirmVehicleDeletionOverlay from "./ConfirmVehicleDeletionOverlay";
+import ConfirmDeletionOverlay from "./ConfirmDeletionOverlay";
 import type { VehicleRow as VehicleRowType } from "../types/delivery";
 import {
   NAVBAR_V2_BTN_OUTLINE,
@@ -197,8 +197,9 @@ export default function VehicleSection({
       )}
 
       {vehicleToDelete && (
-        <ConfirmVehicleDeletionOverlay
-          vehicleName={vehicleToDelete.name}
+        <ConfirmDeletionOverlay
+          title={`Delete "${vehicleToDelete.name}"?`}
+          description="Are you sure you want to delete this vehicle entry? This action cannot be undone."
           onClose={() => setVehicleToDelete(null)}
           onConfirm={() => {
             deleteVehicle(vehicleToDelete.id);

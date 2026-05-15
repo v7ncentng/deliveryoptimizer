@@ -4,8 +4,9 @@
  * Addresses region: toolbar (find / add / import) and a stacked list of delivery cards for the current page.
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import AddressCard from "./AddressCard";
+import ConfirmDeletionOverlay from "./ConfirmDeletionOverlay";
 import AddressEmptyState from "./AddressEmptyState";
 import AddressRowHeader from "./AddressRowHeader";
 import type { AddressCard as AddressCardType } from "../types/delivery";
@@ -68,7 +69,12 @@ export default function AddressSection({
   onCSVUpload,
 }: AddressSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [addressToDeleteId, setAddressToDeleteId] = useState<number | null>(null);
   const addEnabled = addressesCount === 0 || allAddressesLocked || activeAddressIsValid;
+
+  function handleDeleteRequest(id: number) {
+    setAddressToDeleteId(id);
+  }
 
   return (
     <section>
@@ -142,7 +148,7 @@ export default function AddressSection({
               key={`address-${a.id}`}
               address={a}
               updateAddress={updateAddress}
-              deleteAddress={deleteAddress}
+              deleteAddress={handleDeleteRequest}
               unlockAddress={unlockAddress}
               confirmAddress={confirmAddress}
               addressTouched={touchedIds.has(a.id)}
@@ -168,7 +174,7 @@ export default function AddressSection({
                 key={`address-${a.id}`}
                 address={a}
                 updateAddress={updateAddress}
-                deleteAddress={deleteAddress}
+                deleteAddress={handleDeleteRequest}
                 unlockAddress={unlockAddress}
                 confirmAddress={confirmAddress}
                 addressTouched={touchedIds.has(a.id)}
@@ -179,6 +185,18 @@ export default function AddressSection({
           )}
         </div>
       </div>
+
+      {addressToDeleteId !== null && (
+        <ConfirmDeletionOverlay
+          title="Delete delivery address?"
+          description="Are you sure you want to delete this delivery address? This action cannot be undone."
+          onClose={() => setAddressToDeleteId(null)}
+          onConfirm={() => {
+            deleteAddress(addressToDeleteId);
+            setAddressToDeleteId(null);
+          }}
+        />
+      )}
     </section>
   );
 }
