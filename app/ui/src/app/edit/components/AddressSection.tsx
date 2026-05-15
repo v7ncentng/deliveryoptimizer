@@ -141,7 +141,6 @@ export default function AddressSection({
             <AddressCard
               key={`address-${a.id}`}
               address={a}
-              addressesCount={addressesCount}
               updateAddress={updateAddress}
               deleteAddress={deleteAddress}
               unlockAddress={unlockAddress}
@@ -168,7 +167,6 @@ export default function AddressSection({
               <AddressCard
                 key={`address-${a.id}`}
                 address={a}
-                addressesCount={addressesCount}
                 updateAddress={updateAddress}
                 deleteAddress={deleteAddress}
                 unlockAddress={unlockAddress}
