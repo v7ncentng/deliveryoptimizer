@@ -236,8 +236,7 @@ export default function FeedbackLauncher() {
           >
             <div className={styles.header}>
               <div>
-                <p className={styles.eyebrow}>Bug reports and feedback</p>
-                <h2 className={styles.title} id="feedback-title">Report a bug or idea</h2>
+                <h2 className={styles.title} id="feedback-title">Report a bug or feedback</h2>
                 <p className={styles.subtitle}>
                   Send a bug, enhancement, or note without leaving your route work.
                 </p>
