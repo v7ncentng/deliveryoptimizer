@@ -30,6 +30,7 @@ import {
   mapOptimizeRequestToEditState,
 } from "./utils/sessionMapper";
 import { useRouter } from "next/navigation";
+import VehicleStartLocationOverlay, { type StartLocationAddress } from "./components/VehicleStartLocationOverlay";
 
 type StoredUploadFile = { name: string; content: string };
 
@@ -38,12 +39,16 @@ export default function Page() {
   const vehicleState = useVehicles();
   const addressState = useAddresses();
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const { importVehicles } = vehicleState;
+  const { importAddresses } = addressState;
 
   const {
     optimize,
     isOptimizing,
     optimizeError,
     clearOptimizeError,
+    needsDepotAddress,
+    dismissDepotAddressPrompt,
     geocodeFailedAddressIds,
     geocodeFailedVehicleIds,
     outOfRegionAddressIds,
@@ -86,8 +91,8 @@ export default function Page() {
           );
           const importedState = mapOptimizeRequestToEditState(session);
           if (cancelled) return;
-          vehicleState.importVehicles(importedState.vehicles);
-          addressState.importAddresses(importedState.addresses);
+          importVehicles(importedState.vehicles);
+          importAddresses(importedState.addresses);
           // Only remove after a successful import so a refresh can retry on failure
           sessionStorage.removeItem("savePointFile");
         } catch (error) {
@@ -107,7 +112,7 @@ export default function Page() {
         sessionStorage.removeItem("importedCards");
         try {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
-          if (!cancelled) addressState.importAddresses(reindexAddresses(cards));
+          if (!cancelled) importAddresses(reindexAddresses(cards));
         } catch {
           if (!cancelled) setSessionError("Failed to import the selected entries.");
         }
@@ -116,11 +121,12 @@ export default function Page() {
     };
 
     void hydrateImportedState();
-    return () => { cancelled = true; };
-  }, [addressState.importAddresses, vehicleState.importVehicles]);
 
-  // Routes to /upload-save-point so the user can upload a .json save file
-  // or a .csv/.json address list through the column-mapper modal flow.
+    return () => {
+      cancelled = true;
+    };
+  }, [importVehicles, importAddresses]);
+
   const handleImportSession = useCallback(() => {
     router.push("/upload-save-point");
   }, [router]);
@@ -143,8 +149,16 @@ export default function Page() {
 
   const clearSessionError = useCallback(() => setSessionError(null), []);
 
+  const handleStartLocationSave = useCallback((addr: StartLocationAddress) => {
+    const parts = [addr.line1];
+    if (addr.line2.trim()) parts.push(addr.line2);
+    parts.push(addr.city, `${addr.state} ${addr.zipCode}`, addr.country);
+    const formattedAddress = parts.join(", ");
+    void optimize(formattedAddress);
+  }, [optimize]);
+
   return (
-    <div className={`min-h-screen flex flex-col bg-white font-sans-manrope ${styles.root}`}>
+    <div className={`min-h-screen flex flex-col bg-[var(--edit-stone-50)] font-sans-manrope ${styles.root}`}>
       {/* Hidden file input for in-page CSV/JSON import via AddressSection */}
       <input
         ref={fileInputRef}
@@ -168,10 +182,16 @@ export default function Page() {
       )}
 
       <OptimizingModal isOpen={isOptimizing} />
+      {needsDepotAddress && (
+        <VehicleStartLocationOverlay
+          onClose={dismissDepotAddressPrompt}
+          onSave={handleStartLocationSave}
+        />
+      )}
       <Navbar
         onImportSession={handleImportSession}
         onExportSession={handleExportSession}
-        onOptimize={optimize}
+        onOptimize={() => void optimize()}
         isOptimizing={isOptimizing}
         error={sessionError ?? optimizeError ?? csvError ?? parseError}
         onClearError={() => { clearSessionError(); clearOptimizeError(); clearCsvError(); }}
