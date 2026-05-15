@@ -36,6 +36,7 @@ type AddressSectionProps = {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   outOfRegionIds: number[];
+  onCSVImport: () => void;
   onCSVUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
