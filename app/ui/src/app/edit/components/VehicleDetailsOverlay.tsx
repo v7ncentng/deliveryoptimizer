@@ -29,6 +29,7 @@ import {
   OVERLAY_SELECT,
   OVERLAY_SELECT_PLACEHOLDER,
   OVERLAY_SELECT_VALUE,
+  OVERLAY_SELECT_ICON,
   OVERLAY_SELECT_WRAPPER,
   OVERLAY_SELECT_WRAPPER_ERROR,
   OVERLAY_STATUS_BADGE_AVAILABLE,
@@ -36,7 +37,9 @@ import {
   OVERLAY_STATUS_BADGE_TEXT_IN_USE,
   OVERLAY_STATUS_BADGE_IN_USE,
   OVERLAY_STATUS_HINT,
+  OVERLAY_STATUS_ROW,
   OVERLAY_SCROLL_BODY,
+  OVERLAY_TIME_SEGMENTS,
   OVERLAY_TITLE,
 } from "../formStyles.v2";
 import styles from "../edit.module.css";
@@ -217,7 +220,7 @@ export default function VehicleDetailsOverlay({
                   <span className={typeLabel ? OVERLAY_SELECT_VALUE : OVERLAY_SELECT_PLACEHOLDER}>
                     {typeLabel ?? "Select"}
                   </span>
-                  <span className="pointer-events-none shrink-0 text-[var(--edit-text-primary)]">
+                  <span className={OVERLAY_SELECT_ICON}>
                     {CHEVRON_DOWN_ICON}
                   </span>
                   <select
@@ -266,7 +269,7 @@ export default function VehicleDetailsOverlay({
                   <span className={unitLabel ? OVERLAY_SELECT_VALUE : OVERLAY_SELECT_PLACEHOLDER}>
                     {unitLabel ?? "Select"}
                   </span>
-                  <span className="pointer-events-none shrink-0 text-[var(--edit-text-primary)]">
+                  <span className={OVERLAY_SELECT_ICON}>
                     {CHEVRON_DOWN_ICON}
                   </span>
                   <select
@@ -292,7 +295,7 @@ export default function VehicleDetailsOverlay({
             <div className={OVERLAY_ROW}>
               <div className={OVERLAY_FIELD}>
                 <span className={OVERLAY_LABEL}>Status</span>
-                <div className="flex gap-2 items-center">
+                <div className={OVERLAY_STATUS_ROW}>
                   <button
                     type="button"
                     onClick={() => setAvailable((prev) => !prev)}
@@ -313,7 +316,7 @@ export default function VehicleDetailsOverlay({
                   Departure time<span className={OVERLAY_REQUIRED_STAR} aria-hidden="true">*</span>
                 </label>
                 <div className={departureError ? OVERLAY_DEPARTURE_WRAPPER_ERROR : OVERLAY_DEPARTURE_WRAPPER}>
-                  <div className="flex items-center">
+                  <div className={OVERLAY_TIME_SEGMENTS}>
                     <input
                       ref={hoursRef}
                       id="overlay-departure-time"

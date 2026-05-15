@@ -6,7 +6,7 @@ import {
   OVERLAY_BACKDROP,
   OVERLAY_BODY,
   OVERLAY_CANCEL_BTN,
-  OVERLAY_PRIMARY_BTN,
+  OVERLAY_DELETE_BTN,
   OVERLAY_CLOSE_BTN,
   OVERLAY_FOOTER,
   OVERLAY_HEADER,
@@ -32,17 +32,19 @@ const CLOSE_ICON = (
   </svg>
 );
 
-type ConfirmVehicleDeletionOverlayProps = {
-  vehicleName: string;
+type ConfirmDeletionOverlayProps = {
+  title: string;
+  description: string;
   onClose: () => void;
   onConfirm: () => void;
 };
 
-export default function ConfirmVehicleDeletionOverlay({
-  vehicleName,
+export default function ConfirmDeletionOverlay({
+  title,
+  description,
   onClose,
   onConfirm,
-}: ConfirmVehicleDeletionOverlayProps) {
+}: ConfirmDeletionOverlayProps) {
   const panelRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export default function ConfirmVehicleDeletionOverlay({
         <div className={OVERLAY_BODY}>
           <div className={OVERLAY_HEADER}>
             <h2 id="confirm-delete-title" className={OVERLAY_TITLE}>
-              Delete &ldquo;{vehicleName}&rdquo;?
+              {title}
             </h2>
             <button
               type="button"
@@ -87,14 +89,14 @@ export default function ConfirmVehicleDeletionOverlay({
             </button>
           </div>
           <p id="confirm-delete-body" className={OVERLAY_LABEL}>
-            Are you sure you want to delete this vehicle entry? This action cannot be undone.
+            {description}
           </p>
         </div>
         <div className={OVERLAY_FOOTER}>
           <button type="button" onClick={onClose} className={OVERLAY_CANCEL_BTN}>
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} className={`${OVERLAY_PRIMARY_BTN} ${styles.primaryBtnOverlay}`}>
+          <button type="button" onClick={onConfirm} className={`${OVERLAY_DELETE_BTN} ${styles.primaryBtnOverlay}`}>
             Delete
           </button>
         </div>

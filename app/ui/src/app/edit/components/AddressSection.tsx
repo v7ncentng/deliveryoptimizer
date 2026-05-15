@@ -4,22 +4,34 @@
  * Addresses region: toolbar (find / add / import) and a stacked list of delivery cards for the current page.
  */
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import AddressCard from "./AddressCard";
+import ConfirmDeletionOverlay from "./ConfirmDeletionOverlay";
+import AddressEmptyState from "./AddressEmptyState";
+import AddressRowHeader from "./AddressRowHeader";
 import type { AddressCard as AddressCardType } from "../types/delivery";
 import {
-  ADDRESS_ADD_PILL_DESKTOP_DISABLED,
-  ADDRESS_ADD_PILL_DESKTOP_ENABLED,
-  ADDRESS_ADD_PILL_MOBILE_DISABLED,
-  ADDRESS_ADD_PILL_MOBILE_ENABLED,
-  ADDRESS_SEARCH_INPUT_DESKTOP,
-  ADDRESS_SEARCH_INPUT_MOBILE,
   ADDRESS_EMPTY_STATE,
   ADDRESS_LIST_WRAP,
-  ADDRESS_SECTION_TITLE,
   ADDRESS_TOOLBAR_DESKTOP,
   ADDRESS_TOOLBAR_MOBILE_WRAP,
 } from "../formStyles";
+
+import AddressSearchBar from "./AddressSearchBar";
+import {
+  ADDRESS_SECTION_HEADER,
+  ADDRESS_SECTION_HEADING,
+  ADDRESS_SECTION_SUBHEADING,
+  ADDRESS_BTN_V2_DESKTOP_ENABLED,
+  ADDRESS_BTN_V2_DESKTOP_DISABLED,
+  ADDRESS_BTN_V2_MOBILE_ENABLED,
+  ADDRESS_BTN_V2_MOBILE_DISABLED,
+  ADDRESS_LIST_CONTAINER,
+  ADDRESS_LIST_CONTAINER_INNER,
+  ADDRESS_LIST_DIVIDER,
+  ADDRESS_SEARCH_DESKTOP_SIZE,
+  ADDRESS_TOOLBAR_SPACER,
+} from "../formStyles.v2";
 
 type AddressSectionProps = {
   addressesOnCurrentPage: AddressCardType[];
@@ -57,11 +69,19 @@ export default function AddressSection({
   onCSVUpload,
 }: AddressSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const addEnabled = allAddressesLocked || activeAddressIsValid;
+  const [addressToDeleteId, setAddressToDeleteId] = useState<number | null>(null);
+  const addEnabled = addressesCount === 0 || allAddressesLocked || activeAddressIsValid;
+
+  function handleDeleteRequest(id: number) {
+    setAddressToDeleteId(id);
+  }
 
   return (
     <section>
-      <h2 className={ADDRESS_SECTION_TITLE}>Addresses</h2>
+      <div className={ADDRESS_SECTION_HEADER}>
+        <h2 className={ADDRESS_SECTION_HEADING}>Delivery addresses</h2>
+        <p className={ADDRESS_SECTION_SUBHEADING}>Upload or manually add addresses</p>
+      </div>
 
       <input
         ref={fileInputRef}
@@ -81,42 +101,33 @@ export default function AddressSection({
           type="button"
           disabled={!addEnabled}
           onClick={addAddress}
-          className={addEnabled ? ADDRESS_ADD_PILL_MOBILE_ENABLED : ADDRESS_ADD_PILL_MOBILE_DISABLED}
+          className={addEnabled ? ADDRESS_BTN_V2_MOBILE_ENABLED : ADDRESS_BTN_V2_MOBILE_DISABLED}
         >
-          Add new address
+          Add address
         </button>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className={ADDRESS_ADD_PILL_MOBILE_ENABLED}
+          className={ADDRESS_BTN_V2_MOBILE_ENABLED}
         >
           Import
         </button>
-        <input
-          type="search"
-          value={searchQuery}
-          aria-label="Search addresses"
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Find address"
-          className={ADDRESS_SEARCH_INPUT_MOBILE}
-        />
+        <AddressSearchBar value={searchQuery} onChange={setSearchQuery} />
       </div>
 
       {/* Desktop: Search left, spacer, Add right */}
       <div className={ADDRESS_TOOLBAR_DESKTOP}>
-        <input
-          type="search"
+        <AddressSearchBar
           value={searchQuery}
-          aria-label="Search addresses"
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Find address"
-          className={ADDRESS_SEARCH_INPUT_DESKTOP}
+          onChange={setSearchQuery}
+          className={ADDRESS_SEARCH_DESKTOP_SIZE}
+          variant="desktop"
         />
-        <div className="flex-1 min-w-0" />
+        <div className={ADDRESS_TOOLBAR_SPACER} />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className={ADDRESS_ADD_PILL_DESKTOP_ENABLED}
+          className={ADDRESS_BTN_V2_DESKTOP_ENABLED}
         >
           Import
         </button>
@@ -124,34 +135,72 @@ export default function AddressSection({
           type="button"
           disabled={!addEnabled}
           onClick={addAddress}
-          className={addEnabled ? ADDRESS_ADD_PILL_DESKTOP_ENABLED : ADDRESS_ADD_PILL_DESKTOP_DISABLED}
+          className={addEnabled ? ADDRESS_BTN_V2_DESKTOP_ENABLED : ADDRESS_BTN_V2_DESKTOP_DISABLED}
         >
-          Add new address
+          Add address
         </button>
       </div>
 
-      {/* Mobile: spaced cards; desktop: single divided panel */}
-      {searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
-        <div className={ADDRESS_EMPTY_STATE}>
-          No Addresses Found
-        </div>
-      ) : (
-        <div className={ADDRESS_LIST_WRAP}>
-          {addressesOnCurrentPage.map((a) => (
+      {/* Mobile: stacked cards */}
+      <div className={`lg:hidden ${ADDRESS_LIST_WRAP}`}>
+        {addressesCount === 0 ? (
+          <AddressEmptyState />
+        ) : searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
+          <div className={ADDRESS_EMPTY_STATE}>No Addresses Found</div>
+        ) : (
+          addressesOnCurrentPage.map((a) => (
             <AddressCard
               key={`address-${a.id}`}
               address={a}
-              addressesCount={addressesCount}
               updateAddress={updateAddress}
-              deleteAddress={deleteAddress}
+              deleteAddress={handleDeleteRequest}
               unlockAddress={unlockAddress}
               confirmAddress={confirmAddress}
               addressTouched={touchedIds.has(a.id)}
               geocodeFailed={geocodeFailedIds.includes(a.id)}
               outOfRegionFailed={outOfRegionIds.includes(a.id)}
-          />
-          ))}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Desktop hi-fi container: header + divider + rows */}
+      <div className={ADDRESS_LIST_CONTAINER}>
+        <div className={ADDRESS_LIST_CONTAINER_INNER}>
+          <AddressRowHeader />
+          <div className={ADDRESS_LIST_DIVIDER} />
+          {addressesCount === 0 ? (
+            <AddressEmptyState />
+          ) : searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
+            <div className={ADDRESS_EMPTY_STATE}>No Addresses Found</div>
+          ) : (
+            addressesOnCurrentPage.map((a) => (
+              <AddressCard
+                key={`address-${a.id}`}
+                address={a}
+                updateAddress={updateAddress}
+                deleteAddress={handleDeleteRequest}
+                unlockAddress={unlockAddress}
+                confirmAddress={confirmAddress}
+                addressTouched={touchedIds.has(a.id)}
+                geocodeFailed={geocodeFailedIds.includes(a.id)}
+                outOfRegionFailed={outOfRegionIds.includes(a.id)}
+              />
+            ))
+          )}
         </div>
+      </div>
+
+      {addressToDeleteId !== null && (
+        <ConfirmDeletionOverlay
+          title="Delete delivery address?"
+          description="Are you sure you want to delete this delivery address? This action cannot be undone."
+          onClose={() => setAddressToDeleteId(null)}
+          onConfirm={() => {
+            deleteAddress(addressToDeleteId);
+            setAddressToDeleteId(null);
+          }}
+        />
       )}
     </section>
   );

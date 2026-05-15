@@ -43,11 +43,14 @@ export const NAVBAR_V2_BTN_OUTLINE =
 
 export const NAVBAR_V2_BTN_FILLED =
   "h-9 px-4 rounded-[80px] bg-[var(--edit-btn-primary)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
+
+export const PAGE_V2_ROOT =
+  "min-h-screen flex flex-col bg-[var(--edit-stone-50)] font-sans-manrope";
   
 export const PAGE_V2_BODY = "flex flex-1 min-h-0";
 
 export const PAGE_V2_MAIN =
-  "flex-1 min-w-0 bg-[var(--edit-bg-primary)] border-t border-l border-[var(--edit-stone-200)] rounded-tl-[12px] p-6 lg:p-8 space-y-8 lg:space-y-10";
+  "flex-1 min-w-0 bg-[var(--edit-bg-primary)] border-t border-l border-[var(--edit-stone-200)] rounded-tl-[12px] p-6 space-y-16";
 
 export const VEHICLE_INFO_CONTAINER =
   "hidden lg:flex flex-col gap-4 border border-[var(--edit-stone-200)] rounded-[8px] overflow-hidden p-4";
@@ -57,10 +60,35 @@ export const VEHICLE_INFO_HEADER_ROW =
 
 export const VEHICLE_INFO_HEADER_CELL = "min-w-0 truncate";
 
-export const VEHICLE_INFO_DIVIDER = "border-t border-[var(--edit-stone-200)]";
+export const VEHICLE_INFO_HEADER_ACTIONS =
+  "sr-only";
+
+export const VEHICLE_INFO_DIVIDER = 
+  "border-t border-[var(--edit-stone-200)]";
 
 export const VEHICLE_INFO_ROWS =
   "flex flex-col gap-3";
+
+const EMPTY_STATE_WRAPPER =
+  "flex flex-col gap-4 items-center justify-center py-[28px] shrink-0 w-full";
+
+const EMPTY_STATE_ICON =
+  "size-12 shrink-0";
+
+const EMPTY_STATE_TEXT_GROUP =
+  "flex flex-col gap-2 items-center leading-[1.5] text-[16px] text-[var(--edit-text-primary)] whitespace-nowrap";
+
+const EMPTY_STATE_TITLE =
+  "font-[650]";
+
+const EMPTY_STATE_SUBTITLE =
+  "font-normal";
+
+export const VEHICLE_EMPTY_STATE_WRAPPER = EMPTY_STATE_WRAPPER;
+export const VEHICLE_EMPTY_STATE_ICON = EMPTY_STATE_ICON;
+export const VEHICLE_EMPTY_STATE_TEXT_GROUP = EMPTY_STATE_TEXT_GROUP;
+export const VEHICLE_EMPTY_STATE_TITLE = EMPTY_STATE_TITLE;
+export const VEHICLE_EMPTY_STATE_SUBTITLE = EMPTY_STATE_SUBTITLE;
 
 export const VEHICLE_ROW_DESKTOP =
   "grid w-full grid-cols-[minmax(7rem,1.2fr)_minmax(5rem,0.8fr)_minmax(6rem,0.9fr)_minmax(7rem,0.9fr)_minmax(7rem,1fr)_5.25rem] gap-4 items-center";
@@ -92,6 +120,9 @@ export const VEHICLE_ROW_ICON_BUTTON =
 export const VEHICLE_SECTION_BTN_GHOST =
   "h-9 px-4 rounded-[80px] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-tertiary-btn-hover)] active:bg-[var(--edit-tertiary-btn-pressed)] transition-colors cursor-pointer";
 
+export const VEHICLE_SECTION_ACTIONS =
+  "flex items-center justify-end gap-2 mb-4";
+
 export const VEHICLE_SECTION_HEADER =
   "flex flex-col gap-2 mb-4";
 
@@ -100,6 +131,219 @@ export const VEHICLE_SECTION_HEADING =
 
 export const VEHICLE_SECTION_SUBHEADING =
   "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
+
+export const ADDRESS_SECTION_WITH_PAGINATION =
+  "flex flex-col gap-4";
+
+export const ADDRESS_SECTION_HEADER =
+  "flex flex-col gap-2 mb-4";
+
+export const ADDRESS_SECTION_HEADING =
+  "font-bold text-[20px] leading-[28px] text-[var(--edit-text-primary)]";
+
+export const ADDRESS_SECTION_SUBHEADING =
+  "text-[16px] leading-normal text-[var(--edit-text-secondary)]";
+
+export const ADDRESS_BTN_V2_DESKTOP_ENABLED =
+  "h-10 px-4 shrink-0 rounded-[80px] border border-[var(--edit-stone-700)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-secondary-btn-hover)] active:bg-[var(--edit-secondary-btn-pressed)] transition-colors cursor-pointer";
+
+export const ADDRESS_BTN_V2_DESKTOP_DISABLED =
+  "h-10 px-4 shrink-0 rounded-[80px] border border-[var(--edit-stone-200)] font-semibold text-[14px] leading-5 text-[var(--edit-stone-500)] whitespace-nowrap cursor-not-allowed opacity-50";
+
+export const ADDRESS_BTN_V2_MOBILE_ENABLED =
+  "w-full h-10 px-4 rounded-[80px] border border-[var(--edit-stone-700)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap hover:bg-[var(--edit-secondary-btn-hover)] active:bg-[var(--edit-secondary-btn-pressed)] transition-colors cursor-pointer";
+
+export const ADDRESS_BTN_V2_MOBILE_DISABLED =
+  "w-full h-10 px-4 rounded-[80px] border border-[var(--edit-stone-200)] font-semibold text-[14px] leading-5 text-[var(--edit-stone-500)] whitespace-nowrap cursor-not-allowed opacity-50";
+
+export const ADDRESS_SEARCH_BAR =
+  "flex items-center gap-2 px-4 py-[11px] rounded-[80px] border border-[var(--edit-stone-200)] bg-[var(--edit-stone-50)] focus-within:border-[var(--edit-teal-300)] transition-colors";
+
+export const ADDRESS_SEARCH_BAR_DESKTOP =
+  "flex items-center gap-2 h-9 px-4 rounded-[80px] border border-[var(--edit-stone-200)] bg-transparent focus-within:border-[var(--edit-teal-300)] transition-colors";
+
+export const ADDRESS_SEARCH_INPUT =
+  "flex-1 font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent min-w-0 [&::-webkit-search-cancel-button]:hidden";
+
+export const ADDRESS_AUTOCOMPLETE_INPUT_WRAPPER =
+  "relative";
+
+export const ADDRESS_SEARCH_ICON =
+  "shrink-0 size-6";
+
+export const ADDRESS_SEARCH_DESKTOP_SIZE =
+  "shrink-0 w-[440px]";
+
+export const ADDRESS_TOOLBAR_SPACER =
+  "flex-1 min-w-0";
+
+// ── Address Row Header (Figma 8012:2303) ──────────────────────────────────────
+
+export const ADDRESS_ROW_HEADER_ROOT =
+  "hidden lg:flex gap-4 items-start w-full";
+
+export const ADDRESS_ROW_HEADER_COLS =
+  "flex gap-10 items-center font-semibold text-[16px] leading-[1.5] text-[var(--edit-text-primary)] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_RECIPIENT =
+  "w-[328px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_QUANTITY =
+  "w-[72px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_DELIVERY_EST =
+  "w-[150px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_DELIVERY_TIME =
+  "w-[247px] shrink-0";
+
+export const ADDRESS_ROW_HEADER_CELL_NOTES =
+  "w-[246px] shrink-0";
+
+// ── Address List Container (Figma 7758:2602) ──────────────────────────────────
+
+export const ADDRESS_LIST_CONTAINER =
+  "hidden lg:block border border-[var(--edit-stone-200)] rounded-[8px] overflow-x-auto p-4";
+
+export const ADDRESS_LIST_CONTAINER_INNER =
+  "flex flex-col gap-4 min-w-max";
+
+export const ADDRESS_LIST_DIVIDER =
+  "border-t border-[var(--edit-stone-200)] w-full";
+
+export const ADDRESS_EMPTY_STATE_WRAPPER = EMPTY_STATE_WRAPPER;
+export const ADDRESS_EMPTY_STATE_ICON = EMPTY_STATE_ICON;
+export const ADDRESS_EMPTY_STATE_TEXT_GROUP = EMPTY_STATE_TEXT_GROUP;
+export const ADDRESS_EMPTY_STATE_TITLE = EMPTY_STATE_TITLE;
+export const ADDRESS_EMPTY_STATE_SUBTITLE = EMPTY_STATE_SUBTITLE;
+
+// ── Address Row Edit State (Figma 7758:2610) ──────────────────────────────────
+
+export const ADDRESS_ROW_EDIT_ROOT =
+  "flex items-start justify-between w-full";
+
+export const ADDRESS_ROW_DESKTOP_WRAPPER =
+  "hidden lg:block";
+
+export const ADDRESS_ROW_EDIT_LEFT =
+  "flex gap-4 items-start py-2";
+
+export const ADDRESS_ROW_EDIT_COLS =
+  "flex gap-10 items-start";
+
+export const ADDRESS_ROW_RECIPIENT_COL =
+  "flex flex-col gap-2 w-[328px] shrink-0";
+
+export const ADDRESS_ROW_NAME_ROW =
+  "flex items-center gap-[11px] w-full";
+
+export const ADDRESS_ROW_FIELD_INPUT =
+  "border border-[var(--edit-stone-200)] h-11 px-2 py-[10px] rounded-[6px] font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none focus:border-[var(--edit-teal-300)] bg-[var(--edit-bg-primary)] transition-colors min-w-0";
+
+export const ADDRESS_ROW_FIELD_INPUT_FILL =
+  `${ADDRESS_ROW_FIELD_INPUT} flex-1`;
+
+export const ADDRESS_ROW_ADDR_WRAP =
+  "relative border border-[var(--edit-stone-200)] flex h-11 items-center rounded-[6px] overflow-hidden w-full cursor-pointer";
+
+export const ADDRESS_ROW_ADDR_WRAP_ERROR =
+  `${ADDRESS_ROW_ADDR_WRAP} border-[var(--edit-error-border)]`;
+
+export const ADDRESS_ROW_ADDR_GRADIENT =
+  "pointer-events-none absolute right-0 top-0 h-full w-[72px] bg-gradient-to-l from-[var(--edit-bg-primary)] from-[60%] to-transparent flex items-center justify-end pr-2";
+
+export const ADDRESS_ROW_ADDR_TRIGGER_TEXT =
+  "flex-1 h-full px-2 text-[16px] leading-[1.5] font-normal text-left text-[var(--edit-text-primary)] truncate flex items-center";
+
+export const ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER =
+  "text-[var(--edit-stone-500)]";
+
+export const ADDRESS_ROW_STEPPER_CONTAINER =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-2 py-[10px] rounded-[6px] shrink-0";
+
+export const ADDRESS_ROW_STEPPER_CONTAINER_NARROW =
+  `${ADDRESS_ROW_STEPPER_CONTAINER} w-[72px]`;
+
+export const ADDRESS_ROW_STEPPER_INPUT =
+  "flex-1 min-w-0 bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+
+export const ADDRESS_ROW_STEPPER_CONTROLS =
+  "flex flex-col shrink-0";
+
+export const ADDRESS_ROW_STEPPER_BUTTON =
+  "cursor-pointer focus:outline-none";
+
+export const ADDRESS_ROW_STEPPER_BUTTON_BORDER =
+  "stroke-[var(--edit-stone-200)]";
+
+export const ADDRESS_ROW_ICON_FILL =
+  "fill-[var(--edit-primary-icon)]";
+
+export const ADDRESS_ROW_EST_GROUP =
+  "flex gap-2 items-center shrink-0 w-[150px]";
+
+export const ADDRESS_ROW_TIME_GROUP =
+  "flex gap-2 items-center shrink-0";
+
+export const ADDRESS_ROW_TIME_SELECT_WRAP =
+  "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-2 py-[10px] rounded-[6px] w-[111px] shrink-0 relative overflow-hidden cursor-pointer";
+
+export const ADDRESS_ROW_TIME_SELECT =
+  "absolute inset-0 w-full h-full opacity-0 cursor-pointer text-[var(--edit-text-primary)]";
+
+export const ADDRESS_ROW_INLINE_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]";
+
+export const ADDRESS_ROW_TIME_SELECT_TEXT =
+  `${ADDRESS_ROW_INLINE_TEXT} pointer-events-none truncate flex-1`;
+
+export const ADDRESS_ROW_TIME_SELECT_CHEVRON =
+  "rotate-90 shrink-0 pointer-events-none";
+
+export const ADDRESS_ROW_NOTES_WRAP =
+  "border border-[var(--edit-stone-200)] flex items-start overflow-hidden px-2 py-[10px] rounded-[6px] w-[240px] shrink-0";
+
+export const ADDRESS_ROW_NOTES_TEXTAREA =
+  "w-full bg-transparent outline-none text-[16px] leading-[1.5] text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] resize-none font-normal overflow-hidden";
+
+export const ADDRESS_ROW_ACTIONS =
+  "flex gap-2 items-center shrink-0 self-start pt-2";
+
+export const ADDRESS_ROW_ACTION_BTN =
+  "relative size-10 shrink-0 overflow-hidden rounded-[4px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--edit-bg-primary)]";
+
+export const ADDRESS_ROW_LOCKED_CELL =
+  "bg-[var(--edit-stone-50)] flex h-11 items-center px-2 py-[10px] rounded-[6px] shrink-0 overflow-hidden";
+
+export const ADDRESS_ROW_LOCKED_RECIPIENT_COL =
+  "flex flex-col gap-[4px] w-[328px] shrink-0";
+
+export const ADDRESS_ROW_LOCKED_PLAIN_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)]";
+
+export const ADDRESS_ROW_LOCKED_FIELD_BTN =
+  "text-left bg-transparent border-0 p-0 m-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)] rounded-sm";
+
+export const ADDRESS_ROW_LOCKED_CELL_DELIVERY_EST =
+  `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[150px] shrink-0`;
+
+export const ADDRESS_ROW_LOCKED_CELL_QUANTITY =
+  `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[72px] shrink-0`;
+
+export const ADDRESS_ROW_LOCKED_CELL_DELIVERY_TIME =
+  `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[247px] shrink-0`;
+
+export const ADDRESS_ROW_GEOCODE_ERROR_LOCKED =
+  "border border-[var(--edit-error-border)]";
+
+export const ADDRESS_ROW_LOCKED_NOTES_BTN =
+  `${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN} w-[240px] shrink-0`;
+
+export const ADDRESS_ROW_LOCKED_NOTES_TEXT =
+  "overflow-hidden [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3]";
+
+export const MOBILE_LOCKED_CLICKABLE =
+  "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--edit-teal-300)]";
 
 // ── VehicleDetailsOverlay ─────────────────────────────────────────────────────
 
@@ -154,6 +398,9 @@ export const OVERLAY_SELECT_VALUE =
 export const OVERLAY_SELECT_PLACEHOLDER =
   "font-normal text-[16px] leading-6 text-[var(--edit-stone-500)] pointer-events-none flex-1 truncate";
 
+export const OVERLAY_SELECT_ICON =
+  "pointer-events-none shrink-0 text-[var(--edit-text-primary)]";
+
 export const OVERLAY_STATUS_BADGE_AVAILABLE =
   "bg-[var(--edit-container-success)] flex items-center overflow-hidden px-2 py-[7px] rounded-[4px] cursor-pointer select-none shrink-0";
 
@@ -169,6 +416,9 @@ export const OVERLAY_STATUS_BADGE_TEXT_IN_USE =
 export const OVERLAY_STATUS_HINT =
   "text-[12px] leading-normal text-[var(--edit-text-secondary)]";
 
+export const OVERLAY_STATUS_ROW =
+  "flex gap-2 items-center";
+
 export const OVERLAY_DEPARTURE_WRAPPER =
   "border border-[var(--edit-stone-200)] flex h-11 items-center justify-between px-3 rounded-[6px] w-full gap-2 focus-within:border-[var(--edit-teal-300)] transition-colors";
 
@@ -177,6 +427,9 @@ export const OVERLAY_DEPARTURE_INPUT =
 
 export const OVERLAY_TIME_SEGMENT_INPUT =
   "w-8 font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-transparent text-center";
+
+export const OVERLAY_TIME_SEGMENTS =
+  "flex items-center";
 
 export const OVERLAY_TIME_COLON =
   "font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] select-none";
@@ -199,6 +452,9 @@ export const OVERLAY_CANCEL_BTN =
 export const OVERLAY_PRIMARY_BTN =
   "h-9 px-4 rounded-[80px] bg-[var(--edit-btn-primary)] font-semibold text-[14px] leading-5 text-[var(--edit-text-primary)] whitespace-nowrap cursor-pointer";
 
+export const OVERLAY_DELETE_BTN =
+  "h-9 px-4 rounded-[80px] bg-[var(--edit-btn-delete)] font-semibold text-[14px] leading-5 text-[var(--edit-text-invert)] whitespace-nowrap cursor-pointer";
+
 export const OVERLAY_INPUT_ERROR =
   "border border-[var(--edit-error-border)] flex h-11 items-center px-3 rounded-[6px] w-full font-normal text-[16px] leading-6 text-[var(--edit-text-primary)] placeholder:text-[var(--edit-stone-500)] outline-none bg-[var(--edit-bg-primary)] transition-colors";
 
@@ -213,3 +469,76 @@ export const OVERLAY_FIELD_ERROR_CONTAINER =
 
 export const OVERLAY_FIELD_ERROR_TEXT =
   "font-normal text-[16px] leading-[1.5] text-[var(--edit-error-border)]";
+
+export const OVERLAY_FIELD_ERROR_ICON =
+  "shrink-0";
+
+export const OVERLAY_AUTOCOMPLETE_DROPDOWN =
+  "fixed z-[100] rounded-[6px] border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] shadow-lg max-h-48 overflow-y-auto";
+
+export const OVERLAY_AUTOCOMPLETE_HEADER =
+  "px-3 py-1 border-b border-[var(--edit-stone-200)] font-semibold text-[12px] leading-5 text-[var(--edit-stone-500)]";
+
+export const OVERLAY_AUTOCOMPLETE_ITEM =
+  "px-3 py-2 cursor-pointer flex items-start gap-2 text-[16px] text-[var(--edit-text-primary)] border-b border-[var(--edit-stone-200)] last:border-b-0 hover:bg-[var(--edit-stone-50)]";
+
+export const OVERLAY_AUTOCOMPLETE_ITEM_ACTIVE =
+  "px-3 py-2 cursor-pointer flex items-start gap-2 text-[16px] text-[var(--edit-text-primary)] border-b border-[var(--edit-stone-200)] last:border-b-0 bg-[var(--edit-container-active)]";
+
+export const OVERLAY_AUTOCOMPLETE_INPUT_WRAPPER =
+  "relative w-full";
+
+export const OVERLAY_AUTOCOMPLETE_PIN_ICON =
+  "shrink-0 mt-0.5 text-[var(--edit-stone-500)]";
+
+export const OVERLAY_AUTOCOMPLETE_ITEM_TEXT =
+  "flex-1 leading-snug";
+
+// ── Pagination V2 (Figma 8083:3520) ──────────────────────────────────────────
+
+export const PAGINATION_V2_ROW =
+  "flex items-center justify-between w-full";
+
+export const PAGINATION_V2_SHOW_CONTAINER =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-between p-[8px] rounded-[6px] w-[112px] relative cursor-pointer overflow-hidden";
+
+export const PAGINATION_V2_SHOW_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap pointer-events-none select-none";
+
+export const PAGINATION_V2_SHOW_CHEVRON =
+  "flex items-center justify-center size-[24px] shrink-0 pointer-events-none";
+
+export const PAGINATION_V2_SHOW_CHEVRON_ICON =
+  "rotate-90";
+
+export const PAGINATION_V2_SHOW_SELECT =
+  "absolute inset-0 w-full h-full opacity-0 cursor-pointer text-[var(--edit-text-primary)]";
+
+export const PAGINATION_V2_NAV_CONTAINER =
+  "flex gap-[8px] items-center";
+
+export const PAGINATION_V2_NAV_BTN =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] cursor-pointer hover:bg-[var(--edit-stone-50)] transition-colors";
+
+export const PAGINATION_V2_NAV_BTN_DISABLED =
+  "border border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)] flex items-center justify-center p-[8px] rounded-[6px] opacity-[0.48] cursor-not-allowed";
+
+export const PAGINATION_V2_PAGE_ACTIVE =
+  "bg-[var(--edit-pagination-active-bg)] flex items-center justify-center rounded-[100px] size-[40px] font-['Manrope',sans-serif] font-semibold text-[14px] leading-[20px] text-[var(--edit-text-primary)] shrink-0 select-none";
+
+export const PAGINATION_V2_PAGE_INACTIVE =
+  "flex items-center justify-center size-[40px] font-['Manrope',sans-serif] font-semibold text-[14px] leading-[20px] text-[var(--edit-text-primary)] shrink-0 cursor-pointer hover:bg-[var(--edit-stone-50)] rounded-[6px] transition-colors";
+
+// ── Page Footer ───────────────────────────────────────────────────────────────
+
+export const FOOTER_ROOT =
+  "flex items-center justify-between px-4 py-3";
+
+export const FOOTER_LOGO =
+  "shrink-0 w-[25.326px] h-[28px] [aspect-ratio:25.33/28] [background:var(--edit-footer-logo-bg)]";
+
+export const FOOTER_TEXT =
+  "font-normal text-[16px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap";
+
+export const OPTIMIZING_SPINNER_WRAP =
+  "flex justify-center mt-2";

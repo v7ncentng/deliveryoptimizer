@@ -47,7 +47,7 @@ import {
   VEHICLE_ROW_STATUS_TEXT_AVAILABLE,
   VEHICLE_ROW_STATUS_TEXT_IN_USE,
 } from "../formStyles.v2";
-import { EditIconButton, DeleteIconButton } from "./VehicleIconButtons";
+import { EditIconButton, DeleteIconButton } from "./RowIconButtons";
 
 type VehicleLayout = "desktop" | "mobile";
 

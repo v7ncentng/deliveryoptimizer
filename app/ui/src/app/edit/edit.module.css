@@ -20,9 +20,10 @@
   --edit-teal-600:    #267B67;
   --edit-teal-700:    #265749;
   --edit-teal-alpha:  #39746126;
+  --edit-pagination-active-bg: rgba(26, 173, 144, 0.24);
 
   /* ── Stone neutrals (Figma Stone scale) ─────────────────────── */
-  --edit-bg-primary:  #fdfdfc;
+  --edit-bg-primary:  #FDFDFC;
   --edit-stone-50:    #F8F7F5;
   --edit-stone-200:   #DCDBD8;
   --edit-stone-500:   #908F8C;
@@ -48,9 +49,17 @@
   --edit-text-success:      #2A7E3B;
   --edit-required-asterisk: #DA1B0B;
   --edit-error-border:      #DA1B0B;
-  --edit-error-bg:          #fef2f2;
-  --edit-icon-edit:      #3D3D3C;
-  --edit-icon-trash:       #DA1B0B;
+  --edit-error-bg:          #FEF2F2;
+  --edit-footer-logo-bg: url('/b2logo.png') -25.852px -10.077px / 293.436% 265.161% no-repeat;
+  
+  /* ── Delete button ──────────────────────────────────────────── */
+  --edit-btn-delete:    #DA1B0B;
+  --edit-text-invert:   #FDFDFC;
+
+  /* ── Icons ──────────────────────────────────────────────────── */
+  --edit-icon-vehicle:  #1C1B1F;
+  --edit-icon-location: #1C1B1F;
+  --edit-primary-icon:  #3D3D3C;
 }
 
 /* ── Primary Button Hover and Pressed States Overlay ──────────────────────── */
