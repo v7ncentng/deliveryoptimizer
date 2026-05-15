@@ -74,10 +74,11 @@ export default function Page() {
     let cancelled = false;
 
     const hydrateImportedState = async () => {
-      // Session save file (JSON with vehicles + deliveries schema)
+      // Session save file (JSON with vehicles + deliveries schema).
+      // removeItem is intentionally inside the try block — if loadSessionFromFile
+      // throws, the key stays in sessionStorage so a page refresh can retry.
       const storedSavePointFile = sessionStorage.getItem("savePointFile");
       if (storedSavePointFile) {
-        sessionStorage.removeItem("savePointFile");
         try {
           const savedFile = parseStoredUploadFile(storedSavePointFile, "save point");
           const session = await loadSessionFromFile(
@@ -87,6 +88,8 @@ export default function Page() {
           if (cancelled) return;
           vehicleState.importVehicles(importedState.vehicles);
           addressState.importAddresses(importedState.addresses);
+          // Only remove after a successful import so a refresh can retry on failure
+          sessionStorage.removeItem("savePointFile");
         } catch (error) {
           if (!cancelled) {
             setSessionError(
@@ -105,12 +108,11 @@ export default function Page() {
         try {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
           if (!cancelled) addressState.importAddresses(reindexAddresses(cards));
-        } catch (error) {
+        } catch {
           if (!cancelled) setSessionError("Failed to import the selected entries.");
         }
         return;
       }
-
     };
 
     void hydrateImportedState();

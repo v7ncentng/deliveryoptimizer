@@ -48,14 +48,25 @@ export default function UploadSavePointPage() {
     if (f) handleFile(f);
   };
 
+  const [continueError, setContinueError] = useState<string | null>(null);
+
   const handleContinue = useCallback(async () => {
     if (!file || isProcessing) return;
     setIsProcessing(true);
+    setContinueError(null);
 
     try {
       if (file.name.endsWith(".json")) {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
+        let text: string;
+        let parsed: unknown;
+
+        try {
+          text = await file.text();
+          parsed = JSON.parse(text);
+        } catch {
+          setContinueError("This file is not valid JSON.");
+          return;
+        }
 
         // Try to validate as a proper session save.
         // If it passes, store under savePointFile and let edit/page.tsx
@@ -73,10 +84,12 @@ export default function UploadSavePointPage() {
         }
       }
 
-      // CSV or raw JSON array: open the two-step modal (column mapper →
-      // row selector). On Confirm, modal writes "addressFiles" to
-      // sessionStorage and navigates to /edit automatically.
+      // CSV or raw JSON array: open the two-step modal
       openImportModal(file);
+    } catch (err) {
+      setContinueError(
+        err instanceof Error ? err.message : "Something went wrong. Please try again."
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -187,9 +200,10 @@ export default function UploadSavePointPage() {
           padding: 4px;
           display: flex;
           align-items: center;
-          font-size: 18px;
           line-height: 1;
         }
+
+        .upload-file-remove:hover { color: #111; }
 
         .upload-actions {
           width: 100%;
@@ -206,7 +220,13 @@ export default function UploadSavePointPage() {
           cursor: pointer;
           font-size: 14px;
           color: #555;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-family: inherit;
         }
+
+        .upload-back-btn:hover { color: #111; }
 
         .upload-continue-btn {
           background: #4a8c7a;
@@ -217,7 +237,11 @@ export default function UploadSavePointPage() {
           font-size: 14px;
           font-weight: 500;
           cursor: pointer;
+          font-family: inherit;
+          transition: background 0.15s;
         }
+
+        .upload-continue-btn:hover:not(:disabled) { background: #3d7a6a; }
 
         .upload-continue-btn:disabled {
           opacity: 0.4;
@@ -260,7 +284,13 @@ export default function UploadSavePointPage() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="upload-dropzone-icon">📄</div>
+            <div className="upload-dropzone-icon">
+              <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
+                <rect x="1" y="1" width="22" height="34" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                <path d="M7 10h10M7 15h10M7 20h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M15 26v-7M15 19l-3 3M15 19l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
             <p className="upload-dropzone-text">
               Drag and drop .json or .csv files here, or
             </p>
@@ -283,19 +313,27 @@ export default function UploadSavePointPage() {
               <span className="upload-file-size">{formatSize(file.size)}</span>
               <button
                 className="upload-file-remove"
-                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                aria-label="Remove file"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                  setContinueError(null);
+                }}
               >
                 ×
               </button>
             </div>
           )}
 
-          {parseError && (
-            <p className="upload-parse-error">{parseError}</p>
+          {(parseError ?? continueError) && (
+            <p className="upload-parse-error">{parseError ?? continueError}</p>
           )}
 
           <div className="upload-actions">
             <button className="upload-back-btn" onClick={() => router.back()}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               Back
             </button>
             <button

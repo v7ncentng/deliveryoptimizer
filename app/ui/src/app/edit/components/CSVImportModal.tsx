@@ -40,22 +40,25 @@ const FIELD_LABELS: Record<Exclude<MappableField, "">, string> = {
   notes: "Notes",
 };
 
-interface CSVImportModalProps {
-  /** Normalised file data: first row is headers, rest are data rows. */
-  csvData: string[][];
-  onClose: () => void;
-  /**
-   * In-page mode: directly populates the edit page address state.
-   * Provide either this OR onConfirmAndNavigate, not both.
-   */
-  importAddresses?: (addresses: AddressCard[]) => void;
-  /**
-   * Upload-flow mode: serialises selected rows to sessionStorage as
-   * "addressFiles" then navigates to /edit.
-   * Provide either this OR importAddresses, not both.
-   */
-  onConfirmAndNavigate?: true;
-}
+/**
+ * Discriminated union enforces that exactly one confirm mode is provided:
+ *   - InPage: importAddresses is called directly, modal closes, page stays.
+ *   - Navigate: importedCards written to sessionStorage, router pushes to /edit.
+ * Passing neither or both is a compile-time error.
+ */
+type CSVImportModalProps =
+  | {
+      csvData: string[][];
+      onClose: () => void;
+      importAddresses: (addresses: AddressCard[]) => void;
+      onConfirmAndNavigate?: never;
+    }
+  | {
+      csvData: string[][];
+      onClose: () => void;
+      importAddresses?: never;
+      onConfirmAndNavigate: true;
+    };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -325,26 +328,14 @@ function StepTwo({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const addressColIdx = headers.findIndex((h) => mapping[h] === "recipientAddress");
-  const quantityColIdx = headers.findIndex((h) => mapping[h] === "deliveryQuantity");
-  const scheduleColIdx = headers.findIndex((h) => mapping[h] === "deliveryTimeStart");
-
-  // For the Name column: prefer any column mapped to a field that isn't
-  // address/quantity/schedule, otherwise use the first unmapped column,
-  // otherwise fall back to row index. This matches what the design shows
-  // (e.g. "Kayla Wong", "Karen Liang") from a recipient/name column.
-  const nameColIdx = (() => {
-    const nameField = headers.find(
-      (h) => mapping[h] && !["recipientAddress", "deliveryQuantity", "deliveryTimeStart", "deliveryTimeEnd", "timeBuffer", "notes"].includes(mapping[h])
-    );
-    if (nameField !== undefined) return headers.indexOf(nameField);
-    const unmapped = headers.find((h) => !mapping[h]);
-    if (unmapped !== undefined) return headers.indexOf(unmapped);
-    return -1;
-  })();
+  // Show every column that has been mapped, in the order they appear in the file.
+  // Unmapped columns (Select) are excluded since they carry no meaning.
+  const mappedHeaders = headers.filter((h) => mapping[h]);
 
   const allChecked = dataRows.length > 0 && selected.size === dataRows.length;
   const someChecked = selected.size > 0 && !allChecked;
+
+  const COL_MIN = 160; // minimum px width per data column
 
   return (
     <>
@@ -353,68 +344,94 @@ function StepTwo({
         subtitle="Review and select information to import"
         onClose={onCancel}
       />
-      <div style={{ overflowY: "auto", flex: 1, padding: "16px 24px 0" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "32px 1fr 1.4fr 80px 90px",
-            gap: "0 12px",
-            alignItems: "center",
-            paddingBottom: "10px",
-            borderBottom: "1.5px solid #e8e8e8",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={allChecked}
-            ref={(el) => { if (el) el.indeterminate = someChecked; }}
-            onChange={(e) => onToggleAll(e.target.checked)}
-            style={{ cursor: "pointer", accentColor: "#4a9d7f", width: "16px", height: "16px" }}
-          />
-          {["Name", "Address", "Quantity", "Schedule"].map((h) => (
-            <span key={h} style={{ fontSize: "12px", fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              {h}
-            </span>
-          ))}
-        </div>
-        {dataRows.map((row, i) => {
-          const isChecked = selected.has(i);
-          const nameVal = nameColIdx >= 0 ? (row[nameColIdx] ?? `Row ${i + 1}`) : `Row ${i + 1}`;
-          const addressVal = addressColIdx >= 0 ? (row[addressColIdx] ?? "—") : "—";
-          const quantityVal = quantityColIdx >= 0 ? (row[quantityColIdx] ?? "—") : "—";
-          const scheduleVal = scheduleColIdx >= 0 ? (row[scheduleColIdx] ?? "—") : "—";
-          return (
-            <div
-              key={i}
-              onClick={() => onToggleRow(i)}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "32px 1fr 1.4fr 80px 90px",
-                gap: "0 12px",
-                alignItems: "center",
-                padding: "12px 0",
-                borderBottom: "1px solid #f0f0f0",
-                cursor: "pointer",
-                borderRadius: "6px",
-                background: isChecked ? "rgba(74,157,127,0.04)" : "transparent",
-                transition: "background 0.1s",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={isChecked}
-                onChange={() => onToggleRow(i)}
-                onClick={(e) => e.stopPropagation()}
-                style={{ cursor: "pointer", accentColor: "#4a9d7f", width: "16px", height: "16px" }}
-              />
-              <span style={{ fontSize: "13px", color: "#111", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nameVal}</span>
-              <span style={{ fontSize: "13px", color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{addressVal}</span>
-              <span style={{ fontSize: "13px", color: "#555" }}>{quantityVal}</span>
-              <span style={{ fontSize: "13px", color: "#555", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{scheduleVal}</span>
-            </div>
-          );
-        })}
+
+      {/* Horizontally scrollable table */}
+      <div style={{ overflowX: "auto", overflowY: "auto", flex: 1, padding: "16px 0 0" }}>
+        <table style={{ borderCollapse: "collapse", width: "100%", minWidth: `${32 + mappedHeaders.length * COL_MIN}px` }}>
+          <thead>
+            <tr style={{ borderBottom: "1.5px solid #e8e8e8" }}>
+              {/* Select-all checkbox */}
+              <th style={{ width: "52px", padding: "0 12px 10px 24px", textAlign: "left", position: "sticky", left: 0, background: "#fff", zIndex: 2 }}>
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  ref={(el) => { if (el) el.indeterminate = someChecked; }}
+                  onChange={(e) => onToggleAll(e.target.checked)}
+                  style={{ cursor: "pointer", accentColor: "#4a9d7f", width: "16px", height: "16px" }}
+                />
+              </th>
+              {mappedHeaders.map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    minWidth: `${COL_MIN}px`,
+                    padding: "0 16px 10px 0",
+                    textAlign: "left",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#888",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {FIELD_LABELS[mapping[h] as Exclude<MappableField, "">] ?? h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dataRows.map((row, i) => {
+              const isChecked = selected.has(i);
+              return (
+                <tr
+                  key={i}
+                  onClick={() => onToggleRow(i)}
+                  style={{
+                    borderBottom: "1px solid #f0f0f0",
+                    cursor: "pointer",
+                    background: isChecked ? "rgba(74,157,127,0.04)" : "transparent",
+                    transition: "background 0.1s",
+                  }}
+                >
+                  {/* Sticky checkbox column */}
+                  <td style={{ padding: "12px 12px 12px 24px", position: "sticky", left: 0, background: isChecked ? "#f0faf7" : "#fff", zIndex: 1 }}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onToggleRow(i)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ cursor: "pointer", accentColor: "#4a9d7f", width: "16px", height: "16px" }}
+                    />
+                  </td>
+                  {mappedHeaders.map((h) => {
+                    const val = row[headers.indexOf(h)] ?? "—";
+                    return (
+                      <td
+                        key={h}
+                        style={{
+                          padding: "12px 16px 12px 0",
+                          fontSize: "13px",
+                          color: "#111",
+                          whiteSpace: "nowrap",
+                          maxWidth: "240px",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                        title={val}
+                      >
+                        {val}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
+
+      {/* Footer */}
       <div style={{ padding: "14px 24px", borderTop: "1px solid #f0f0f0" }}>
         <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#555" }}>
           {selected.size} {selected.size === 1 ? "entry" : "entries"} will be imported
