@@ -1,5 +1,6 @@
 import {
   OVERLAY_FIELD_ERROR_CONTAINER,
+  OVERLAY_FIELD_ERROR_ICON,
   OVERLAY_FIELD_ERROR_TEXT,
 } from "../formStyles.v2";
 
@@ -27,7 +28,7 @@ type OverlayFieldErrorProps = {
 export default function OverlayFieldError({ message }: OverlayFieldErrorProps) {
   return (
     <div role="alert" className={OVERLAY_FIELD_ERROR_CONTAINER}>
-      <span className="shrink-0">{WARNING_ICON}</span>
+      <span className={OVERLAY_FIELD_ERROR_ICON}>{WARNING_ICON}</span>
       <p className={OVERLAY_FIELD_ERROR_TEXT}>{message}</p>
     </div>
   );
