@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { SUPPORTED_STATES } from "../constants/supportedRegions";
 import OverlayFieldError from "./OverlayFieldError";
+import OverlayAutocompleteDropdown from "./OverlayAutocompleteDropdown";
+import { useAddressAutocomplete } from "../../components/AddressGeocoder/utils/useAddressAutocomplete";
+import type { AddressSuggestion } from "../../components/AddressGeocoder/types";
 import {
   OVERLAY_BACKDROP,
   OVERLAY_BODY,
@@ -23,10 +27,12 @@ import {
   OVERLAY_SELECT,
   OVERLAY_SELECT_PLACEHOLDER,
   OVERLAY_SELECT_VALUE,
+  OVERLAY_SELECT_ICON,
   OVERLAY_SELECT_WRAPPER,
   OVERLAY_SELECT_WRAPPER_ERROR,
   OVERLAY_SCROLL_BODY,
   OVERLAY_TITLE,
+  OVERLAY_AUTOCOMPLETE_INPUT_WRAPPER,
 } from "../formStyles.v2";
 import styles from "../edit.module.css";
 
@@ -64,7 +70,7 @@ const CHEVRON_DOWN_ICON = (
 
 const COUNTRIES = ["United States"];
 
-export type StartLocationAddress = {
+export type LocationAddress = {
   line1: string;
   line2: string;
   city: string;
@@ -73,17 +79,21 @@ export type StartLocationAddress = {
   country: string;
 };
 
-type VehicleStartLocationOverlayProps = {
-  initialAddress?: Partial<StartLocationAddress>;
+type AddressOverlayProps = {
+  heading: string;
+  primaryLabel?: string;
+  initialAddress?: Partial<LocationAddress>;
   onClose: () => void;
-  onSave: (address: StartLocationAddress) => void;
+  onSave: (address: LocationAddress) => void;
 };
 
-export default function VehicleStartLocationOverlay({
+export default function AddressOverlay({
+  heading,
+  primaryLabel = "Optimize",  // Default label, overwritten by "Confirm" when called by AddressCard
   initialAddress,
   onClose,
   onSave,
-}: VehicleStartLocationOverlayProps) {
+}: AddressOverlayProps) {
   const panelRef = useFocusTrap<HTMLDivElement>(true);
 
   const [line1, setLine1] = useState(initialAddress?.line1 ?? "");
@@ -94,6 +104,44 @@ export default function VehicleStartLocationOverlay({
   const [country, setCountry] = useState(initialAddress?.country ?? "");
   const [submitted, setSubmitted] = useState(false);
 
+  const line1InputRef = useRef<HTMLInputElement>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
+
+  const stateFilter = useCallback(
+    (s: AddressSuggestion) => SUPPORTED_STATES.has(s.address?.state ?? ""),
+    []
+  );
+  const { suggestions, showSuggestions, selectedIndex, debouncedFetch, clearSuggestions, handleKeyDown: handleAutocompleteKeyDown } =
+    useAddressAutocomplete(stateFilter);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!showSuggestions || !line1InputRef.current) return;
+    const r = line1InputRef.current.getBoundingClientRect();
+    setDropdownStyle({ top: r.bottom + 4, left: r.left, width: r.width });
+  }, [showSuggestions]);
+
+  function handleLine1Select(s: AddressSuggestion) {
+    if (blurTimeoutRef.current) {
+      clearTimeout(blurTimeoutRef.current);
+      blurTimeoutRef.current = null;
+    }
+    const a = s.address ?? {};
+    const streetLine = [a.house_number, a.road].filter(Boolean).join(" ") || s.display_name;
+    setLine1(streetLine);
+    setCity(a.city ?? a.town ?? a.village ?? a.municipality ?? "");
+    setState(a.state ?? "");
+    setZipCode((a.postcode ?? "").slice(0, 5));
+    setCountry("United States");
+    clearSuggestions();
+  }
+
   const line1Error = submitted && !line1.trim();
   const cityError = submitted && !city.trim();
   const stateError = submitted && !state;
@@ -102,11 +150,14 @@ export default function VehicleStartLocationOverlay({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (suggestions.length > 0) return;
+        onClose();
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, suggestions]);
 
   function handleBackdropClick(e: React.MouseEvent<HTMLDivElement>) {
     if (e.target === e.currentTarget) onClose();
@@ -114,8 +165,10 @@ export default function VehicleStartLocationOverlay({
 
   function handleSave() {
     setSubmitted(true);
-    if (!line1.trim() || !city.trim() || !state || zipCode.length !== 5 || !country) return;
-    onSave({ line1, line2, city, state, zipCode, country });
+    const trimmedLine1 = line1.trim();
+    const trimmedCity = city.trim();
+    if (!trimmedLine1 || !trimmedCity || !state || zipCode.length !== 5 || !country) return;
+    onSave({ line1: trimmedLine1, line2: line2.trim(), city: trimmedCity, state, zipCode, country });
   }
 
   return (
@@ -129,14 +182,14 @@ export default function VehicleStartLocationOverlay({
         className={OVERLAY_PANEL}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="start-location-overlay-title"
+        aria-labelledby="address-overlay-title"
         tabIndex={-1}
       >
         <div className={OVERLAY_BODY}>
           {/* Header */}
           <div className={OVERLAY_HEADER}>
-            <h2 id="start-location-overlay-title" className={OVERLAY_TITLE}>
-              Enter starting address
+            <h2 id="address-overlay-title" className={OVERLAY_TITLE}>
+              {heading}
             </h2>
             <button
               type="button"
@@ -155,15 +208,29 @@ export default function VehicleStartLocationOverlay({
               <label htmlFor="start-loc-line1" className={OVERLAY_LABEL}>
                 Address line 1<span className={OVERLAY_REQUIRED_STAR} aria-hidden="true">*</span>
               </label>
-              <input
-                id="start-loc-line1"
-                value={line1}
-                onChange={(e) => setLine1(e.target.value)}
-                placeholder="Street number and name"
-                className={line1Error ? OVERLAY_INPUT_ERROR : OVERLAY_INPUT}
-                aria-required="true"
-                aria-invalid={line1Error}
-              />
+              <div className={OVERLAY_AUTOCOMPLETE_INPUT_WRAPPER}>
+                <input
+                  ref={line1InputRef}
+                  id="start-loc-line1"
+                  value={line1}
+                  onChange={(e) => { setLine1(e.target.value); debouncedFetch(e.target.value); }}
+                  onKeyDown={(e) => handleAutocompleteKeyDown(e, handleLine1Select)}
+                  onBlur={() => { blurTimeoutRef.current = setTimeout(clearSuggestions, 150); }}
+                  placeholder="Street number and name"
+                  className={line1Error ? OVERLAY_INPUT_ERROR : OVERLAY_INPUT}
+                  aria-required="true"
+                  aria-invalid={line1Error}
+                  autoComplete="off"
+                />
+                {showSuggestions && (
+                  <OverlayAutocompleteDropdown
+                    suggestions={suggestions}
+                    selectedIndex={selectedIndex}
+                    onSelect={handleLine1Select}
+                    style={dropdownStyle}
+                  />
+                )}
+              </div>
               {line1Error && <OverlayFieldError message="Enter an address" />}
             </div>
 
@@ -207,7 +274,7 @@ export default function VehicleStartLocationOverlay({
                   <span className={state ? OVERLAY_SELECT_VALUE : OVERLAY_SELECT_PLACEHOLDER}>
                     {state || "Select"}
                   </span>
-                  <span className="pointer-events-none shrink-0 text-[var(--edit-text-primary)]">
+                  <span className={OVERLAY_SELECT_ICON}>
                     {CHEVRON_DOWN_ICON}
                   </span>
                   <select
@@ -256,7 +323,7 @@ export default function VehicleStartLocationOverlay({
                   <span className={country ? OVERLAY_SELECT_VALUE : OVERLAY_SELECT_PLACEHOLDER}>
                     {country || "Select"}
                   </span>
-                  <span className="pointer-events-none shrink-0 text-[var(--edit-text-primary)]">
+                  <span className={OVERLAY_SELECT_ICON}>
                     {CHEVRON_DOWN_ICON}
                   </span>
                   <select
@@ -285,7 +352,7 @@ export default function VehicleStartLocationOverlay({
             Cancel
           </button>
           <button type="button" onClick={handleSave} className={`${OVERLAY_PRIMARY_BTN} ${styles.primaryBtnOverlay}`}>
-            Optimize
+            {primaryLabel}
           </button>
         </div>
       </div>
