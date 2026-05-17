@@ -71,7 +71,6 @@ export default function Page() {
     importAddresses: addressState.importAddresses,
   });
 
-  // In-page modal for CSV/JSON imports triggered from AddressSection
   const {
     csvData,
     isImportModalOpen,
@@ -86,9 +85,6 @@ export default function Page() {
     let cancelled = false;
 
     const hydrateImportedState = async () => {
-      // Session save file (JSON with vehicles + deliveries schema).
-      // removeItem is intentionally inside the try block — if loadSessionFromFile
-      // throws, the key stays in sessionStorage so a page refresh can retry.
       const storedSavePointFile = sessionStorage.getItem("savePointFile");
       if (storedSavePointFile) {
         try {
@@ -100,7 +96,6 @@ export default function Page() {
           if (cancelled) return;
           importVehicles(importedState.vehicles);
           importAddresses(importedState.addresses);
-          // Only remove after a successful import so a refresh can retry on failure
           sessionStorage.removeItem("savePointFile");
         } catch (error) {
           if (!cancelled) {
@@ -112,8 +107,6 @@ export default function Page() {
         return;
       }
 
-      // Fully-built AddressCard[] written by CSVImportModal's onConfirmAndNavigate path.
-      // No parsing needed — import directly into address state.
       const storedImportedCards = sessionStorage.getItem("importedCards");
       if (storedImportedCards) {
         sessionStorage.removeItem("importedCards");
@@ -165,7 +158,7 @@ export default function Page() {
   }, [optimize]);
 
   return (
-    <div className={`min-h-screen flex flex-col bg-[var(--edit-stone-50)] font-sans-manrope ${styles.root}`}>
+    <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
       {/* Hidden file input for in-page CSV/JSON import via AddressSection */}
       <input
         ref={fileInputRef}
@@ -188,7 +181,6 @@ export default function Page() {
         />
       )}
 
-    <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
       <OptimizingModal isOpen={isOptimizing} />
       {needsDepotAddress && (
         <AddressOverlay
@@ -224,17 +216,14 @@ export default function Page() {
             geocodeFailedVehicleIds={geocodeFailedVehicleIds}
             outOfRegionVehicleIds={outOfRegionVehicleIds}
           />
-          <AddressSection
-            {...addressState}
-            geocodeFailedIds={geocodeFailedAddressIds}
-            outOfRegionIds={outOfRegionAddressIds}
-            onCSVUpload={handleCSVUpload}
-            onCSVImport={() => fileInputRef.current?.click()}
-          />
-          <AddressPagination {...addressState} />
-          <VehicleSection {...vehicleState} geocodeFailedVehicleIds={geocodeFailedVehicleIds} outOfRegionVehicleIds={outOfRegionVehicleIds} />
           <div className={ADDRESS_SECTION_WITH_PAGINATION}>
-            <AddressSection {...addressState} geocodeFailedIds={geocodeFailedAddressIds} outOfRegionIds={outOfRegionAddressIds} onCSVUpload={handleCSVUpload} />
+            <AddressSection
+              {...addressState}
+              geocodeFailedIds={geocodeFailedAddressIds}
+              outOfRegionIds={outOfRegionAddressIds}
+              onCSVUpload={handleCSVUpload}
+              onCSVImport={() => fileInputRef.current?.click()}
+            />
             <AddressPagination {...addressState} />
             <AddressPaginationMobile {...addressState} />
           </div>
