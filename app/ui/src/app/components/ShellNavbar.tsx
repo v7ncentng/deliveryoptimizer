@@ -1,5 +1,5 @@
 // app/components/ShellNavbar.tsx
-'use client';
+"use client";
 
 /**
  * Minimal top bar for onboarding flow pages.

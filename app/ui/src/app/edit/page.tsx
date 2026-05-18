@@ -13,7 +13,12 @@ import OptimizingModal from "./components/OptimizingModal";
 import Sidebar from "./components/Sidebar/Sidebar";
 import SidebarEditButton from "./components/Sidebar/SidebarEditButton";
 import SidebarResultsButton from "./components/Sidebar/SidebarResultsButton";
-import { PAGE_V2_ROOT, PAGE_V2_BODY, PAGE_V2_MAIN, ADDRESS_SECTION_WITH_PAGINATION } from "./formStyles.v2";
+import {
+  PAGE_V2_ROOT,
+  PAGE_V2_BODY,
+  PAGE_V2_MAIN,
+  ADDRESS_SECTION_WITH_PAGINATION,
+} from "./formStyles.v2";
 import VehicleSection from "./components/VehicleSection";
 import AddressSection from "./components/AddressSection";
 import AddressPagination from "./components/AddressPagination";
@@ -36,7 +41,9 @@ import {
   mapOptimizeRequestToEditState,
 } from "./utils/sessionMapper";
 import { useRouter } from "next/navigation";
-import AddressOverlay, { type LocationAddress } from "./components/AddressOverlay";
+import AddressOverlay, {
+  type LocationAddress,
+} from "./components/AddressOverlay";
 
 type StoredUploadFile = { name: string; content: string };
 
@@ -64,7 +71,7 @@ export default function Page() {
     vehicleState.vehicles,
     addressState.addresses,
     vehicleState.cacheVehicleLocation,
-    addressState.cacheAddressLocation
+    addressState.cacheAddressLocation,
   );
 
   const { handleCSVUpload, csvError, clearCsvError } = useCSVUpload({
@@ -88,7 +95,10 @@ export default function Page() {
       const storedSavePointFile = sessionStorage.getItem("savePointFile");
       if (storedSavePointFile) {
         try {
-          const savedFile = parseStoredUploadFile(storedSavePointFile, "save point");
+          const savedFile = parseStoredUploadFile(
+            storedSavePointFile,
+            "save point",
+          );
           const session = await loadSessionFromFile(
             new File([savedFile.content], savedFile.name, { type: "application/json" })
           );
@@ -125,7 +135,7 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, [importVehicles, importAddresses]);
+  }, [importAddresses, importVehicles]);
 
   const handleImportSession = useCallback(() => {
     router.push("/upload-save-point");
@@ -136,26 +146,31 @@ export default function Page() {
     try {
       const request = await mapEditStateToOptimizeRequest(
         vehicleState.vehicles,
-        addressState.addresses
+        addressState.addresses,
       );
       const result = downloadSessionSave(request);
       if (!result.ok) throw result.error;
     } catch (error) {
       setSessionError(
-        error instanceof Error ? error.message : "Failed to export the session state."
+        error instanceof Error
+          ? error.message
+          : "Failed to export the session state.",
       );
     }
   }, [addressState.addresses, vehicleState.vehicles]);
 
   const clearSessionError = useCallback(() => setSessionError(null), []);
 
-  const handleStartLocationSave = useCallback((addr: LocationAddress) => {
-    const parts = [addr.line1];
-    if (addr.line2.trim()) parts.push(addr.line2);
-    parts.push(addr.city, `${addr.state} ${addr.zipCode}`, addr.country);
-    const formattedAddress = parts.join(", ");
-    void optimize(formattedAddress);
-  }, [optimize]);
+  const handleStartLocationSave = useCallback(
+    (addr: LocationAddress) => {
+      const parts = [addr.line1];
+      if (addr.line2.trim()) parts.push(addr.line2);
+      parts.push(addr.city, `${addr.state} ${addr.zipCode}`, addr.country);
+      const formattedAddress = parts.join(", ");
+      void optimize(formattedAddress);
+    },
+    [optimize],
+  );
 
   return (
     <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
@@ -189,7 +204,10 @@ export default function Page() {
           onSave={handleStartLocationSave}
         />
       )}
-      <MobileSidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+      <MobileSidebar
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
       <MobileBottomBar
         onOptimize={() => void optimize()}
         onSave={handleExportSession}
@@ -202,8 +220,12 @@ export default function Page() {
         onExportSession={handleExportSession}
         onOptimize={() => void optimize()}
         isOptimizing={isOptimizing}
-        error={sessionError ?? optimizeError ?? csvError ?? parseError}
-        onClearError={() => { clearSessionError(); clearOptimizeError(); clearCsvError(); }}
+        error={sessionError ?? optimizeError ?? csvError}
+        onClearError={() => {
+          clearSessionError();
+          clearOptimizeError();
+          clearCsvError();
+        }}
       />
       <div className={PAGE_V2_BODY}>
         <Sidebar>
@@ -235,7 +257,10 @@ export default function Page() {
   );
 }
 
-function parseStoredUploadFile(rawValue: string, label: string): StoredUploadFile {
+function parseStoredUploadFile(
+  rawValue: string,
+  label: string,
+): StoredUploadFile {
   let parsed: unknown;
   try { parsed = JSON.parse(rawValue); } catch {
     throw new Error(`Invalid ${label} upload payload.`);
@@ -248,6 +273,38 @@ function parseStoredUploadFile(rawValue: string, label: string): StoredUploadFil
   return parsed as StoredUploadFile;
 }
 
-function reindexAddresses(addresses: AddressCard[]): AddressCard[] {
-  return addresses.map((address, index) => ({ ...address, id: index + 1 }));
+function parseStoredAddressFiles(rawValue: string): StoredUploadFile[] {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(rawValue);
+  } catch {
+    throw new Error("Invalid address upload payload.");
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("Invalid address upload payload.");
+  }
+
+  return parsed.map((entry) => {
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      typeof (entry as StoredUploadFile).name !== "string" ||
+      typeof (entry as StoredUploadFile).content !== "string"
+    ) {
+      throw new Error("Invalid address upload payload.");
+    }
+
+    return entry as StoredUploadFile;
+  });
+}
+
+function reindexAddresses(
+  addresses: ReturnType<typeof mapOptimizeRequestToEditState>["addresses"],
+) {
+  return addresses.map((address, index) => ({
+    ...address,
+    id: index + 1,
+  }));
 }
