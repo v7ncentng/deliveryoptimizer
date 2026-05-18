@@ -9,7 +9,7 @@
  * Two confirm modes:
  *   - importAddresses (in-page): calls the hook directly, stays on edit page.
  *   - onConfirmAndNavigate (upload flow): stores results in sessionStorage as
- *     "addressFiles" then calls router.push("/edit"), triggering the edit page's
+ *     "importedCards" then calls router.push("/edit"), triggering the edit page's
  *     existing hydration useEffect to pick them up on mount.
  *
  * Works with both CSV and raw JSON arrays — useCSVImport normalises both to
@@ -91,6 +91,8 @@ function buildAddressCards(
         const val = row[colIdx] ?? "";
         if (field === "deliveryQuantity") {
           card.deliveryQuantity = parseInt(val, 10) || 0;
+        } else if (field === "timeBuffer") {
+          card.timeBuffer = parseInt(val, 10) || 0;
         } else {
           (card as Record<string, unknown>)[field] = val;
         }
@@ -298,7 +300,18 @@ function StepOne({
         </button>
         <button
           onClick={onNext}
-          style={{ background: "#4a9d7f", color: "#fff", border: "none", borderRadius: "999px", padding: "10px 24px", fontSize: "14px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
+          disabled={!Object.values(mapping).includes("recipientAddress")}
+          style={{
+            background: Object.values(mapping).includes("recipientAddress") ? "#4a9d7f" : "#c8d8d3",
+            color: "#fff",
+            border: "none",
+            borderRadius: "999px",
+            padding: "10px 24px",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: Object.values(mapping).includes("recipientAddress") ? "pointer" : "not-allowed",
+            fontFamily: "inherit",
+          }}
         >
           Next
         </button>

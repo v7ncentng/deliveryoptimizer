@@ -320,7 +320,7 @@ export default function UploadRoutePage() {
           {error && <p className="ur-error">{error}</p>}
 
           <div className="ur-actions">
-            <button className="ur-back-btn" onClick={() => router.push("/")}>
+            <button className="ur-back-btn" onClick={() => router.back()}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
