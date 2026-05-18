@@ -254,10 +254,10 @@ export default function UploadRoutePage() {
       <div className="ur-root">
         <ShellNavbar />
 
-        <div className="ur-content">
-          <h2 className="ur-title">Upload your route</h2>
-          <p className="ur-subtitle">
-            Upload the route file shared by your Route Manager.
+        <div className="upload-content">
+          <h2 className="upload-title">Upload your route</h2>
+          <p className="upload-subtitle">
+            Upload your route to begin your deliveries!
           </p>
 
           {/* Drop zone — shows spinner while file is being read */}
@@ -286,6 +286,35 @@ export default function UploadRoutePage() {
                 <p className="ur-dropzone-browse">Browse files</p>
               </>
             )}
+            <div className="upload-dropzone-icon">
+              <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
+                <path
+                  d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M18 2v12h12"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M16 22v-6M13 19l3-3 3 3"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <p className="upload-dropzone-text">
+              Drag and drop .json files here, or
+            </p>
+            <p className="upload-dropzone-browse">Browse files</p>
             <input
               ref={inputRef}
               type="file"
@@ -305,6 +334,31 @@ export default function UploadRoutePage() {
               <span className="ur-file-size">{formatSize(file.size)}</span>
               <button
                 className="ur-file-remove"
+          {file && (
+            <div className="upload-file-row">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                style={{ color: "#4a8c7a", flexShrink: 0 }}
+              >
+                <path
+                  d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="upload-file-name">{file.name}</span>
+              <span className="upload-file-size">{formatSize(file.size)}</span>
+              <button
+                className="upload-file-remove"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                }}
                 aria-label="Remove file"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -322,7 +376,13 @@ export default function UploadRoutePage() {
           <div className="ur-actions">
             <button className="ur-back-btn" onClick={() => router.push("/")}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M10 3L5 8l5 5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               Back
             </button>
