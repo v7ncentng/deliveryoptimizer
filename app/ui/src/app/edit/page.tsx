@@ -26,13 +26,12 @@ import AddressPaginationMobile from "@/app/edit/components/address/AddressPagina
 import EditPageFooter from "@/app/edit/components/layout/footer/EditPageFooter";
 import MobileEditPageFooter from "@/app/edit/components/layout/footer/MobileEditPageFooter";
 import MobileBottomBar from "@/app/edit/components/layout/navbar/MobileBottomBar";
+import { CSVImportModal } from "@/app/edit/components/CSVImportModal";
 import { useVehicles } from "@/app/edit/hooks/useVehicles";
 import { useAddresses } from "@/app/edit/hooks/useAddresses";
 import { useOptimize } from "@/app/edit/hooks/useOptimize";
-import {
-  parseAddressUpload,
-  useCSVUpload,
-} from "@/app/edit/hooks/useCSVUpload";
+import { useCSVUpload } from "@/app/edit/hooks/useCSVUpload";
+import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import { useCallback, useEffect, useState } from "react";
 import type { AddressCard } from "@/app/edit/types/delivery";
 import { loadSessionFromFile } from "@/lib/session/importSession";
@@ -59,6 +58,7 @@ export default function Page() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { importVehicles } = vehicleState;
   const { importAddresses } = addressState;
+
   const {
     optimize,
     isOptimizing,
@@ -81,10 +81,22 @@ export default function Page() {
     importAddresses: addressState.importAddresses,
   });
 
+  // In-page modal for CSV/JSON imports triggered from AddressSection
+  const {
+    csvData,
+    isImportModalOpen,
+    parseError,
+    openImportModal,
+    closeImportModal,
+  } = useCSVImport();
+
   useEffect(() => {
     let cancelled = false;
 
     const hydrateImportedState = async () => {
+      // Session save file (JSON with vehicles + deliveries schema).
+      // removeItem is intentionally inside the try block — if loadSessionFromFile
+      // throws, the key stays in sessionStorage so a page refresh can retry.
       const storedSavePointFile = sessionStorage.getItem("savePointFile");
       if (storedSavePointFile) {
         try {
@@ -98,13 +110,11 @@ export default function Page() {
             }),
           );
           const importedState = mapOptimizeRequestToEditState(session);
-
           if (cancelled) return;
-
           importVehicles(importedState.vehicles);
           importAddresses(importedState.addresses);
+          // Only remove after a successful import so a refresh can retry on failure
           sessionStorage.removeItem("savePointFile");
-          return;
         } catch (error) {
           if (!cancelled) {
             setSessionError(
@@ -113,35 +123,22 @@ export default function Page() {
                 : "Failed to import the saved session.",
             );
           }
-          return;
         }
+        return;
       }
 
-      const storedAddressFiles = sessionStorage.getItem("addressFiles");
-      if (!storedAddressFiles) return;
-
-      try {
-        const uploads = parseStoredAddressFiles(storedAddressFiles);
-        const importedAddresses: AddressCard[] = [];
-
-        for (const upload of uploads) {
-          importedAddresses.push(
-            ...(await parseAddressUpload(upload.name, upload.content)),
-          );
+      // Fully-built AddressCard[] written by CSVImportModal's onConfirmAndNavigate path.
+      // No parsing needed — import directly into address state.
+      const storedImportedCards = sessionStorage.getItem("importedCards");
+      if (storedImportedCards) {
+        sessionStorage.removeItem("importedCards");
+        try {
+          const cards = JSON.parse(storedImportedCards) as AddressCard[];
+          if (!cancelled) importAddresses(reindexAddresses(cards));
+        } catch {
+          if (!cancelled) setSessionError("Failed to import the selected entries.");
         }
-
-        if (cancelled) return;
-
-        importAddresses(reindexAddresses(importedAddresses));
-        sessionStorage.removeItem("addressFiles");
-      } catch (error) {
-        if (!cancelled) {
-          setSessionError(
-            error instanceof Error
-              ? error.message
-              : "Failed to import the uploaded addresses.",
-          );
-        }
+        return;
       }
     };
 
@@ -152,8 +149,10 @@ export default function Page() {
     };
   }, [importAddresses, importVehicles]);
 
+  // Routes to /upload-save-point so the user can upload a .json save file
+  // or a .csv/.json address list through the column-mapper modal flow.
   const handleImportSession = useCallback(() => {
-    router.push("/welcome");
+    router.push("/upload-save-point");
   }, [router]);
 
   const handleExportSession = useCallback(async () => {
@@ -195,6 +194,15 @@ export default function Page() {
 
   return (
     <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
+      {/* In-page import modal — stays on edit page after confirm */}
+      {isImportModalOpen && (
+        <CSVImportModal
+          csvData={csvData}
+          onClose={closeImportModal}
+          importAddresses={addressState.importAddresses}
+        />
+      )}
+
       <OptimizingModal isOpen={isOptimizing} />
       {needsDepotAddress && (
         <AddressOverlay
@@ -219,7 +227,7 @@ export default function Page() {
         onExportSession={handleExportSession}
         onOptimize={() => void optimize()}
         isOptimizing={isOptimizing}
-        error={sessionError ?? optimizeError ?? csvError}
+        error={sessionError ?? optimizeError ?? csvError ?? parseError}
         onClearError={() => {
           clearSessionError();
           clearOptimizeError();
@@ -279,36 +287,7 @@ function parseStoredUploadFile(
   return parsed as StoredUploadFile;
 }
 
-function parseStoredAddressFiles(rawValue: string): StoredUploadFile[] {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(rawValue);
-  } catch {
-    throw new Error("Invalid address upload payload.");
-  }
-
-  if (!Array.isArray(parsed)) {
-    throw new Error("Invalid address upload payload.");
-  }
-
-  return parsed.map((entry) => {
-    if (
-      !entry ||
-      typeof entry !== "object" ||
-      typeof (entry as StoredUploadFile).name !== "string" ||
-      typeof (entry as StoredUploadFile).content !== "string"
-    ) {
-      throw new Error("Invalid address upload payload.");
-    }
-
-    return entry as StoredUploadFile;
-  });
-}
-
-function reindexAddresses(
-  addresses: ReturnType<typeof mapOptimizeRequestToEditState>["addresses"],
-) {
+function reindexAddresses(addresses: AddressCard[]): AddressCard[] {
   return addresses.map((address, index) => ({
     ...address,
     id: index + 1,
