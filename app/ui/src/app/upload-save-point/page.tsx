@@ -27,7 +27,6 @@ export default function UploadSavePointPage() {
     csvData,
     isImportModalOpen,
     isLoading,
-    parseError,
     openImportModal,
     closeImportModal,
   } = useCSVImport();
@@ -331,36 +330,6 @@ export default function UploadSavePointPage() {
                 <p className="upload-dropzone-browse">Browse files</p>
               </>
             )}
-            <div className="upload-dropzone-icon">
-              <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
-                <path
-                  d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M18 2v12h12"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M16 22v-6M13 19l3-3 3 3"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            {/* Fixed: label now says ".json files" to match accept=".json" */}
-            <p className="upload-dropzone-text">
-              Drag and drop .json files here, or
-            </p>
-            <p className="upload-dropzone-browse">Browse files</p>
             <input
               ref={inputRef}
               type="file"
@@ -398,21 +367,17 @@ export default function UploadSavePointPage() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);
-                }}
-                aria-label="Remove file"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setFile(null);
                   setContinueError(null);
                 }}
+                aria-label="Remove file"
               >
                 ×
               </button>
             </div>
           )}
 
-          {(continueError ?? parseError) && (
-            <p className="upload-parse-error">{continueError ?? parseError}</p>
+          {continueError && (
+            <p className="upload-parse-error">{continueError}</p>
           )}
 
           <div className="upload-actions">
