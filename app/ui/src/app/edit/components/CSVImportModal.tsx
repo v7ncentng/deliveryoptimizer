@@ -16,7 +16,7 @@
  * string[][] before this modal receives them.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { AddressCard } from "../types/delivery";
 
@@ -76,9 +76,9 @@ function buildAddressCards(
         id: idCounter++,
         locked: true,
         editingExisting: false,
+        recipientName: "",
+        phoneNumber: "",
         recipientAddress: "",
-        recipientName: "", 
-        phoneNumber: "", 
         timeBuffer: 0,
         deliveryTimeStart: "",
         deliveryTimeEnd: "",
@@ -495,8 +495,11 @@ export function CSVImportModal({
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
 
-  const headers = csvData[0] ?? [];
-  const dataRows = csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== ""));
+  const headers = useMemo(() => csvData[0] ?? [], [csvData]);
+  const dataRows = useMemo(
+    () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
+    [csvData],
+  );
 
   const [mapping, setMapping] = useState<Record<string, MappableField>>(() =>
     Object.fromEntries(headers.map((h) => [h, "" as MappableField]))
@@ -517,7 +520,11 @@ export function CSVImportModal({
   const handleToggleRow = useCallback((index: number) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
       return next;
     });
   }, []);
