@@ -83,7 +83,6 @@ export default function Page() {
     csvData,
     isImportModalOpen,
     parseError,
-    openImportModal,
     closeImportModal,
   } = useCSVImport();
 
