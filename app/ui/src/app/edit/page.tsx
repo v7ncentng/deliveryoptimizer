@@ -32,7 +32,7 @@ import { useAddresses } from "@/app/edit/hooks/useAddresses";
 import { useOptimize } from "@/app/edit/hooks/useOptimize";
 import { useCSVUpload } from "@/app/edit/hooks/useCSVUpload";
 import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { AddressCard } from "@/app/edit/types/delivery";
 import { loadSessionFromFile } from "@/lib/session/importSession";
 import { downloadSessionSave } from "@/lib/session/exportSession";
@@ -87,8 +87,6 @@ export default function Page() {
     closeImportModal,
   } = useCSVImport();
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     let cancelled = false;
 
@@ -135,8 +133,7 @@ export default function Page() {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
           if (!cancelled) importAddresses(reindexAddresses(cards));
         } catch {
-          if (!cancelled)
-            setSessionError("Failed to import the selected entries.");
+          if (!cancelled) setSessionError("Failed to import the selected entries.");
         }
         return;
       }
@@ -188,19 +185,6 @@ export default function Page() {
 
   return (
     <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
-      {/* Hidden file input for in-page CSV/JSON import via AddressSection */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv,.json"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) openImportModal(file);
-          e.target.value = "";
-        }}
-      />
-
       {/* In-page import modal — stays on edit page after confirm */}
       {isImportModalOpen && (
         <CSVImportModal
@@ -258,7 +242,6 @@ export default function Page() {
               geocodeFailedIds={geocodeFailedAddressIds}
               outOfRegionIds={outOfRegionAddressIds}
               onCSVUpload={handleCSVUpload}
-              onCSVImport={() => fileInputRef.current?.click()}
             />
             <AddressPagination {...addressState} />
             <AddressPaginationMobile {...addressState} />
@@ -276,9 +259,7 @@ function parseStoredUploadFile(
   label: string,
 ): StoredUploadFile {
   let parsed: unknown;
-  try {
-    parsed = JSON.parse(rawValue);
-  } catch {
+  try { parsed = JSON.parse(rawValue); } catch {
     throw new Error(`Invalid ${label} upload payload.`);
   }
   if (
