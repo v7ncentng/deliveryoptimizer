@@ -1,19 +1,47 @@
 // app/upload-save-point/page.tsx
 "use client";
-import { useState, useRef } from "react";
+
+export const dynamic = "force-dynamic";
+
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
+import { CSVImportModal } from "@/app/edit/components/CSVImportModal";
+import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
+import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
 import { formatSize } from "@/app/utils/routeUtils";
+
+const MAX_FILE_MB = 10;
+const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
 
 export default function UploadSavePointPage() {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [continueError, setContinueError] = useState<string | null>(null);
   const dragDepth = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    csvData,
+    isImportModalOpen,
+    isLoading,
+    openImportModal,
+    closeImportModal,
+  } = useCSVImport();
+
   const handleFile = (f: File) => {
-    if (f.name.endsWith(".json")) setFile(f);
+    setContinueError(null);
+    if (!f.name.endsWith(".json") && !f.name.endsWith(".csv")) {
+      setContinueError("Only .json or .csv files are accepted.");
+      return;
+    }
+    if (f.size > MAX_FILE_BYTES) {
+      setContinueError(`File exceeds the ${MAX_FILE_MB} MB limit.`);
+      return;
+    }
+    setFile(f);
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -36,15 +64,51 @@ export default function UploadSavePointPage() {
     if (f) handleFile(f);
   };
 
-  const handleContinue = async () => {
-    if (!file) return;
-    const text = await file.text();
-    sessionStorage.setItem(
-      "savePointFile",
-      JSON.stringify({ name: file.name, content: text }),
-    );
-    router.push("/edit");
-  };
+  const handleContinue = useCallback(async () => {
+    if (!file || isProcessing) return;
+    setIsProcessing(true);
+    setContinueError(null);
+
+    try {
+      if (file.name.endsWith(".json")) {
+        let text: string;
+        let parsed: unknown;
+
+        try {
+          text = await file.text();
+          parsed = JSON.parse(text);
+        } catch {
+          setContinueError("This file is not valid JSON.");
+          return;
+        }
+
+        try {
+          migrateSessionSaveFile(parsed);
+          sessionStorage.setItem(
+            "savePointFile",
+            JSON.stringify({ name: file.name, content: text }),
+          );
+          router.push("/edit");
+          return;
+        } catch {
+          // Not a session save — fall through to the modal flow
+        }
+      }
+
+      // CSV or raw JSON array: open two-step column-mapper modal
+      openImportModal(file);
+    } catch (err) {
+      setContinueError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [file, isProcessing, openImportModal, router]);
+
+  const isUploadingOrLoading = (isProcessing && !!file) || isLoading;
 
   return (
     <>
@@ -94,11 +158,13 @@ export default function UploadSavePointPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
           gap: 10px;
           cursor: pointer;
           background: #f9f9f8;
           transition: border-color 0.15s, background 0.15s;
           margin-bottom: 16px;
+          min-height: 160px;
         }
 
         .upload-dropzone.dragging {
@@ -151,9 +217,10 @@ export default function UploadSavePointPage() {
           padding: 4px;
           display: flex;
           align-items: center;
-          font-size: 18px;
           line-height: 1;
         }
+
+        .upload-file-remove:hover { color: #111; }
 
         .upload-actions {
           width: 100%;
@@ -170,11 +237,10 @@ export default function UploadSavePointPage() {
           cursor: pointer;
           font-size: 14px;
           color: #555;
-          font-family: 'DM Sans', sans-serif;
           display: flex;
           align-items: center;
           gap: 6px;
-          padding: 0;
+          font-family: inherit;
         }
 
         .upload-back-btn:hover { color: #111; }
@@ -187,23 +253,52 @@ export default function UploadSavePointPage() {
           padding: 10px 28px;
           font-size: 14px;
           font-weight: 500;
-          font-family: 'DM Sans', sans-serif;
           cursor: pointer;
-          transition: background 0.15s, opacity 0.15s;
+          font-family: inherit;
+          transition: background 0.15s;
         }
+
+        .upload-continue-btn:hover:not(:disabled) { background: #3d7a6a; }
 
         .upload-continue-btn:disabled {
           opacity: 0.4;
           cursor: not-allowed;
         }
 
-        .upload-continue-btn:not(:disabled):hover {
-          background: #3d7a6a;
+        .upload-parse-error {
+          width: 100%;
+          max-width: 580px;
+          font-size: 13px;
+          color: #c0392b;
+          margin-bottom: 12px;
+          text-align: center;
+        }
+
+        @keyframes upload-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .upload-spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #e0e0e0;
+          border-top-color: #4a8c7a;
+          border-radius: 50%;
+          animation: upload-spin 0.8s linear infinite;
         }
       `}</style>
 
       <div className="upload-root">
         <ShellNavbar />
+
+        {/* Modal renders over the upload page — navigation only happens after Confirm */}
+        {isImportModalOpen && (
+          <CSVImportModal
+            csvData={csvData}
+            onClose={closeImportModal}
+            onConfirmAndNavigate
+          />
+        )}
 
         <div className="upload-content">
           <h2 className="upload-title">Upload your save point</h2>
@@ -211,57 +306,66 @@ export default function UploadSavePointPage() {
             Continue editing from where you left off.
           </p>
 
+          {/* Drop zone — shows spinner while file is being read/parsed */}
           <div
             className={`upload-dropzone${isDragging ? " dragging" : ""}`}
-            onClick={() => inputRef.current?.click()}
+            onClick={() => !isUploadingOrLoading && inputRef.current?.click()}
             onDragEnter={handleDragEnter}
             onDragOver={(e) => e.preventDefault()}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className="upload-dropzone-icon">
-              <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
-                <path
-                  d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M18 2v12h12"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M16 22v-6M13 19l3-3 3 3"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            {/* Fixed: label now says ".json files" to match accept=".json" */}
-            <p className="upload-dropzone-text">
-              Drag and drop .json files here, or
-            </p>
-            <p className="upload-dropzone-browse">Browse files</p>
+            {isUploadingOrLoading ? (
+              <div className="upload-spinner" />
+            ) : (
+              <>
+                <div className="upload-dropzone-icon">
+                  <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
+                    <rect
+                      x="1"
+                      y="1"
+                      width="22"
+                      height="34"
+                      rx="3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <path
+                      d="M7 10h10M7 15h10M7 20h6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <p className="upload-dropzone-text">
+                  Drag and drop .json or .csv files here, or
+                </p>
+                <p className="upload-dropzone-browse">Browse files</p>
+              </>
+            )}
             <input
               ref={inputRef}
               type="file"
-              accept=".json"
+              accept=".json,.csv"
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
+                e.target.value = "";
               }}
             />
           </div>
 
-          {file && (
+          {file && !isUploadingOrLoading && (
             <div className="upload-file-row">
               <svg
                 width="16"
@@ -285,12 +389,17 @@ export default function UploadSavePointPage() {
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);
+                  setContinueError(null);
                 }}
                 aria-label="Remove file"
               >
                 ×
               </button>
             </div>
+          )}
+
+          {continueError && (
+            <p className="upload-parse-error">{continueError}</p>
           )}
 
           <div className="upload-actions">
@@ -308,10 +417,10 @@ export default function UploadSavePointPage() {
             </button>
             <button
               className="upload-continue-btn"
-              onClick={handleContinue}
-              disabled={!file}
+              onClick={() => void handleContinue()}
+              disabled={!file || isUploadingOrLoading}
             >
-              Continue
+              {isUploadingOrLoading ? "Processing..." : "Continue"}
             </button>
           </div>
         </div>
