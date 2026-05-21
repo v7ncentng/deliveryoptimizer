@@ -256,9 +256,9 @@ export default function UploadRoutePage() {
       <div className="ur-root">
         <ShellNavbar />
 
-        <div className="upload-content">
-          <h2 className="upload-title">Upload your route</h2>
-          <p className="upload-subtitle">
+        <div className="ur-content">
+          <h2 className="ur-title">Upload your route</h2>
+          <p className="ur-subtitle">
             Upload your route to begin your deliveries!
           </p>
 

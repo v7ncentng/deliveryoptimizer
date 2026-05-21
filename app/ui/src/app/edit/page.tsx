@@ -186,7 +186,9 @@ export default function Page() {
         <CSVImportModal
           csvData={csvData}
           onClose={closeImportModal}
-          importAddresses={addressState.importAddresses}
+          importAddresses={(cards) =>
+            addressState.importAddresses(reindexAddresses(cards))
+          }
         />
       )}
 
@@ -219,6 +221,7 @@ export default function Page() {
           clearSessionError();
           clearOptimizeError();
           clearCsvError();
+          closeImportModal();
         }}
       />
       <div className={PAGE_V2_BODY}>
