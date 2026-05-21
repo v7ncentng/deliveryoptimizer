@@ -66,7 +66,7 @@ function buildAddressCards(
   rows: string[][],
   headers: string[],
   mapping: Record<string, MappableField>,
-  selectedIndices: Set<number>
+  selectedIndices: Set<number>,
 ): AddressCard[] {
   let idCounter = 1;
   return rows
@@ -118,7 +118,13 @@ function ModalBackdrop({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ModalShell({ children, width = 580 }: { children: React.ReactNode; width?: number }) {
+function ModalShell({
+  children,
+  width = 580,
+}: {
+  children: React.ReactNode;
+  width?: number;
+}) {
   return (
     <div
       style={{
@@ -153,13 +159,38 @@ function ModalShell({ children, width = 580 }: { children: React.ReactNode; widt
   );
 }
 
-function ModalHeader({ title, subtitle, onClose }: { title: string; subtitle: string; onClose: () => void }) {
+function ModalHeader({
+  title,
+  subtitle,
+  onClose,
+}: {
+  title: string;
+  subtitle: string;
+  onClose: () => void;
+}) {
   return (
     <div style={{ padding: "24px 24px 0" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}
+      >
         <div>
-          <h2 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#111" }}>{title}</h2>
-          <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#777" }}>{subtitle}</p>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "17px",
+              fontWeight: 700,
+              color: "#111",
+            }}
+          >
+            {title}
+          </h2>
+          <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#777" }}>
+            {subtitle}
+          </p>
         </div>
         <button
           onClick={onClose}
@@ -176,7 +207,12 @@ function ModalHeader({ title, subtitle, onClose }: { title: string; subtitle: st
           }}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path
+              d="M2 2l14 14M16 2L2 16"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
       </div>
@@ -221,7 +257,16 @@ function StepOne({
           }}
         >
           {["File column", "Delivery Optimizer column", "Preview"].map((h) => (
-            <span key={h} style={{ fontSize: "12px", fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <span
+              key={h}
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#888",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
               {h}
             </span>
           ))}
@@ -244,7 +289,9 @@ function StepOne({
             </span>
             <select
               value={mapping[header] ?? ""}
-              onChange={(e) => onMappingChange(header, e.target.value as MappableField)}
+              onChange={(e) =>
+                onMappingChange(header, e.target.value as MappableField)
+              }
               style={{
                 fontSize: "13px",
                 border: "1.5px solid #e0e0e0",
@@ -261,15 +308,27 @@ function StepOne({
               }}
             >
               <option value="">Select</option>
-              {(Object.keys(FIELD_LABELS) as Exclude<MappableField, "">[]).map((f) => (
-                <option key={f} value={f}>{FIELD_LABELS[f]}</option>
-              ))}
+              {(Object.keys(FIELD_LABELS) as Exclude<MappableField, "">[]).map(
+                (f) => (
+                  <option key={f} value={f}>
+                    {FIELD_LABELS[f]}
+                  </option>
+                ),
+              )}
             </select>
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px", overflow: "hidden" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+                overflow: "hidden",
+              }}
+            >
               {previewRows.map((row, i) => {
                 const val = row[headers.indexOf(header)] ?? "—";
                 // Shrink font proportionally for longer values so they fit the column
-                const fontSize = val.length > 40 ? "10px" : val.length > 25 ? "11px" : "12px";
+                const fontSize =
+                  val.length > 40 ? "10px" : val.length > 25 ? "11px" : "12px";
                 return (
                   <span
                     key={i}
@@ -291,10 +350,27 @@ function StepOne({
           </div>
         ))}
       </div>
-      <div style={{ padding: "16px 24px", display: "flex", justifyContent: "flex-end", gap: "10px", borderTop: "1px solid #f0f0f0" }}>
+      <div
+        style={{
+          padding: "16px 24px",
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "10px",
+          borderTop: "1px solid #f0f0f0",
+        }}
+      >
         <button
           onClick={onCancel}
-          style={{ background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "#555", fontFamily: "inherit", padding: "10px 16px", borderRadius: "8px" }}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "14px",
+            color: "#555",
+            fontFamily: "inherit",
+            padding: "10px 16px",
+            borderRadius: "8px",
+          }}
         >
           Cancel
         </button>
@@ -302,14 +378,18 @@ function StepOne({
           onClick={onNext}
           disabled={!Object.values(mapping).includes("recipientAddress")}
           style={{
-            background: Object.values(mapping).includes("recipientAddress") ? "#4a9d7f" : "#c8d8d3",
+            background: Object.values(mapping).includes("recipientAddress")
+              ? "#4a9d7f"
+              : "#c8d8d3",
             color: "#fff",
             border: "none",
             borderRadius: "999px",
             padding: "10px 24px",
             fontSize: "14px",
             fontWeight: 600,
-            cursor: Object.values(mapping).includes("recipientAddress") ? "pointer" : "not-allowed",
+            cursor: Object.values(mapping).includes("recipientAddress")
+              ? "pointer"
+              : "not-allowed",
             fontFamily: "inherit",
           }}
         >
@@ -361,18 +441,48 @@ function StepTwo({
       />
 
       {/* Horizontally scrollable table */}
-      <div style={{ overflowX: "auto", overflowY: "auto", flex: 1, padding: "16px 0 0" }}>
-        <table style={{ borderCollapse: "collapse", width: "100%", minWidth: `${32 + mappedHeaders.length * COL_MIN}px` }}>
+      <div
+        style={{
+          overflowX: "auto",
+          overflowY: "auto",
+          flex: 1,
+          padding: "16px 0 0",
+        }}
+      >
+        <table
+          style={{
+            borderCollapse: "collapse",
+            width: "100%",
+            minWidth: `${32 + mappedHeaders.length * COL_MIN}px`,
+          }}
+        >
           <thead>
             <tr style={{ borderBottom: "1.5px solid #e8e8e8" }}>
               {/* Select-all checkbox */}
-              <th style={{ width: "52px", padding: "0 12px 10px 24px", textAlign: "left", position: "sticky", left: 0, background: "#fff", zIndex: 2 }}>
+              <th
+                style={{
+                  width: "52px",
+                  padding: "0 12px 10px 24px",
+                  textAlign: "left",
+                  position: "sticky",
+                  left: 0,
+                  background: "#fff",
+                  zIndex: 2,
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={allChecked}
-                  ref={(el) => { if (el) el.indeterminate = someChecked; }}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someChecked;
+                  }}
                   onChange={(e) => onToggleAll(e.target.checked)}
-                  style={{ cursor: "pointer", accentColor: "#4a9d7f", width: "16px", height: "16px" }}
+                  style={{
+                    cursor: "pointer",
+                    accentColor: "#4a9d7f",
+                    width: "16px",
+                    height: "16px",
+                  }}
                 />
               </th>
               {mappedHeaders.map((h) => (
@@ -405,18 +515,33 @@ function StepTwo({
                   style={{
                     borderBottom: "1px solid #f0f0f0",
                     cursor: "pointer",
-                    background: isChecked ? "rgba(74,157,127,0.04)" : "transparent",
+                    background: isChecked
+                      ? "rgba(74,157,127,0.04)"
+                      : "transparent",
                     transition: "background 0.1s",
                   }}
                 >
                   {/* Sticky checkbox column */}
-                  <td style={{ padding: "12px 12px 12px 24px", position: "sticky", left: 0, background: isChecked ? "#f0faf7" : "#fff", zIndex: 1 }}>
+                  <td
+                    style={{
+                      padding: "12px 12px 12px 24px",
+                      position: "sticky",
+                      left: 0,
+                      background: isChecked ? "#f0faf7" : "#fff",
+                      zIndex: 1,
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => onToggleRow(i)}
                       onClick={(e) => e.stopPropagation()}
-                      style={{ cursor: "pointer", accentColor: "#4a9d7f", width: "16px", height: "16px" }}
+                      style={{
+                        cursor: "pointer",
+                        accentColor: "#4a9d7f",
+                        width: "16px",
+                        height: "16px",
+                      }}
                     />
                   </td>
                   {mappedHeaders.map((h) => {
@@ -449,14 +574,44 @@ function StepTwo({
       {/* Footer */}
       <div style={{ padding: "14px 24px", borderTop: "1px solid #f0f0f0" }}>
         <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#555" }}>
-          {selected.size} {selected.size === 1 ? "entry" : "entries"} will be imported
+          {selected.size} {selected.size === 1 ? "entry" : "entries"} will be
+          imported
         </p>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "#555", fontFamily: "inherit", padding: "10px 0" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <button
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "14px",
+              color: "#555",
+              fontFamily: "inherit",
+              padding: "10px 0",
+            }}
+          >
             Back
           </button>
           <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "14px", color: "#555", fontFamily: "inherit", padding: "10px 16px", borderRadius: "8px" }}>
+            <button
+              onClick={onCancel}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14px",
+                color: "#555",
+                fontFamily: "inherit",
+                padding: "10px 16px",
+                borderRadius: "8px",
+              }}
+            >
               Cancel
             </button>
             <button
@@ -497,25 +652,32 @@ export function CSVImportModal({
 
   const headers = useMemo(() => csvData[0] ?? [], [csvData]);
   const dataRows = useMemo(
-    () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
+    () =>
+      csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
     [csvData],
   );
 
   const [mapping, setMapping] = useState<Record<string, MappableField>>(() =>
-    Object.fromEntries(headers.map((h) => [h, "" as MappableField]))
+    Object.fromEntries(headers.map((h) => [h, "" as MappableField])),
   );
 
-  const handleMappingChange = useCallback((header: string, field: MappableField) => {
-    setMapping((prev) => ({ ...prev, [header]: field }));
-  }, []);
+  const handleMappingChange = useCallback(
+    (header: string, field: MappableField) => {
+      setMapping((prev) => ({ ...prev, [header]: field }));
+    },
+    [],
+  );
 
   const [selected, setSelected] = useState<Set<number>>(
-    () => new Set(dataRows.map((_, i) => i))
+    () => new Set(dataRows.map((_, i) => i)),
   );
 
-  const handleToggleAll = useCallback((checked: boolean) => {
-    setSelected(checked ? new Set(dataRows.map((_, i) => i)) : new Set());
-  }, [dataRows]);
+  const handleToggleAll = useCallback(
+    (checked: boolean) => {
+      setSelected(checked ? new Set(dataRows.map((_, i) => i)) : new Set());
+    },
+    [dataRows],
+  );
 
   const handleToggleRow = useCallback((index: number) => {
     setSelected((prev) => {
@@ -542,7 +704,16 @@ export function CSVImportModal({
       importAddresses(cards);
       onClose();
     }
-  }, [dataRows, headers, mapping, selected, importAddresses, onConfirmAndNavigate, onClose, router]);
+  }, [
+    dataRows,
+    headers,
+    mapping,
+    selected,
+    importAddresses,
+    onConfirmAndNavigate,
+    onClose,
+    router,
+  ]);
 
   return (
     <>

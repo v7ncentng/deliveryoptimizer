@@ -135,7 +135,8 @@ export default function Page() {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
           if (!cancelled) importAddresses(reindexAddresses(cards));
         } catch {
-          if (!cancelled) setSessionError("Failed to import the selected entries.");
+          if (!cancelled)
+            setSessionError("Failed to import the selected entries.");
         }
         return;
       }
@@ -275,7 +276,9 @@ function parseStoredUploadFile(
   label: string,
 ): StoredUploadFile {
   let parsed: unknown;
-  try { parsed = JSON.parse(rawValue); } catch {
+  try {
+    parsed = JSON.parse(rawValue);
+  } catch {
     throw new Error(`Invalid ${label} upload payload.`);
   }
   if (

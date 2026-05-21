@@ -86,7 +86,7 @@ export default function UploadSavePointPage() {
           migrateSessionSaveFile(parsed);
           sessionStorage.setItem(
             "savePointFile",
-            JSON.stringify({ name: file.name, content: text })
+            JSON.stringify({ name: file.name, content: text }),
           );
           router.push("/edit");
           return;
@@ -99,7 +99,9 @@ export default function UploadSavePointPage() {
       openImportModal(file);
     } catch (err) {
       setContinueError(
-        err instanceof Error ? err.message : "Something went wrong. Please try again."
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
       );
     } finally {
       setIsProcessing(false);
@@ -319,9 +321,29 @@ export default function UploadSavePointPage() {
               <>
                 <div className="upload-dropzone-icon">
                   <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                    <rect x="1" y="1" width="22" height="34" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                    <path d="M7 10h10M7 15h10M7 20h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M15 26v-7M15 19l-3 3M15 19l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect
+                      x="1"
+                      y="1"
+                      width="22"
+                      height="34"
+                      rx="3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <path
+                      d="M7 10h10M7 15h10M7 20h6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
                 <p className="upload-dropzone-text">
