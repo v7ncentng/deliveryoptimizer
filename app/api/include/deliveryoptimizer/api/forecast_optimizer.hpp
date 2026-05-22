@@ -45,8 +45,13 @@ struct WeatherImpactEstimate {
 
 [[nodiscard]] int EstimateServiceSeconds(const OptimizeRequestInput& input);
 
-[[nodiscard]] OpenWeatherDelayEstimate
-FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options, const Coordinate& coordinate);
+[[nodiscard]] OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(
+    const WeatherForecastOptions& options, const Coordinate& coordinate,
+    std::optional<std::chrono::sys_seconds> route_start_time = std::nullopt);
+
+[[nodiscard]] int
+ReadOpenWeatherDelay(const Json::Value& body,
+                     std::optional<std::chrono::sys_seconds> route_start_time = std::nullopt);
 
 [[nodiscard]] WeatherImpactEstimate EstimateWeatherImpact(const WeatherForecastOptions& options,
                                                           std::size_t stop_count,

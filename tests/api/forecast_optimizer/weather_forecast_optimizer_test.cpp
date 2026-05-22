@@ -42,6 +42,19 @@ namespace {
   };
 }
 
+[[nodiscard]] Json::Value BuildWeatherHour(const int dt, const int condition_id) {
+  Json::Value hour{Json::objectValue};
+  hour["dt"] = dt;
+  hour["wind_speed"] = 0.0;
+  hour["visibility"] = 10000;
+
+  Json::Value condition{Json::objectValue};
+  condition["id"] = condition_id;
+  hour["weather"] = Json::Value{Json::arrayValue};
+  hour["weather"].append(condition);
+  return hour;
+}
+
 } // namespace
 
 TEST(WeatherForecastOptimizerTest, DisabledWeatherHasNoImpact) {
@@ -153,6 +166,30 @@ TEST(WeatherForecastOptimizerTest, MissingVehicleTimeWindowHasNoPlannedStart) {
   const auto input = BuildInput();
 
   EXPECT_FALSE(deliveryoptimizer::api::ReadRouteStartTime(input).has_value());
+}
+
+TEST(WeatherForecastOptimizerTest, ReadsOpenWeatherHourNearRouteStart) {
+  Json::Value body{Json::objectValue};
+  body["hourly"] = Json::Value{Json::arrayValue};
+  body["hourly"].append(BuildWeatherHour(0, 201));
+  body["hourly"].append(BuildWeatherHour(7200, 800));
+
+  const int delay = deliveryoptimizer::api::ReadOpenWeatherDelay(
+      body, std::chrono::sys_seconds{std::chrono::seconds{7200}});
+
+  EXPECT_EQ(delay, 0);
+}
+
+TEST(WeatherForecastOptimizerTest, ReadsBadOpenWeatherHourNearRouteStart) {
+  Json::Value body{Json::objectValue};
+  body["hourly"] = Json::Value{Json::arrayValue};
+  body["hourly"].append(BuildWeatherHour(0, 800));
+  body["hourly"].append(BuildWeatherHour(7200, 201));
+
+  const int delay = deliveryoptimizer::api::ReadOpenWeatherDelay(
+      body, std::chrono::sys_seconds{std::chrono::seconds{7200}});
+
+  EXPECT_EQ(delay, 240);
 }
 
 TEST(WeatherForecastOptimizerTest, RefinesForecastWithVroomSummaryDuration) {

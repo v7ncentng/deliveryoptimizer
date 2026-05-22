@@ -140,19 +140,19 @@ constexpr double kDefaultWeatherThresholdPercent = 5.0;
   return delay_seconds;
 }
 
-[[nodiscard]] int DelayFromOpenWeatherBody(const Json::Value& body) {
-  const Json::Value& hourly = body["hourly"];
-  if (!hourly.isArray()) {
-    return 0;
+[[nodiscard]] bool IsRouteHour(const Json::Value& hour,
+                               const std::optional<std::chrono::sys_seconds> route_start_time) {
+  if (!route_start_time.has_value()) {
+    return true;
+  }
+  if (!hour["dt"].isInt64() && !hour["dt"].isUInt64()) {
+    return false;
   }
 
-  int delay_seconds = 0;
-  const Json::ArrayIndex hours_to_scan = std::min<Json::ArrayIndex>(hourly.size(), 6U);
-  for (Json::ArrayIndex index = 0; index < hours_to_scan; ++index) {
-    delay_seconds = std::max(delay_seconds, DelayFromHourlyForecast(hourly[index]));
-  }
-
-  return delay_seconds;
+  const auto forecast_time =
+      std::chrono::sys_seconds{std::chrono::seconds{hour["dt"].asLargestInt()}};
+  return forecast_time >= *route_start_time &&
+         forecast_time < *route_start_time + std::chrono::hours{6};
 }
 
 void SetRouteTimes(const deliveryoptimizer::api::OptimizeRequestInput& input,
@@ -204,8 +204,9 @@ int EstimateServiceSeconds(const OptimizeRequestInput& input) {
   return static_cast<int>(total);
 }
 
-OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options,
-                                                       const Coordinate& coordinate) {
+OpenWeatherDelayEstimate
+FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options, const Coordinate& coordinate,
+                              const std::optional<std::chrono::sys_seconds> route_start_time) {
   if (!IsOpenWeatherConfigured(options)) {
     return OpenWeatherDelayEstimate{
         .available = false,
@@ -223,7 +224,8 @@ OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOpti
   auto future = promise->get_future();
   client->sendRequest(
       request,
-      [promise](const drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
+      [promise, route_start_time](const drogon::ReqResult result,
+                                  const drogon::HttpResponsePtr& response) {
         if (result != drogon::ReqResult::Ok || response == nullptr ||
             response->getStatusCode() != drogon::k200OK) {
           promise->set_value(OpenWeatherDelayEstimate{
@@ -246,7 +248,7 @@ OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOpti
 
         promise->set_value(OpenWeatherDelayEstimate{
             .available = true,
-            .delay_seconds_per_stop = DelayFromOpenWeatherBody(*body),
+            .delay_seconds_per_stop = ReadOpenWeatherDelay(*body, route_start_time),
             .source = "openweather",
         });
       },
@@ -262,6 +264,35 @@ OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOpti
   }
 
   return future.get();
+}
+
+int ReadOpenWeatherDelay(const Json::Value& body,
+                         const std::optional<std::chrono::sys_seconds> route_start_time) {
+  const Json::Value& hourly = body["hourly"];
+  if (!hourly.isArray()) {
+    return 0;
+  }
+
+  int delay_seconds = 0;
+  Json::ArrayIndex matched_hours = 0U;
+  for (Json::ArrayIndex index = 0U; index < hourly.size(); ++index) {
+    if (!IsRouteHour(hourly[index], route_start_time)) {
+      continue;
+    }
+    delay_seconds = std::max(delay_seconds, DelayFromHourlyForecast(hourly[index]));
+    ++matched_hours;
+  }
+
+  if (!route_start_time.has_value() || matched_hours > 0U) {
+    return delay_seconds;
+  }
+
+  const Json::ArrayIndex hours_to_scan = std::min<Json::ArrayIndex>(hourly.size(), 6U);
+  for (Json::ArrayIndex index = 0U; index < hours_to_scan; ++index) {
+    delay_seconds = std::max(delay_seconds, DelayFromHourlyForecast(hourly[index]));
+  }
+
+  return delay_seconds;
 }
 
 WeatherImpactEstimate EstimateWeatherImpact(const WeatherForecastOptions& options,
@@ -303,7 +334,8 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
       EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
   SetRouteTimes(input, impact);
   const OpenWeatherDelayEstimate openweather = FetchOpenWeatherDelayEstimate(
-      options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat});
+      options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat},
+      ReadRouteStartTime(input));
   if (openweather.available) {
     effective_options.weather_delay_seconds_per_stop = openweather.delay_seconds_per_stop;
     impact = EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
