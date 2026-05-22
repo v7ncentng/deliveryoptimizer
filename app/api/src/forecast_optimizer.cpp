@@ -155,6 +155,18 @@ constexpr double kDefaultWeatherThresholdPercent = 5.0;
   return delay_seconds;
 }
 
+void SetRouteTimes(const deliveryoptimizer::api::OptimizeRequestInput& input,
+                   deliveryoptimizer::api::WeatherImpactEstimate& impact) {
+  impact.planned_start_time = deliveryoptimizer::api::ReadRouteStartTime(input);
+  if (!impact.planned_start_time.has_value()) {
+    impact.estimated_finish_time = std::nullopt;
+    return;
+  }
+
+  impact.estimated_finish_time =
+      *impact.planned_start_time + std::chrono::seconds{impact.weather_adjusted_duration_seconds};
+}
+
 } // namespace
 
 namespace deliveryoptimizer::api {
@@ -271,11 +283,15 @@ WeatherImpactEstimate EstimateWeatherImpact(const WeatherForecastOptions& option
   return WeatherImpactEstimate{
       .stop_count = normalized_stop_count,
       .baseline_duration_seconds = normalized_baseline_seconds,
+      .baseline_route_duration_seconds = normalized_baseline_seconds,
       .delay_seconds_per_stop = configured_delay_per_stop,
       .weather_delay_seconds = weather_delay_seconds,
+      .weather_adjusted_duration_seconds = normalized_baseline_seconds + weather_delay_seconds,
       .reoptimize_threshold_seconds = threshold_seconds,
       .should_reoptimize = weather_delay_seconds > 0 && weather_delay_seconds >= threshold_seconds,
       .source = options.enabled ? "fixed_delay" : "disabled",
+      .planned_start_time = std::nullopt,
+      .estimated_finish_time = std::nullopt,
   };
 }
 
@@ -285,12 +301,14 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
   WeatherForecastOptions effective_options = options;
   WeatherImpactEstimate impact =
       EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
+  SetRouteTimes(input, impact);
   const OpenWeatherDelayEstimate openweather = FetchOpenWeatherDelayEstimate(
       options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat});
   if (openweather.available) {
     effective_options.weather_delay_seconds_per_stop = openweather.delay_seconds_per_stop;
     impact = EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
     impact.source = openweather.source;
+    SetRouteTimes(input, impact);
   }
 
   return impact;
@@ -343,6 +361,7 @@ WeatherImpactEstimate RecalculateWeatherImpact(const WeatherForecastOptions& opt
   WeatherImpactEstimate impact =
       EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_route_seconds);
   impact.source = planned_impact.source;
+  SetRouteTimes(input, impact);
   return impact;
 }
 
@@ -370,10 +389,20 @@ Json::Value BuildWeatherForecastAnnotation(const WeatherForecastOptions& options
   forecast["provider"] = impact.source;
   forecast["stop_count"] = impact.stop_count;
   forecast["baseline_duration_seconds"] = impact.baseline_duration_seconds;
+  forecast["baseline_route_duration_seconds"] = impact.baseline_route_duration_seconds;
   forecast["weather_delay_seconds"] = impact.weather_delay_seconds;
+  forecast["weather_adjusted_duration_seconds"] = impact.weather_adjusted_duration_seconds;
   forecast["predicted_duration_seconds"] =
       impact.baseline_duration_seconds + impact.weather_delay_seconds;
   forecast["reoptimize_threshold_seconds"] = impact.reoptimize_threshold_seconds;
+  if (impact.planned_start_time.has_value()) {
+    forecast["planned_start_time"] =
+        static_cast<Json::Int64>(impact.planned_start_time->time_since_epoch().count());
+  }
+  if (impact.estimated_finish_time.has_value()) {
+    forecast["estimated_finish_time"] =
+        static_cast<Json::Int64>(impact.estimated_finish_time->time_since_epoch().count());
+  }
 
   Json::Value reoptimization{Json::objectValue};
   reoptimization["applied"] = impact.should_reoptimize;

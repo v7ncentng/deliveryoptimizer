@@ -2,6 +2,7 @@
 
 #include "deliveryoptimizer/api/optimize_request.hpp"
 
+#include <chrono>
 #include <cstddef>
 #include <json/json.h>
 #include <optional>
@@ -27,11 +28,15 @@ struct OpenWeatherDelayEstimate {
 struct WeatherImpactEstimate {
   int stop_count{0};
   int baseline_duration_seconds{0};
+  int baseline_route_duration_seconds{0};
   int delay_seconds_per_stop{0};
   int weather_delay_seconds{0};
+  int weather_adjusted_duration_seconds{0};
   int reoptimize_threshold_seconds{300};
   bool should_reoptimize{false};
   std::string source;
+  std::optional<std::chrono::sys_seconds> planned_start_time;
+  std::optional<std::chrono::sys_seconds> estimated_finish_time;
 };
 
 [[nodiscard]] WeatherForecastOptions ResolveWeatherForecastOptionsFromEnv();

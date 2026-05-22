@@ -156,7 +156,11 @@ TEST(WeatherForecastOptimizerTest, MissingVehicleTimeWindowHasNoPlannedStart) {
 }
 
 TEST(WeatherForecastOptimizerTest, RefinesForecastWithVroomSummaryDuration) {
-  const auto input = BuildInput();
+  auto input = BuildInput();
+  input.vehicles[0].time_window = deliveryoptimizer::api::TimeWindow{
+      .start = std::chrono::sys_seconds{std::chrono::seconds{600}},
+      .end = std::chrono::sys_seconds{std::chrono::seconds{3600}},
+  };
   const deliveryoptimizer::api::WeatherForecastOptions options{
       .enabled = true,
       .weather_delay_seconds_per_stop = 200,
@@ -177,6 +181,10 @@ TEST(WeatherForecastOptimizerTest, RefinesForecastWithVroomSummaryDuration) {
       deliveryoptimizer::api::BuildWeatherForecastAnnotation(options, impact);
 
   EXPECT_EQ(forecast["baseline_duration_seconds"].asInt(), 560);
+  EXPECT_EQ(forecast["baseline_route_duration_seconds"].asInt(), 560);
   EXPECT_EQ(forecast["weather_delay_seconds"].asInt(), 400);
+  EXPECT_EQ(forecast["weather_adjusted_duration_seconds"].asInt(), 960);
   EXPECT_EQ(forecast["predicted_duration_seconds"].asInt(), 960);
+  EXPECT_EQ(forecast["planned_start_time"].asInt64(), 600);
+  EXPECT_EQ(forecast["estimated_finish_time"].asInt64(), 1560);
 }
