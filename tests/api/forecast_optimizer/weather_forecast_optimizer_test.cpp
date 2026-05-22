@@ -173,9 +173,10 @@ TEST(WeatherForecastOptimizerTest, ReadsOpenWeatherHourNearRouteStart) {
   body["hourly"] = Json::Value{Json::arrayValue};
   body["hourly"].append(BuildWeatherHour(0, 201));
   body["hourly"].append(BuildWeatherHour(7200, 800));
+  body["hourly"].append(BuildWeatherHour(10800, 201));
 
   const int delay = deliveryoptimizer::api::ReadOpenWeatherDelay(
-      body, std::chrono::sys_seconds{std::chrono::seconds{7200}});
+      body, std::chrono::sys_seconds{std::chrono::seconds{7200}}, 1800);
 
   EXPECT_EQ(delay, 0);
 }
@@ -187,7 +188,7 @@ TEST(WeatherForecastOptimizerTest, ReadsBadOpenWeatherHourNearRouteStart) {
   body["hourly"].append(BuildWeatherHour(7200, 201));
 
   const int delay = deliveryoptimizer::api::ReadOpenWeatherDelay(
-      body, std::chrono::sys_seconds{std::chrono::seconds{7200}});
+      body, std::chrono::sys_seconds{std::chrono::seconds{7200}}, 1800);
 
   EXPECT_EQ(delay, 240);
 }
@@ -206,22 +207,20 @@ TEST(WeatherForecastOptimizerTest, RefinesForecastWithVroomSummaryDuration) {
       .openweather_api_key = "",
       .openweather_base_url = "",
   };
-  const deliveryoptimizer::api::WeatherImpactEstimate planned_impact =
-      deliveryoptimizer::api::EstimateWeatherImpact(options, input.jobs.size(), 300);
   Json::Value output{Json::objectValue};
   output["summary"] = Json::Value{Json::objectValue};
   output["summary"]["duration"] = 960;
 
   const deliveryoptimizer::api::WeatherImpactEstimate impact =
-      deliveryoptimizer::api::RecalculateWeatherImpact(options, input, planned_impact, output);
+      deliveryoptimizer::api::RecalculateWeatherImpact(options, input, output);
   const Json::Value forecast =
       deliveryoptimizer::api::BuildWeatherForecastAnnotation(options, impact);
 
-  EXPECT_EQ(forecast["baseline_duration_seconds"].asInt(), 560);
-  EXPECT_EQ(forecast["baseline_route_duration_seconds"].asInt(), 560);
+  EXPECT_EQ(forecast["baseline_duration_seconds"].asInt(), 960);
+  EXPECT_EQ(forecast["baseline_route_duration_seconds"].asInt(), 960);
   EXPECT_EQ(forecast["weather_delay_seconds"].asInt(), 400);
-  EXPECT_EQ(forecast["weather_adjusted_duration_seconds"].asInt(), 960);
-  EXPECT_EQ(forecast["predicted_duration_seconds"].asInt(), 960);
+  EXPECT_EQ(forecast["weather_adjusted_duration_seconds"].asInt(), 1360);
+  EXPECT_EQ(forecast["predicted_duration_seconds"].asInt(), 1360);
   EXPECT_EQ(forecast["planned_start_time"].asInt64(), 600);
-  EXPECT_EQ(forecast["estimated_finish_time"].asInt64(), 1560);
+  EXPECT_EQ(forecast["estimated_finish_time"].asInt64(), 1960);
 }

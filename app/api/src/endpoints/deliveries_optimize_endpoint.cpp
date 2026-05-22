@@ -102,13 +102,13 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
                                         const SolveAdmissionConfig& admission_config,
                                         std::shared_ptr<ObservabilityRegistry> observability) {
   const WeatherForecastOptions weather_options = ResolveWeatherForecastOptionsFromEnv();
-  auto coordinator = std::make_shared<SolveCoordinator>(
-      admission_config, std::make_shared<ProcessVroomRunner>(ResolveVroomRuntimeConfigFromEnv()),
-      SolveCoordinatorOptions{}, observability);
+  auto runner = std::make_shared<ProcessVroomRunner>(ResolveVroomRuntimeConfigFromEnv());
+  auto coordinator = std::make_shared<SolveCoordinator>(admission_config, runner,
+                                                        SolveCoordinatorOptions{}, observability);
 
   app.registerHandler(
       "/api/v1/deliveries/optimize",
-      [coordinator = std::move(coordinator), weather_options,
+      [coordinator = std::move(coordinator), runner = std::move(runner), weather_options,
        observability = std::move(observability)](
           const drogon::HttpRequestPtr& request,
           std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
@@ -174,30 +174,23 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
             .jobs = optimize_request_ptr->jobs.size(),
             .vehicles = optimize_request_ptr->vehicles.size(),
         };
-        auto weather_impact = std::make_shared<std::optional<WeatherImpactEstimate>>(std::nullopt);
-
         const SolveAdmissionStatus admission_status = coordinator->Submit(
-            request_size,
-            [optimize_request_ptr, weather_options, weather_impact] {
-              const int baseline_seconds = EstimateServiceSeconds(*optimize_request_ptr);
-              const WeatherImpactEstimate impact = EstimateWeatherImpact(
-                  weather_options, optimize_request_ptr->jobs.size(), baseline_seconds);
-              *weather_impact = impact;
-              return BuildWeatherAdjustedVroomInput(*optimize_request_ptr, impact);
-            },
-            [optimize_request_ptr, weather_options, weather_impact,
+            request_size, [optimize_request_ptr] { return BuildVroomInput(*optimize_request_ptr); },
+            [optimize_request_ptr, runner, weather_options,
              respond_with_completion](const CoordinatedSolveResult& result) mutable {
+              CoordinatedSolveResult final_result = result;
               std::optional<Json::Value> forecast;
               if (result.output.has_value()) {
-                const WeatherImpactEstimate planned_impact = weather_impact->value_or(
-                    EstimateWeatherImpact(weather_options, optimize_request_ptr->jobs.size(),
-                                          EstimateServiceSeconds(*optimize_request_ptr)));
                 const WeatherImpactEstimate impact = RecalculateWeatherImpact(
-                    weather_options, *optimize_request_ptr, planned_impact, *result.output);
+                    weather_options, *optimize_request_ptr, *result.output);
                 forecast = BuildWeatherForecastAnnotation(weather_options, impact);
+                if (impact.should_reoptimize) {
+                  final_result = ToCoordinatedSolveResult(
+                      runner->Run(BuildWeatherAdjustedVroomInput(*optimize_request_ptr, impact)));
+                }
               }
               respond_with_completion(BuildSolveExecutionResponse(
-                  BuildSolveExecutionResult(*optimize_request_ptr, result, forecast)));
+                  BuildSolveExecutionResult(*optimize_request_ptr, final_result, forecast)));
             },
             lifecycle);
         if (admission_status != SolveAdmissionStatus::kAccepted) {

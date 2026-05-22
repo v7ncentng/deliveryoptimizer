@@ -47,11 +47,13 @@ struct WeatherImpactEstimate {
 
 [[nodiscard]] OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(
     const WeatherForecastOptions& options, const Coordinate& coordinate,
-    std::optional<std::chrono::sys_seconds> route_start_time = std::nullopt);
+    std::optional<std::chrono::sys_seconds> route_start_time = std::nullopt,
+    std::optional<int> route_duration_seconds = std::nullopt);
 
 [[nodiscard]] int
 ReadOpenWeatherDelay(const Json::Value& body,
-                     std::optional<std::chrono::sys_seconds> route_start_time = std::nullopt);
+                     std::optional<std::chrono::sys_seconds> route_start_time = std::nullopt,
+                     std::optional<int> route_duration_seconds = std::nullopt);
 
 [[nodiscard]] WeatherImpactEstimate EstimateWeatherImpact(const WeatherForecastOptions& options,
                                                           std::size_t stop_count,
@@ -66,10 +68,9 @@ ReadRouteStartTime(const OptimizeRequestInput& input);
 
 [[nodiscard]] std::optional<int> ReadVroomDuration(const Json::Value& vroom_output);
 
-[[nodiscard]] WeatherImpactEstimate
-RecalculateWeatherImpact(const WeatherForecastOptions& options, const OptimizeRequestInput& input,
-                         const WeatherImpactEstimate& planned_impact,
-                         const Json::Value& vroom_output);
+[[nodiscard]] WeatherImpactEstimate RecalculateWeatherImpact(const WeatherForecastOptions& options,
+                                                             const OptimizeRequestInput& input,
+                                                             const Json::Value& vroom_output);
 
 [[nodiscard]] Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,
                                                          const WeatherImpactEstimate& impact);
