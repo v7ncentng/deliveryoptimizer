@@ -112,8 +112,7 @@ TEST(WeatherForecastOptimizerTest, ReadsVroomSummaryDuration) {
   output["summary"] = Json::Value{Json::objectValue};
   output["summary"]["duration"] = 124.2;
 
-  const std::optional<int> duration =
-      deliveryoptimizer::api::ReadVroomSummaryDurationSeconds(output);
+  const std::optional<int> duration = deliveryoptimizer::api::ReadVroomDuration(output);
 
   ASSERT_TRUE(duration.has_value());
   EXPECT_EQ(*duration, 125);
@@ -122,7 +121,7 @@ TEST(WeatherForecastOptimizerTest, ReadsVroomSummaryDuration) {
 TEST(WeatherForecastOptimizerTest, IgnoresMissingVroomSummaryDuration) {
   const Json::Value output{Json::objectValue};
 
-  EXPECT_FALSE(deliveryoptimizer::api::ReadVroomSummaryDurationSeconds(output).has_value());
+  EXPECT_FALSE(deliveryoptimizer::api::ReadVroomDuration(output).has_value());
 }
 
 TEST(WeatherForecastOptimizerTest, ReadsEarliestVehicleStartTime) {
@@ -144,7 +143,7 @@ TEST(WeatherForecastOptimizerTest, ReadsEarliestVehicleStartTime) {
   };
 
   const std::optional<std::chrono::sys_seconds> planned_start =
-      deliveryoptimizer::api::ReadPlannedRouteStartTime(input);
+      deliveryoptimizer::api::ReadRouteStartTime(input);
 
   ASSERT_TRUE(planned_start.has_value());
   EXPECT_EQ(planned_start->time_since_epoch(), std::chrono::seconds{900});
@@ -153,5 +152,31 @@ TEST(WeatherForecastOptimizerTest, ReadsEarliestVehicleStartTime) {
 TEST(WeatherForecastOptimizerTest, MissingVehicleTimeWindowHasNoPlannedStart) {
   const auto input = BuildInput();
 
-  EXPECT_FALSE(deliveryoptimizer::api::ReadPlannedRouteStartTime(input).has_value());
+  EXPECT_FALSE(deliveryoptimizer::api::ReadRouteStartTime(input).has_value());
+}
+
+TEST(WeatherForecastOptimizerTest, RefinesForecastWithVroomSummaryDuration) {
+  const auto input = BuildInput();
+  const deliveryoptimizer::api::WeatherForecastOptions options{
+      .enabled = true,
+      .weather_delay_seconds_per_stop = 200,
+      .reoptimize_threshold_seconds = 100,
+      .reoptimize_threshold_percent = 0.0,
+      .openweather_api_key = "",
+      .openweather_base_url = "",
+  };
+  const deliveryoptimizer::api::WeatherImpactEstimate planned_impact =
+      deliveryoptimizer::api::EstimateWeatherImpact(options, input.jobs.size(), 300);
+  Json::Value output{Json::objectValue};
+  output["summary"] = Json::Value{Json::objectValue};
+  output["summary"]["duration"] = 960;
+
+  const deliveryoptimizer::api::WeatherImpactEstimate impact =
+      deliveryoptimizer::api::RecalculateWeatherImpact(options, input, planned_impact, output);
+  const Json::Value forecast =
+      deliveryoptimizer::api::BuildWeatherForecastAnnotation(options, impact);
+
+  EXPECT_EQ(forecast["baseline_duration_seconds"].asInt(), 560);
+  EXPECT_EQ(forecast["weather_delay_seconds"].asInt(), 400);
+  EXPECT_EQ(forecast["predicted_duration_seconds"].asInt(), 960);
 }

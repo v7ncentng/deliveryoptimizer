@@ -296,8 +296,7 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
   return impact;
 }
 
-std::optional<std::chrono::sys_seconds>
-ReadPlannedRouteStartTime(const OptimizeRequestInput& input) {
+std::optional<std::chrono::sys_seconds> ReadRouteStartTime(const OptimizeRequestInput& input) {
   std::optional<std::chrono::sys_seconds> planned_start;
   for (const VehicleInput& vehicle : input.vehicles) {
     if (!vehicle.time_window.has_value()) {
@@ -311,7 +310,7 @@ ReadPlannedRouteStartTime(const OptimizeRequestInput& input) {
   return planned_start;
 }
 
-std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_output) {
+std::optional<int> ReadVroomDuration(const Json::Value& vroom_output) {
   const Json::Value& duration = vroom_output["summary"]["duration"];
   if (!duration.isNumeric()) {
     return std::nullopt;
@@ -323,6 +322,28 @@ std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_outp
   }
 
   return static_cast<int>(std::ceil(raw_duration));
+}
+
+WeatherImpactEstimate RecalculateWeatherImpact(const WeatherForecastOptions& options,
+                                               const OptimizeRequestInput& input,
+                                               const WeatherImpactEstimate& planned_impact,
+                                               const Json::Value& vroom_output) {
+  const std::optional<int> summary_duration = ReadVroomDuration(vroom_output);
+  if (!summary_duration.has_value()) {
+    return planned_impact;
+  }
+
+  const int weather_delay_already_in_route =
+      planned_impact.should_reoptimize ? planned_impact.weather_delay_seconds : 0;
+  const int baseline_route_seconds =
+      std::max(*summary_duration - weather_delay_already_in_route, 0);
+
+  WeatherForecastOptions effective_options = options;
+  effective_options.weather_delay_seconds_per_stop = planned_impact.delay_seconds_per_stop;
+  WeatherImpactEstimate impact =
+      EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_route_seconds);
+  impact.source = planned_impact.source;
+  return impact;
 }
 
 Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,

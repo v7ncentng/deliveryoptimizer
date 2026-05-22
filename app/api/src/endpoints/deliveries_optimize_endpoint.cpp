@@ -189,9 +189,11 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
              respond_with_completion](const CoordinatedSolveResult& result) mutable {
               std::optional<Json::Value> forecast;
               if (result.output.has_value()) {
-                const WeatherImpactEstimate impact = weather_impact->value_or(
+                const WeatherImpactEstimate planned_impact = weather_impact->value_or(
                     EstimateWeatherImpact(weather_options, optimize_request_ptr->jobs.size(),
                                           EstimateServiceSeconds(*optimize_request_ptr)));
+                const WeatherImpactEstimate impact = RecalculateWeatherImpact(
+                    weather_options, *optimize_request_ptr, planned_impact, *result.output);
                 forecast = BuildWeatherForecastAnnotation(weather_options, impact);
               }
               respond_with_completion(BuildSolveExecutionResponse(

@@ -158,9 +158,16 @@ void OptimizationJobRuntime::WorkerLoop(const std::stop_token stop_token,
       const WeatherImpactEstimate impact =
           EstimateRouteWeatherImpact(weather_options_, parsed_request->input, baseline_seconds);
       const Json::Value vroom_input = BuildWeatherAdjustedVroomInput(parsed_request->input, impact);
-      const auto solve_result = BuildSolveExecutionResult(
-          parsed_request->input, ToCoordinatedSolveResult(runner_->Run(vroom_input)),
-          BuildWeatherForecastAnnotation(weather_options_, impact));
+      const CoordinatedSolveResult coordinated_result =
+          ToCoordinatedSolveResult(runner_->Run(vroom_input));
+      std::optional<Json::Value> forecast;
+      if (coordinated_result.output.has_value()) {
+        forecast = BuildWeatherForecastAnnotation(
+            weather_options_, RecalculateWeatherImpact(weather_options_, parsed_request->input,
+                                                       impact, *coordinated_result.output));
+      }
+      const auto solve_result =
+          BuildSolveExecutionResult(parsed_request->input, coordinated_result, forecast);
       if (solve_result.response_body.has_value()) {
         if (store_->CompleteJobSuccess(claimed_job->record.job_id, claimed_job->worker_id,
                                        *solve_result.response_body, solve_result.outcome,

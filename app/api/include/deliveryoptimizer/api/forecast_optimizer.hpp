@@ -52,9 +52,14 @@ EstimateRouteWeatherImpact(const WeatherForecastOptions& options, const Optimize
                            int baseline_duration_seconds);
 
 [[nodiscard]] std::optional<std::chrono::sys_seconds>
-ReadPlannedRouteStartTime(const OptimizeRequestInput& input);
+ReadRouteStartTime(const OptimizeRequestInput& input);
 
-[[nodiscard]] std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_output);
+[[nodiscard]] std::optional<int> ReadVroomDuration(const Json::Value& vroom_output);
+
+[[nodiscard]] WeatherImpactEstimate
+RecalculateWeatherImpact(const WeatherForecastOptions& options, const OptimizeRequestInput& input,
+                         const WeatherImpactEstimate& planned_impact,
+                         const Json::Value& vroom_output);
 
 [[nodiscard]] Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,
                                                          const WeatherImpactEstimate& impact);
