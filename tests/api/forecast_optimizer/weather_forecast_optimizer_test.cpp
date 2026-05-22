@@ -106,3 +106,21 @@ TEST(WeatherForecastOptimizerTest, AboveThresholdWeatherAddsServiceTime) {
   EXPECT_EQ(forecast["weather_delay_seconds"].asInt(), 400);
   EXPECT_TRUE(forecast["reoptimization"]["applied"].asBool());
 }
+
+TEST(WeatherForecastOptimizerTest, ReadsVroomSummaryDuration) {
+  Json::Value output{Json::objectValue};
+  output["summary"] = Json::Value{Json::objectValue};
+  output["summary"]["duration"] = 124.2;
+
+  const std::optional<int> duration =
+      deliveryoptimizer::api::ReadVroomSummaryDurationSeconds(output);
+
+  ASSERT_TRUE(duration.has_value());
+  EXPECT_EQ(*duration, 125);
+}
+
+TEST(WeatherForecastOptimizerTest, IgnoresMissingVroomSummaryDuration) {
+  const Json::Value output{Json::objectValue};
+
+  EXPECT_FALSE(deliveryoptimizer::api::ReadVroomSummaryDurationSeconds(output).has_value());
+}

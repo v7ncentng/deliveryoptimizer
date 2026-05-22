@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <json/json.h>
+#include <optional>
 #include <string>
 
 namespace deliveryoptimizer::api {
@@ -49,6 +50,8 @@ FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options, const Coord
 [[nodiscard]] WeatherImpactEstimate
 EstimateRouteWeatherImpact(const WeatherForecastOptions& options, const OptimizeRequestInput& input,
                            int baseline_duration_seconds);
+
+[[nodiscard]] std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_output);
 
 [[nodiscard]] Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,
                                                          const WeatherImpactEstimate& impact);

@@ -296,6 +296,20 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
   return impact;
 }
 
+std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_output) {
+  const Json::Value& duration = vroom_output["summary"]["duration"];
+  if (!duration.isNumeric()) {
+    return std::nullopt;
+  }
+
+  const double raw_duration = duration.asDouble();
+  if (raw_duration < 0.0 || raw_duration > static_cast<double>(std::numeric_limits<int>::max())) {
+    return std::nullopt;
+  }
+
+  return static_cast<int>(std::ceil(raw_duration));
+}
+
 Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,
                                            const WeatherImpactEstimate& impact) {
   Json::Value payload = BuildVroomInput(input);
