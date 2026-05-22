@@ -51,6 +51,9 @@ FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options, const Coord
 EstimateRouteWeatherImpact(const WeatherForecastOptions& options, const OptimizeRequestInput& input,
                            int baseline_duration_seconds);
 
+[[nodiscard]] std::optional<std::chrono::sys_seconds>
+ReadPlannedRouteStartTime(const OptimizeRequestInput& input);
+
 [[nodiscard]] std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_output);
 
 [[nodiscard]] Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,

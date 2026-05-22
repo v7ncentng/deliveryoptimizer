@@ -124,3 +124,34 @@ TEST(WeatherForecastOptimizerTest, IgnoresMissingVroomSummaryDuration) {
 
   EXPECT_FALSE(deliveryoptimizer::api::ReadVroomSummaryDurationSeconds(output).has_value());
 }
+
+TEST(WeatherForecastOptimizerTest, ReadsEarliestVehicleStartTime) {
+  auto input = BuildInput();
+  input.vehicles.push_back(deliveryoptimizer::api::VehicleInput{
+      .external_id = "driver-2",
+      .capacity = 8,
+      .start = std::nullopt,
+      .end = std::nullopt,
+      .time_window =
+          deliveryoptimizer::api::TimeWindow{
+              .start = std::chrono::sys_seconds{std::chrono::seconds{1800}},
+              .end = std::chrono::sys_seconds{std::chrono::seconds{7200}},
+          },
+  });
+  input.vehicles[0].time_window = deliveryoptimizer::api::TimeWindow{
+      .start = std::chrono::sys_seconds{std::chrono::seconds{900}},
+      .end = std::chrono::sys_seconds{std::chrono::seconds{3600}},
+  };
+
+  const std::optional<std::chrono::sys_seconds> planned_start =
+      deliveryoptimizer::api::ReadPlannedRouteStartTime(input);
+
+  ASSERT_TRUE(planned_start.has_value());
+  EXPECT_EQ(planned_start->time_since_epoch(), std::chrono::seconds{900});
+}
+
+TEST(WeatherForecastOptimizerTest, MissingVehicleTimeWindowHasNoPlannedStart) {
+  const auto input = BuildInput();
+
+  EXPECT_FALSE(deliveryoptimizer::api::ReadPlannedRouteStartTime(input).has_value());
+}

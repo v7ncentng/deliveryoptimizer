@@ -296,6 +296,21 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
   return impact;
 }
 
+std::optional<std::chrono::sys_seconds>
+ReadPlannedRouteStartTime(const OptimizeRequestInput& input) {
+  std::optional<std::chrono::sys_seconds> planned_start;
+  for (const VehicleInput& vehicle : input.vehicles) {
+    if (!vehicle.time_window.has_value()) {
+      continue;
+    }
+    if (!planned_start.has_value() || vehicle.time_window->start < *planned_start) {
+      planned_start = vehicle.time_window->start;
+    }
+  }
+
+  return planned_start;
+}
+
 std::optional<int> ReadVroomSummaryDurationSeconds(const Json::Value& vroom_output) {
   const Json::Value& duration = vroom_output["summary"]["duration"];
   if (!duration.isNumeric()) {
