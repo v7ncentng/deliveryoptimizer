@@ -187,9 +187,8 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
 
               WeatherForecastOptions sync_weather_options = weather_options;
               sync_weather_options.openweather_api_key.clear();
-              const WeatherImpactEstimate impact =
-                  RecalculateWeatherImpact(sync_weather_options, *optimize_request_ptr,
-                                           *result.output);
+              const WeatherImpactEstimate impact = RecalculateWeatherImpact(
+                  sync_weather_options, *optimize_request_ptr, *result.output);
               forecast = BuildWeatherForecastAnnotation(sync_weather_options, impact);
               if (!impact.should_reoptimize) {
                 respond_with_completion(BuildSolveExecutionResponse(
@@ -202,10 +201,10 @@ void RegisterDeliveriesOptimizeEndpoint(drogon::HttpAppFramework& app,
                   [optimize_request_ptr, impact] {
                     return BuildWeatherAdjustedVroomInput(*optimize_request_ptr, impact);
                   },
-                  [optimize_request_ptr, forecast, respond_with_completion](
-                      const CoordinatedSolveResult& rerun_result) mutable {
-                    respond_with_completion(BuildSolveExecutionResponse(BuildSolveExecutionResult(
-                        *optimize_request_ptr, rerun_result, forecast)));
+                  [optimize_request_ptr, forecast,
+                   respond_with_completion](const CoordinatedSolveResult& rerun_result) mutable {
+                    respond_with_completion(BuildSolveExecutionResponse(
+                        BuildSolveExecutionResult(*optimize_request_ptr, rerun_result, forecast)));
                   });
               if (rerun_status != SolveAdmissionStatus::kAccepted) {
                 respond_with_completion(BuildAdmissionRejectionResponse(rerun_status));

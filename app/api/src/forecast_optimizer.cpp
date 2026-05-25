@@ -346,8 +346,8 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
   const std::optional<std::chrono::sys_seconds> route_start_time = ReadRouteStartTime(input);
   SetRouteTimes(route_start_time, impact);
   const OpenWeatherDelayEstimate openweather = FetchOpenWeatherDelayEstimate(
-      options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat},
-      route_start_time, baseline_duration_seconds);
+      options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat}, route_start_time,
+      baseline_duration_seconds);
   if (openweather.available) {
     effective_options.weather_delay_seconds_per_stop = openweather.delay_seconds_per_stop;
     impact = EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
