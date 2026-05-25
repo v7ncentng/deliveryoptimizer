@@ -22,7 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
         src: "/pwa-icon.svg",
         sizes: "any",
         type: "image/svg+xml",
-        purpose: "maskable",
+        purpose: "any",
       },
     ],
   };
