@@ -62,14 +62,12 @@ export default function UploadRoutePage() {
       const text = await file.text();
       sessionStorage.setItem(
         "routeFile",
-        JSON.stringify({ name: file.name, content: text }),
+        JSON.stringify({ name: file.name, content: text })
       );
       router.push("/driver-view");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
+        err instanceof Error ? err.message : "Something went wrong. Please try again."
       );
       setIsProcessing(false);
     }
@@ -259,7 +257,7 @@ export default function UploadRoutePage() {
         <div className="ur-content">
           <h2 className="ur-title">Upload your route</h2>
           <p className="ur-subtitle">
-            Upload your route to begin your deliveries!
+            Upload the route file shared by your Route Manager.
           </p>
 
           {/* Drop zone — shows spinner while file is being read */}
@@ -277,29 +275,9 @@ export default function UploadRoutePage() {
               <>
                 <div className="ur-dropzone-icon">
                   <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                    <rect
-                      x="1"
-                      y="1"
-                      width="22"
-                      height="34"
-                      rx="3"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
-                    <path
-                      d="M7 10h10M7 15h10M7 20h6"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <rect x="1" y="1" width="22" height="34" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                    <path d="M7 10h10M7 15h10M7 20h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M15 26v-7M15 19l-3 3M15 19l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <p className="ur-dropzone-text">
@@ -327,12 +305,12 @@ export default function UploadRoutePage() {
               <span className="ur-file-size">{formatSize(file.size)}</span>
               <button
                 className="ur-file-remove"
+                aria-label="Remove file"
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);
                   setError(null);
                 }}
-                aria-label="Remove file"
               >
                 ×
               </button>
@@ -344,13 +322,7 @@ export default function UploadRoutePage() {
           <div className="ur-actions">
             <button className="ur-back-btn" onClick={() => router.back()}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M10 3L5 8l5 5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Back
             </button>

@@ -27,6 +27,7 @@ export default function UploadSavePointPage() {
     csvData,
     isImportModalOpen,
     isLoading,
+    parseError,
     openImportModal,
     closeImportModal,
   } = useCSVImport();
@@ -82,6 +83,7 @@ export default function UploadSavePointPage() {
           return;
         }
 
+        // Valid session save — restore full state on edit page
         try {
           migrateSessionSaveFile(parsed);
           sessionStorage.setItem(
@@ -91,7 +93,7 @@ export default function UploadSavePointPage() {
           router.push("/edit");
           return;
         } catch {
-          // Not a session save — fall through to the modal flow
+          // Not a session save — fall through to the column-mapper modal
         }
       }
 
@@ -99,9 +101,7 @@ export default function UploadSavePointPage() {
       openImportModal(file);
     } catch (err) {
       setContinueError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong. Please try again.",
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
       );
     } finally {
       setIsProcessing(false);
@@ -286,6 +286,28 @@ export default function UploadSavePointPage() {
           border-radius: 50%;
           animation: upload-spin 0.8s linear infinite;
         }
+
+        .upload-parse-error {
+          width: 100%;
+          max-width: 580px;
+          font-size: 13px;
+          color: #c0392b;
+          margin-bottom: 12px;
+          text-align: center;
+        }
+
+        @keyframes upload-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .upload-spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #e0e0e0;
+          border-top-color: #4a8c7a;
+          border-radius: 50%;
+          animation: upload-spin 0.8s linear infinite;
+        }
       `}</style>
 
       <div className="upload-root">
@@ -320,27 +342,25 @@ export default function UploadSavePointPage() {
             ) : (
               <>
                 <div className="upload-dropzone-icon">
-                  <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                    <rect
-                      x="1"
-                      y="1"
-                      width="22"
-                      height="34"
-                      rx="3"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
+                  <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
                     <path
-                      d="M7 10h10M7 15h10M7 20h6"
+                      d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
                       stroke="currentColor"
-                      strokeWidth="1.5"
+                      strokeWidth="1.75"
                       strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                     <path
-                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
+                      d="M18 2v12h12"
                       stroke="currentColor"
-                      strokeWidth="1.5"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M16 22v-6M13 19l3-3 3 3"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -398,8 +418,8 @@ export default function UploadSavePointPage() {
             </div>
           )}
 
-          {continueError && (
-            <p className="upload-parse-error">{continueError}</p>
+          {(continueError ?? parseError) && (
+            <p className="upload-parse-error">{continueError ?? parseError}</p>
           )}
 
           <div className="upload-actions">

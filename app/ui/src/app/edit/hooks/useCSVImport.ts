@@ -50,9 +50,7 @@ export function useCSVImport() {
         }
 
         if (rows.length < 2) {
-          setParseError(
-            "File must have a header row and at least one data row.",
-          );
+          setParseError("File must have a header row and at least one data row.");
           return;
         }
 
@@ -60,7 +58,7 @@ export function useCSVImport() {
         setIsImportModalOpen(true);
       } catch (err) {
         setParseError(
-          err instanceof Error ? err.message : "Failed to parse file.",
+          err instanceof Error ? err.message : "Failed to parse file."
         );
       } finally {
         setIsLoading(false);
@@ -114,7 +112,7 @@ function parseJsonToRows(text: string): string[][] {
     "deliveries" in (parsed as object)
   ) {
     throw new Error(
-      "This looks like a session save file. Use the session restore flow instead.",
+      "This looks like a session save file. Use the session restore flow instead."
     );
   }
 
@@ -141,7 +139,7 @@ function parseJsonToRows(text: string): string[][] {
     headers.map((h) => {
       const val = obj?.[h];
       return val == null ? "" : String(val);
-    }),
+    })
   );
 
   return [headers, ...dataRows];

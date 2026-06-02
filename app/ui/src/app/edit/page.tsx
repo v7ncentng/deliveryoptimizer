@@ -79,8 +79,13 @@ export default function Page() {
   });
 
   // In-page modal for CSV/JSON imports triggered from AddressSection
-  const { csvData, isImportModalOpen, parseError, closeImportModal } =
-    useCSVImport();
+  const {
+    csvData,
+    isImportModalOpen,
+    parseError,
+    openImportModal,
+    closeImportModal,
+  } = useCSVImport();
 
   useEffect(() => {
     let cancelled = false;
@@ -128,8 +133,7 @@ export default function Page() {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
           if (!cancelled) importAddresses(reindexAddresses(cards));
         } catch {
-          if (!cancelled)
-            setSessionError("Failed to import the selected entries.");
+          if (!cancelled) setSessionError("Failed to import the selected entries.");
         }
         return;
       }
@@ -186,9 +190,7 @@ export default function Page() {
         <CSVImportModal
           csvData={csvData}
           onClose={closeImportModal}
-          importAddresses={(cards) =>
-            addressState.importAddresses(reindexAddresses(cards))
-          }
+          importAddresses={addressState.importAddresses}
         />
       )}
 
