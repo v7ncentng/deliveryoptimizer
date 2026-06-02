@@ -29,11 +29,11 @@ const WARNING_ICON = (
   </svg>
 );
 
-type OverlayFieldErrorProps = {
+type FieldErrorProps = {
   message: string;
 };
 
-export default function OverlayFieldError({ message }: OverlayFieldErrorProps) {
+export default function FieldError({ message }: FieldErrorProps) {
   return (
     <div role="alert" className={OVERLAY_FIELD_ERROR_CONTAINER}>
       <span className={OVERLAY_FIELD_ERROR_ICON}>{WARNING_ICON}</span>

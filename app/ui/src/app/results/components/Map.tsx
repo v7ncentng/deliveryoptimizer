@@ -57,7 +57,7 @@ function buildRoutePath(
   pendingPinMove: PendingPinMove | null,
 ): google.maps.LatLngLiteral[] {
   const sorted = [...route.stops].sort((a, b) => a.sequence - b.sequence);
-  return sorted.map((s) => {
+  const deliveryPoints = sorted.map((s) => {
     if (
       pendingPinMove?.vehicleId === route.vehicleId &&
       pendingPinMove.stopId === s.id
@@ -66,6 +66,13 @@ function buildRoutePath(
     }
     return { lat: s.lat, lng: s.lng };
   });
+  if (route.startLocation) {
+    return [
+      { lat: route.startLocation.lat, lng: route.startLocation.lng },
+      ...deliveryPoints,
+    ];
+  }
+  return deliveryPoints;
 }
 
 function RoutePolylinesOverlay({
@@ -274,6 +281,10 @@ function stopKey(vehicleId: string, stopId: string): string {
   return `${vehicleId}:${stopId}`;
 }
 
+const DEPOT_MARKER_SVG = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><defs><filter id="sh" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.4)"/></filter></defs><circle cx="14" cy="14" r="12" fill="#374151" stroke="#fff" stroke-width="2" filter="url(#sh)"/><text x="14" y="18.5" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">S</text></svg>`,
+)}`;
+
 function AdvancedMarkers({
   map,
   routes,
@@ -308,6 +319,26 @@ function AdvancedMarkers({
         if (cancelled) return;
 
         routes.forEach((route) => {
+          // Depot marker — distinct non-draggable pin labeled "S"
+          if (route.startLocation) {
+            const depotEl = document.createElement("img");
+            depotEl.src = DEPOT_MARKER_SVG;
+            depotEl.width = 28;
+            depotEl.height = 28;
+            depotEl.alt = "";
+            const depotMarker = new AdvancedMarkerElement({
+              map,
+              position: {
+                lat: route.startLocation.lat,
+                lng: route.startLocation.lng,
+              },
+              title: route.startLocation.address || "Starting point",
+              content: depotEl,
+              gmpDraggable: false,
+            });
+            markers.push(depotMarker);
+          }
+
           const sorted = [...route.stops].sort(
             (a, b) => a.sequence - b.sequence,
           );
@@ -403,6 +434,12 @@ export default function MapComponent({
       const bounds = new google.maps.LatLngBounds();
       routes.forEach((route) => {
         route.stops.forEach((s) => bounds.extend({ lat: s.lat, lng: s.lng }));
+        if (route.startLocation) {
+          bounds.extend({
+            lat: route.startLocation.lat,
+            lng: route.startLocation.lng,
+          });
+        }
       });
       mapInstance.fitBounds(bounds, 48);
     },
@@ -472,6 +509,26 @@ export default function MapComponent({
               );
               return (
                 <Fragment key={route.vehicleId}>
+                  {route.startLocation && (
+                    <Marker
+                      key={`depot-${route.vehicleId}`}
+                      position={{
+                        lat: route.startLocation.lat,
+                        lng: route.startLocation.lng,
+                      }}
+                      title={route.startLocation.address || "Starting point"}
+                      draggable={false}
+                      icon={
+                        typeof google !== "undefined"
+                          ? {
+                              url: DEPOT_MARKER_SVG,
+                              scaledSize: new google.maps.Size(28, 28),
+                              anchor: new google.maps.Point(14, 14),
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
                   {sorted.map((stop) => {
                     const atPending =
                       pendingPinMove != null &&

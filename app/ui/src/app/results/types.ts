@@ -34,6 +34,7 @@ export interface Route {
   vehicleType?: string; // e.g. "Van"
   distanceMi?: number; // total distance for route in miles
   estimatedTimeMinutes?: number; // total estimated time in minutes
+  startLocation?: { lat: number; lng: number; address: string }; // depot/origin for this route
 }
 
 export interface PendingPinMove {

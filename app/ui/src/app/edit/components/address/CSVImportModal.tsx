@@ -1,4 +1,4 @@
-// app/edit/components/CSVImportModal.tsx
+// app/edit/components/address/CSVImportModal.tsx
 "use client";
 
 /**
@@ -18,7 +18,8 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { AddressCard } from "../types/delivery";
+import type { AddressCard } from "@/app/edit/types/delivery";
+import ErrorOverlay from "@/app/edit/components/shared/ErrorOverlay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -649,6 +650,7 @@ export function CSVImportModal({
 }: CSVImportModalProps) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const headers = useMemo(() => csvData[0] ?? [], [csvData]);
   const dataRows = useMemo(
@@ -698,8 +700,19 @@ export function CSVImportModal({
       // Store the fully-built AddressCard[] directly — no re-parsing needed.
       // edit/page.tsx reads "importedCards" on mount and calls importAddresses()
       // directly, bypassing parseAddressUpload entirely.
-      sessionStorage.setItem("importedCards", JSON.stringify(cards));
-      router.push("/edit");
+      try {
+        sessionStorage.setItem("importedCards", JSON.stringify(cards));
+        router.push("/edit");
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "QuotaExceededError") {
+          setErrorMessage(
+            "Import is too large to save. Please reduce the number of selected rows.",
+          );
+        } else {
+          console.error(e);
+          setErrorMessage("Something went wrong");
+        }
+      }
     } else if (importAddresses) {
       importAddresses(cards);
       onClose();
@@ -718,6 +731,10 @@ export function CSVImportModal({
   return (
     <>
       <ModalBackdrop onClose={onClose} />
+      <ErrorOverlay
+        message={errorMessage}
+        onClose={() => setErrorMessage(null)}
+      />
       <ModalShell width={step === 1 ? 580 : 680}>
         {step === 1 ? (
           <StepOne

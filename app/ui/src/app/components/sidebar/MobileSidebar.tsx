@@ -134,7 +134,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           <Link
             href="#"
             className={MOBILE_SIDEBAR_NAV_ITEM_DISABLED}
-            aria-disabled="true"
+            aria-disabled={true}
             tabIndex={-1}
           >
             <span className={MOBILE_SIDEBAR_NAV_PILL_INACTIVE}>

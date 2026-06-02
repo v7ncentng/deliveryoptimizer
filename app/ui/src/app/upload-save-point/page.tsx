@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
-import { CSVImportModal } from "@/app/edit/components/CSVImportModal";
+import { CSVImportModal } from "@/app/edit/components/address/CSVImportModal";
 import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
 import { formatSize } from "@/app/utils/routeUtils";

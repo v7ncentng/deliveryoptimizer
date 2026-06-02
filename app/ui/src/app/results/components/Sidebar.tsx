@@ -173,6 +173,25 @@ export default function Sidebar({
                   {isExpanded && (
                     <div className="border-t border-zinc-200 bg-zinc-100/50 p-3">
                       <ul className="space-y-2">
+                        {route.startLocation && (
+                          <li>
+                            <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
+                              <div className="flex items-start gap-2">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-700 text-xs font-semibold text-white">
+                                  S
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-zinc-800">
+                                    Starting Point
+                                  </p>
+                                  <p className="mt-0.5 truncate text-xs text-zinc-600">
+                                    {route.startLocation.address || "Depot"}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </li>
+                        )}
                         {sortedStops.map((stop) => (
                           <li key={stop.id}>
                             <EditableStopItem
