@@ -38,12 +38,17 @@ export function vroomToRoutes(
   vroomResponse: VroomResponse,
   vehicles: VehicleRow[],
   addresses: AddressCard[],
+  depotAddress: string,
 ): Route[] {
   const vehicleById = new Map(vehicles.map((v) => [String(v.id), v]));
   const addressById = new Map(addresses.map((a) => [String(a.id), a]));
 
   return vroomResponse.routes.map((vroomRoute: VroomRoute): Route => {
     const vehicle = vehicleById.get(vroomRoute.vehicle_external_id);
+
+    const startStep = vroomRoute.steps.find(
+      (s: VroomStep) => s.type === "start",
+    );
 
     const jobSteps = vroomRoute.steps.filter(
       (s: VroomStep) => s.type === "job" && s.job_external_id != null,
@@ -85,6 +90,13 @@ export function vroomToRoutes(
       vehicleType: vehicle?.type || undefined,
       distanceMi: Math.round(vroomRoute.distance * METERS_TO_MILES * 10) / 10,
       estimatedTimeMinutes: Math.round(vroomRoute.duration / 60),
+      startLocation: startStep
+        ? {
+            lat: startStep.location[1],
+            lng: startStep.location[0],
+            address: vehicle?.startLocation || depotAddress || "",
+          }
+        : undefined,
     };
   });
 }

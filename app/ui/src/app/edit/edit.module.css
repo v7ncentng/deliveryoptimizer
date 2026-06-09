@@ -35,6 +35,7 @@
   --edit-container-active: #d5f2e8;
   --edit-text-primary: #272725;
   --edit-text-secondary: #464544;
+  --edit-manage-heading: #000000;
 
   /* ── Buttons ──────────────────────────────────────────────────── */
   --edit-btn-primary: #4cb599;
@@ -76,6 +77,13 @@
   --edit-vehicle-wheel-inner: #d1d5db;
   --edit-vehicle-light: #fcd34d;
   --edit-vehicle-back-panel: #312e81;
+
+  /* ── Drag-drop overlay ──────────────────────────────────────── */
+  --edit-drag-overlay-bg: rgba(213, 242, 232, 0.48);
+
+  /* ── CSV drop zone drag-active state ────────────────────────── */
+  --edit-drop-zone-active-border: #57ac91;
+  --edit-drop-zone-active-bg: #f0faf6;
 
   /* Address illustration */
   --edit-address-accent: #f97316;

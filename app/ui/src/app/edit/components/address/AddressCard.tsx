@@ -15,11 +15,11 @@ import {
   ADDRESS_ROW_NAME_ROW,
   ADDRESS_ROW_FIELD_INPUT_FILL,
   ADDRESS_ROW_ADDR_WRAP,
-  ADDRESS_ROW_ADDR_WRAP_ERROR,
   ADDRESS_ROW_ADDR_GRADIENT,
   ADDRESS_ROW_ADDR_TRIGGER_TEXT,
   ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER,
   ADDRESS_ROW_STEPPER_CONTAINER_NARROW,
+  ADDRESS_ROW_STEPPER_CONTAINER_NARROW_ERROR,
   ADDRESS_ROW_STEPPER_INPUT,
   ADDRESS_ROW_STEPPER_CONTROLS,
   ADDRESS_ROW_STEPPER_BUTTON,
@@ -70,6 +70,7 @@ import {
   MOBILE_ADDR_EXPANDED_PANEL,
   MOBILE_ADDR_LOCKED_NOTES_CLAMP,
 } from "@/app/edit/formStyles.v2";
+import FieldError from "@/app/edit/components/shared/FieldError";
 import {
   EditIconButton,
   ConfirmIconButton,
@@ -117,6 +118,7 @@ function StepperInput({
   min = 0,
   max,
   ariaLabel,
+  invalid = false,
   onIncrement,
   onDecrement,
   onChange,
@@ -125,12 +127,19 @@ function StepperInput({
   min?: number;
   max?: number;
   ariaLabel: string;
+  invalid?: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
   onChange: (v: number) => void;
 }) {
   return (
-    <div className={ADDRESS_ROW_STEPPER_CONTAINER_NARROW}>
+    <div
+      className={
+        invalid
+          ? ADDRESS_ROW_STEPPER_CONTAINER_NARROW_ERROR
+          : ADDRESS_ROW_STEPPER_CONTAINER_NARROW
+      }
+    >
       <input
         type="number"
         min={min}
@@ -145,6 +154,7 @@ function StepperInput({
           );
         }}
         aria-label={ariaLabel}
+        aria-invalid={invalid ? true : undefined}
         className={ADDRESS_ROW_STEPPER_INPUT}
       />
       <div className={ADDRESS_ROW_STEPPER_CONTROLS}>
@@ -204,8 +214,23 @@ function AutoResizeNotesTextarea({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    const fitHeight = () => {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    fitHeight();
+
+    const mq = window.matchMedia("(min-width: 1024px)");
+    mq.addEventListener("change", fitHeight);
+
+    const ro = new ResizeObserver(fitHeight);
+    ro.observe(textarea);
+
+    return () => {
+      mq.removeEventListener("change", fitHeight);
+      ro.disconnect();
+    };
   }, [value]);
 
   return (
@@ -239,8 +264,8 @@ export default function AddressCard({
   const startIdx = TIME_OPTIONS.indexOf(a.deliveryTimeStart);
   const endIdx = TIME_OPTIONS.indexOf(a.deliveryTimeEnd);
 
-  const addrInvalid =
-    geocodeFailed || (addressTouched && !a.recipientAddress.trim());
+  const addressMissing = addressTouched && !a.recipientAddress.trim();
+  const qtyInvalid = addressTouched && a.deliveryQuantity <= 0;
 
   const panelId = `addr-panel-${a.id}`;
 
@@ -355,11 +380,7 @@ export default function AddressCard({
                     <button
                       type="button"
                       onClick={() => setOverlayOpen(true)}
-                      className={
-                        addrInvalid
-                          ? ADDRESS_ROW_ADDR_WRAP_ERROR
-                          : ADDRESS_ROW_ADDR_WRAP
-                      }
+                      className={ADDRESS_ROW_ADDR_WRAP}
                       aria-label="Edit recipient address"
                     >
                       <span className={ADDRESS_ROW_ADDR_TRIGGER_TEXT}>
@@ -380,6 +401,9 @@ export default function AddressCard({
                         </svg>
                       </div>
                     </button>
+                    {addressMissing && (
+                      <FieldError message="No Address Entered" />
+                    )}
                   </div>
 
                   {/* Quantity — edit */}
@@ -388,6 +412,7 @@ export default function AddressCard({
                     min={1}
                     max={1_000_000}
                     ariaLabel="Delivery quantity"
+                    invalid={qtyInvalid}
                     onChange={(v) => updateAddress(a.id, "deliveryQuantity", v)}
                     onIncrement={() =>
                       updateAddress(
@@ -763,11 +788,7 @@ export default function AddressCard({
                   <button
                     type="button"
                     onClick={() => setOverlayOpen(true)}
-                    className={
-                      addrInvalid
-                        ? ADDRESS_ROW_ADDR_WRAP_ERROR
-                        : ADDRESS_ROW_ADDR_WRAP
-                    }
+                    className={ADDRESS_ROW_ADDR_WRAP}
                     aria-label="Edit recipient address"
                   >
                     <span className={ADDRESS_ROW_ADDR_TRIGGER_TEXT}>
@@ -786,6 +807,9 @@ export default function AddressCard({
                       </svg>
                     </div>
                   </button>
+                  {addressMissing && (
+                    <FieldError message="No Address Entered" />
+                  )}
                 </div>
 
                 {/* Delivery Info */}
@@ -799,6 +823,7 @@ export default function AddressCard({
                       min={1}
                       max={1_000_000}
                       ariaLabel="Delivery quantity"
+                      invalid={qtyInvalid}
                       onChange={(v) =>
                         updateAddress(a.id, "deliveryQuantity", v)
                       }

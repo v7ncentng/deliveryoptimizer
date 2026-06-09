@@ -91,7 +91,7 @@ export default function Sidebar({
                 <li
                   key={route.vehicleId}
                   className="rounded-xl border border-zinc-200 bg-zinc-50 shadow-sm overflow-hidden"
-                  style={{ boxShadow: `inset 4px 0 0 ${accent}` }}
+                  style={{ boxShadow: `inset 4px 0 0 0 ${accent}` }}
                 >
                   <button
                     type="button"
@@ -102,7 +102,7 @@ export default function Sidebar({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start gap-2 min-w-0">
                         <span
-                          className="mt-0.5 h-5 w-5 shrink-0 rounded-md"
+                          className="mt-0.5 h-8 w-8 shrink-0 rounded-md"
                           style={{ backgroundColor: accent }}
                           aria-hidden
                         />
@@ -173,6 +173,25 @@ export default function Sidebar({
                   {isExpanded && (
                     <div className="border-t border-zinc-200 bg-zinc-100/50 p-3">
                       <ul className="space-y-2">
+                        {route.startLocation && (
+                          <li>
+                            <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
+                              <div className="flex items-start gap-2">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-700 text-xs font-semibold text-white">
+                                  S
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold text-zinc-800">
+                                    Starting Point
+                                  </p>
+                                  <p className="mt-0.5 truncate text-xs text-zinc-600">
+                                    {route.startLocation.address || "Depot"}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </li>
+                        )}
                         {sortedStops.map((stop) => (
                           <li key={stop.id}>
                             <EditableStopItem

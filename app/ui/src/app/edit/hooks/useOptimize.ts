@@ -13,6 +13,7 @@ import {
   vehicleRowToVehicleInput,
 } from "@/app/edit/utils/optimizeMapper";
 import { SUPPORTED_STATES } from "@/app/edit/constants/supportedRegions";
+import { setOptimizeResults } from "@/app/edit/utils/hasOptimizeResults";
 import { vroomToRoutes } from "@/app/edit/utils/vroomToRoutes";
 import type {
   AddressCard,
@@ -361,8 +362,9 @@ export function useOptimize(
               resultBody as VroomResponse,
               lockedVehicles,
               addresses,
+              trimmedDepotAddress || "",
             );
-            sessionStorage.setItem("optimizeResults", JSON.stringify(routes));
+            setOptimizeResults(routes);
             router.push("/results");
             return;
           }
