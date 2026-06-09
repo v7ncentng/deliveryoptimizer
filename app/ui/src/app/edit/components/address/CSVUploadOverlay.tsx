@@ -422,28 +422,16 @@ const dataRows = useMemo(
 );
 
 const [step, setStep] = useState<1 | 2>(1);
-const [mapping, setMapping] = useState<Record<string, MappableField>>({});
-const [selected, setSelected] = useState<Set<number>>(new Set());
+const [mapping, setMapping] = useState<Record<string, MappableField>>(() => {
+  return Object.fromEntries(headers.map((h) => [h, "" as MappableField]));
+});
+
+const [selected, setSelected] = useState<Set<number>>(() => {
+  return new Set(dataRows.map((_, i) => i));
+});
 
 // When csvData arrives, initialise mapping and selection
-const prevHeadersRef = useRef<string[]>([]);
 // Initialize mapping when headers change
-useEffect(() => {
-  if (headers.length > 0 && headers !== prevHeadersRef.current) {
-    prevHeadersRef.current = headers;
-    // Instead of calling setMapping here, create the initial mapping object
-    const initialMapping = Object.fromEntries(headers.map((h) => [h, "" as MappableField]));
-    setMapping(initialMapping);
-  }
-}, [headers]);
-
-// Initialize selection when data rows change
-useEffect(() => {
-  if (dataRows.length >= 0 && headers.length > 0) {
-    setSelected(new Set(dataRows.map((_, i) => i)));
-    // Remove setStep(1) from here - it's unnecessary since step defaults to 1
-  }
-}, [dataRows, headers]);
 
   function handleClose() {
     setIsUploading(false);
