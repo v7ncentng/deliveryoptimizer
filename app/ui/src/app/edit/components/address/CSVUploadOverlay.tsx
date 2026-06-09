@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import {
   OVERLAY_BACKDROP,
   OVERLAY_HEADER,
@@ -407,30 +407,34 @@ export default function CSVUploadOverlay({
   // If a file was pre-supplied (e.g. from upload-save-point), skip step 0 and
   // go straight to the column mapper on first render.
   const hasAutoOpenedRef = useRef(false);
+  // If a file was pre-supplied, skip step 0 and go straight to the column mapper
+useEffect(() => {
   if (initialFile && !hasAutoOpenedRef.current && !isImportModalOpen) {
     hasAutoOpenedRef.current = true;
-    // Schedule outside render to avoid setState-during-render warning
-    setTimeout(() => openImportModal(initialFile), 0);
+    openImportModal(initialFile);
   }
+}, [initialFile, isImportModalOpen, openImportModal]);
 
-  const headers = useMemo(() => csvData[0] ?? [], [csvData]);
-  const dataRows = useMemo(
-    () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
-    [csvData],
-  );
+const headers = useMemo(() => csvData[0] ?? [], [csvData]);
+const dataRows = useMemo(
+  () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
+  [csvData],
+);
 
-  const [step, setStep] = useState<1 | 2>(1);
-  const [mapping, setMapping] = useState<Record<string, MappableField>>({});
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+const [step, setStep] = useState<1 | 2>(1);
+const [mapping, setMapping] = useState<Record<string, MappableField>>({});
+const [selected, setSelected] = useState<Set<number>>(new Set());
 
-  // When csvData arrives, initialise mapping and selection
-  const prevHeadersRef = useRef<string[]>([]);
+// When csvData arrives, initialise mapping and selection
+const prevHeadersRef = useRef<string[]>([]);
+useEffect(() => {
   if (headers.length > 0 && headers !== prevHeadersRef.current) {
     prevHeadersRef.current = headers;
     setMapping(Object.fromEntries(headers.map((h) => [h, "" as MappableField])));
     setSelected(new Set(dataRows.map((_, i) => i)));
     setStep(1);
   }
+}, [headers, dataRows]);
 
   function handleClose() {
     setIsUploading(false);
