@@ -427,17 +427,21 @@ const [selected, setSelected] = useState<Set<number>>(new Set());
 
 // When csvData arrives, initialise mapping and selection
 const prevHeadersRef = useRef<string[]>([]);
+// Initialize mapping when headers change
 useEffect(() => {
   if (headers.length > 0 && headers !== prevHeadersRef.current) {
     prevHeadersRef.current = headers;
-    setMapping(Object.fromEntries(headers.map((h) => [h, "" as MappableField])));
+    // Instead of calling setMapping here, create the initial mapping object
+    const initialMapping = Object.fromEntries(headers.map((h) => [h, "" as MappableField]));
+    setMapping(initialMapping);
   }
 }, [headers]);
 
+// Initialize selection when data rows change
 useEffect(() => {
   if (dataRows.length >= 0 && headers.length > 0) {
     setSelected(new Set(dataRows.map((_, i) => i)));
-    setStep(1);
+    // Remove setStep(1) from here - it's unnecessary since step defaults to 1
   }
 }, [dataRows, headers]);
 
