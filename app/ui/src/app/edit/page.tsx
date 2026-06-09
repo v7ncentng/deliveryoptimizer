@@ -93,7 +93,10 @@ export default function Page() {
       const storedSavePointFile = sessionStorage.getItem("savePointFile");
       if (storedSavePointFile) {
         try {
-          const savedFile = parseStoredUploadFile(storedSavePointFile, "save point");
+          const savedFile = parseStoredUploadFile(
+            storedSavePointFile,
+            "save point",
+          );
           const session = await loadSessionFromFile(
             new File([savedFile.content], savedFile.name, {
               type: "application/json",
@@ -123,7 +126,8 @@ export default function Page() {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
           if (!cancelled) importAddresses(reindexAddresses(cards));
         } catch {
-          if (!cancelled) setSessionError("Failed to import the selected entries.");
+          if (!cancelled)
+            setSessionError("Failed to import the selected entries.");
         }
         return;
       }
@@ -134,7 +138,10 @@ export default function Page() {
       if (storedPendingCSV) {
         sessionStorage.removeItem("pendingCSVFile");
         try {
-          const { name, content } = JSON.parse(storedPendingCSV) as { name: string; content: string };
+          const { name, content } = JSON.parse(storedPendingCSV) as {
+            name: string;
+            content: string;
+          };
           const file = new File([content], name, { type: "text/csv" });
           if (!cancelled) {
             setPendingCSVFile(file);
@@ -207,7 +214,9 @@ export default function Page() {
       setPendingDropFile(file);
       setIsUploadOverlayOpen(true);
     } else {
-      setUploadError("This file type is not accepted. Please upload a CSV file.");
+      setUploadError(
+        "This file type is not accepted. Please upload a CSV file.",
+      );
     }
   }
 
@@ -216,14 +225,19 @@ export default function Page() {
       {/* CSVUploadOverlay handles all three steps: file pick → column mapper → row selector */}
       {isUploadOverlayOpen && (
         <CSVUploadOverlay
-          onClose={() => { setIsUploadOverlayOpen(false); setPendingCSVFile(null); }}
+          onClose={() => {
+            setIsUploadOverlayOpen(false);
+            setPendingCSVFile(null);
+          }}
           importAddresses={(cards: AddressCard[]) =>
             addressState.importAddresses(reindexAddresses(cards))
           }
           onInvalidFile={() => {
             setIsUploadOverlayOpen(false);
             setPendingCSVFile(null);
-            setUploadError("This file type is not accepted. Please upload a CSV file.");
+            setUploadError(
+              "This file type is not accepted. Please upload a CSV file.",
+            );
           }}
           initialFile={pendingDropFile ?? pendingCSVFile ?? undefined}
         />
@@ -231,7 +245,10 @@ export default function Page() {
 
       <ErrorOverlay message={optimizeError} onClose={clearOptimizeError} />
       <ErrorOverlay message={sessionError} onClose={clearSessionError} />
-      <ErrorOverlay message={uploadError} onClose={() => setUploadError(null)} />
+      <ErrorOverlay
+        message={uploadError}
+        onClose={() => setUploadError(null)}
+      />
       <OptimizingModal isOpen={isOptimizing} />
       {needsDepotAddress && (
         <AddressOverlay
@@ -295,7 +312,10 @@ export default function Page() {
   );
 }
 
-function parseStoredUploadFile(rawValue: string, label: string): StoredUploadFile {
+function parseStoredUploadFile(
+  rawValue: string,
+  label: string,
+): StoredUploadFile {
   let parsed: unknown;
   try {
     parsed = JSON.parse(rawValue);
