@@ -431,10 +431,15 @@ useEffect(() => {
   if (headers.length > 0 && headers !== prevHeadersRef.current) {
     prevHeadersRef.current = headers;
     setMapping(Object.fromEntries(headers.map((h) => [h, "" as MappableField])));
+  }
+}, [headers]);
+
+useEffect(() => {
+  if (dataRows.length >= 0 && headers.length > 0) {
     setSelected(new Set(dataRows.map((_, i) => i)));
     setStep(1);
   }
-}, [headers, dataRows]);
+}, [dataRows, headers]);
 
   function handleClose() {
     setIsUploading(false);
