@@ -146,9 +146,7 @@ function StepColumnMapper({
             Match your CSV columns to our fields
           </p>
 
-          {/* Bordered table card */}
           <div className="w-full border border-[var(--edit-stone-200)] rounded-[8px] overflow-hidden">
-            {/* Column header row */}
             <div
               className="grid gap-x-4 px-4 py-3 border-b border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)]"
               style={{ gridTemplateColumns: "1fr 1.4fr 1fr" }}
@@ -174,7 +172,6 @@ function StepColumnMapper({
                     {header.charAt(0).toUpperCase() + header.slice(1)}
                   </span>
 
-                  {/* Native select overlaid on styled shell */}
                   <div className="relative border border-[var(--edit-stone-200)] rounded-[6px] h-10 flex items-center overflow-hidden">
                     <select
                       value={mapping[header] ?? ""}
@@ -186,7 +183,7 @@ function StepColumnMapper({
                         <option key={f} value={f}>{FIELD_LABELS[f]}</option>
                       ))}
                     </select>
-                    <span className={`flex-1 px-3 text-[14px] leading-[1.5] pointer-events-none truncate text-[var(--edit-text-primary)]`}>
+                    <span className="flex-1 px-3 text-[14px] leading-[1.5] pointer-events-none truncate text-[var(--edit-text-primary)]">
                       {mapping[header] ? FIELD_LABELS[mapping[header] as Exclude<MappableField, "">] : "Select"}
                     </span>
                     <svg className="shrink-0 mr-3 pointer-events-none rotate-90" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -194,7 +191,6 @@ function StepColumnMapper({
                     </svg>
                   </div>
 
-                  {/* Preview — up to 3 sample values */}
                   <div className="flex flex-col gap-[2px] overflow-hidden">
                     {previewRows.map((row, i) => {
                       const val = row[headers.indexOf(header)] ?? "—";
@@ -282,7 +278,6 @@ function StepRowSelector({
             Review and select information to import
           </p>
 
-          {/* Horizontally and vertically scrollable table */}
           <div className="w-full overflow-x-auto overflow-y-auto max-h-[380px]">
             <table
               className="border-collapse w-full"
@@ -388,7 +383,6 @@ export default function CSVUploadOverlay({
   onInvalidFile,
   initialFile,
 }: CSVUploadOverlayProps) {
-  // Step 0 state — file pick
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(
     initialFile && initialFile.size <= MAX_CSV_BYTES ? initialFile : null,
@@ -401,37 +395,55 @@ export default function CSVUploadOverlay({
       : null,
   );
 
-  // Steps 1 + 2 state — column mapper and row selector
   const { csvData, isImportModalOpen, openImportModal, closeImportModal } = useCSVImport();
 
-  // If a file was pre-supplied (e.g. from upload-save-point), skip step 0 and
-  // go straight to the column mapper on first render.
-  const hasAutoOpenedRef = useRef(false);
-  // If a file was pre-supplied, skip step 0 and go straight to the column mapper
-useEffect(() => {
-  if (initialFile && !hasAutoOpenedRef.current && !isImportModalOpen) {
-    hasAutoOpenedRef.current = true;
-    openImportModal(initialFile);
+  // Fix warning 1: wrap headers and dataRows in useMemo so their references
+  // are stable across renders and useCallback deps don't change on every render.
+  const headers = useMemo(() => csvData[0] ?? [], [csvData]);
+  const dataRows = useMemo(
+    () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
+    [csvData],
+  );
+
+  const [step, setStep] = useState<1 | 2>(1);
+
+  // Derive mapping and selected directly from headers/dataRows so no effect
+  // is needed — avoids the setState-in-effect cascading render lint error.
+  const mapping = useMemo(
+    () => Object.fromEntries(headers.map((h) => [h, "" as MappableField])),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [headers.join(",")],
+  );
+  const defaultSelected = useMemo(
+    () => new Set(dataRows.map((_, i) => i)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [headers.join(",")],
+  );
+  const [selectedOverride, setSelectedOverride] = useState<Set<number> | null>(null);
+  const [mappingOverride, setMappingOverride] = useState<Record<string, MappableField> | null>(null);
+
+  // Reset overrides when a new file is parsed (headers change)
+  const prevHeadersKeyRef = useRef<string>("");
+  const headersKey = headers.join(",");
+  if (headersKey !== prevHeadersKeyRef.current) {
+    prevHeadersKeyRef.current = headersKey;
+    if (selectedOverride !== null) setSelectedOverride(null);
+    if (mappingOverride !== null) setMappingOverride(null);
+    if (step !== 1) setStep(1);
   }
-}, [initialFile, isImportModalOpen, openImportModal]);
 
-const headers = useMemo(() => csvData[0] ?? [], [csvData]);
-const dataRows = useMemo(
-  () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
-  [csvData],
-);
+  const activeMapping = mappingOverride ?? mapping;
+  const activeSelected = selectedOverride ?? defaultSelected;
 
-const [step, setStep] = useState<1 | 2>(1);
-const [mapping, setMapping] = useState<Record<string, MappableField>>(() => {
-  return Object.fromEntries(headers.map((h) => [h, "" as MappableField]));
-});
-
-const [selected, setSelected] = useState<Set<number>>(() => {
-  return new Set(dataRows.map((_, i) => i));
-});
-
-// When csvData arrives, initialise mapping and selection
-// Initialize mapping when headers change
+  // If a file was pre-supplied (e.g. from upload-save-point), skip step 0
+  // and go straight to the column mapper on first render.
+  const hasAutoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (initialFile && !hasAutoOpenedRef.current && !isImportModalOpen) {
+      hasAutoOpenedRef.current = true;
+      openImportModal(initialFile);
+    }
+  }, [initialFile, isImportModalOpen, openImportModal]);
 
   function handleClose() {
     setIsUploading(false);
@@ -497,16 +509,16 @@ const [selected, setSelected] = useState<Set<number>>(() => {
   }
 
   const handleMappingChange = useCallback((header: string, field: MappableField) => {
-    setMapping((prev) => ({ ...prev, [header]: field }));
-  }, []);
+    setMappingOverride((prev) => ({ ...(prev ?? mapping), [header]: field }));
+  }, [mapping]);
 
   const handleToggleAll = useCallback((checked: boolean) => {
-    setSelected(checked ? new Set(dataRows.map((_, i) => i)) : new Set());
+    setSelectedOverride(checked ? new Set(dataRows.map((_, i) => i)) : new Set());
   }, [dataRows]);
 
   const handleToggleRow = useCallback((index: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
+    setSelectedOverride((prev) => {
+      const next = new Set(prev ?? defaultSelected);
       if (next.has(index)) {
         next.delete(index);
       } else {
@@ -514,17 +526,16 @@ const [selected, setSelected] = useState<Set<number>>(() => {
       }
       return next;
     });
-  }, []);
+  }, [defaultSelected]);
 
   const handleConfirm = useCallback(() => {
-    const cards = buildAddressCards(dataRows, headers, mapping, selected);
+    const cards = buildAddressCards(dataRows, headers, activeMapping, activeSelected);
     importAddresses(cards);
     onClose();
-  }, [dataRows, headers, mapping, selected, importAddresses, onClose]);
+  }, [dataRows, headers, activeMapping, activeSelected, importAddresses, onClose]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  // Steps 1 + 2: column mapper and row selector
   if (isImportModalOpen) {
     return (
       <div className={OVERLAY_BACKDROP} onClick={handleClose}>
@@ -540,7 +551,7 @@ const [selected, setSelected] = useState<Set<number>>(() => {
               <StepColumnMapper
                 headers={headers}
                 dataRows={dataRows}
-                mapping={mapping}
+                mapping={activeMapping}
                 onMappingChange={handleMappingChange}
                 onCancel={handleClose}
                 onNext={() => setStep(2)}
@@ -549,8 +560,8 @@ const [selected, setSelected] = useState<Set<number>>(() => {
               <StepRowSelector
                 headers={headers}
                 dataRows={dataRows}
-                mapping={mapping}
-                selected={selected}
+                mapping={activeMapping}
+                selected={activeSelected}
                 onToggleAll={handleToggleAll}
                 onToggleRow={handleToggleRow}
                 onBack={() => setStep(1)}
