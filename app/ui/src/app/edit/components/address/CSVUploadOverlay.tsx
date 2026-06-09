@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import {
   OVERLAY_BACKDROP,
   OVERLAY_HEADER,
@@ -29,10 +29,32 @@ import {
   CSV_UPLOAD_SIZE_ERROR,
 } from "@/app/edit/formStyles.v2";
 import SpinnerIcon from "@/app/edit/components/shared/SpinnerIcon";
+import type { AddressCard } from "@/app/edit/types/delivery";
+import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type MappableField =
+  | "recipientAddress"
+  | "deliveryTimeStart"
+  | "deliveryTimeEnd"
+  | "deliveryQuantity"
+  | "timeBuffer"
+  | "notes"
+  | "";
+
+const FIELD_LABELS: Record<Exclude<MappableField, "">, string> = {
+  recipientAddress: "Recipient Address",
+  deliveryTimeStart: "Delivery Time Start",
+  deliveryTimeEnd: "Delivery Time End",
+  deliveryQuantity: "Delivery Quantity",
+  timeBuffer: "Time Buffer",
+  notes: "Notes",
+};
 
 type CSVUploadOverlayProps = {
   onClose: () => void;
-  onFileSelect: (file: File) => void;
+  importAddresses: (addresses: AddressCard[]) => void;
   onInvalidFile?: () => void;
   initialFile?: File;
 };
@@ -44,12 +66,329 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildAddressCards(
+  rows: string[][],
+  headers: string[],
+  mapping: Record<string, MappableField>,
+  selectedIndices: Set<number>,
+): AddressCard[] {
+  let idCounter = 1;
+  return rows
+    .filter((_, i) => selectedIndices.has(i))
+    .map((row) => {
+      const card: AddressCard = {
+        id: idCounter++,
+        locked: true,
+        editingExisting: false,
+        recipientAddress: "",
+        recipientName: "",
+        phoneNumber: "",
+        timeBuffer: 0,
+        deliveryTimeStart: "",
+        deliveryTimeEnd: "",
+        deliveryQuantity: 0,
+        notes: "",
+      };
+      headers.forEach((header, colIdx) => {
+        const field = mapping[header];
+        if (!field) return;
+        const val = row[colIdx] ?? "";
+        if (field === "deliveryQuantity") {
+          card.deliveryQuantity = parseInt(val, 10) || 0;
+        } else if (field === "timeBuffer") {
+          card.timeBuffer = parseInt(val, 10) || 0;
+        } else {
+          (card as Record<string, unknown>)[field] = val;
+        }
+      });
+      return card;
+    });
+}
+
+// ─── Step 1: Column Mapper ────────────────────────────────────────────────────
+
+function StepColumnMapper({
+  headers,
+  dataRows,
+  mapping,
+  onMappingChange,
+  onCancel,
+  onNext,
+}: {
+  headers: string[];
+  dataRows: string[][];
+  mapping: Record<string, MappableField>;
+  onMappingChange: (header: string, field: MappableField) => void;
+  onCancel: () => void;
+  onNext: () => void;
+}) {
+  const previewRows = dataRows.slice(0, 3);
+  const isMapped = Object.values(mapping).includes("recipientAddress");
+
+  return (
+    <>
+      <div className={CSV_UPLOAD_OVERLAY_CONTENT}>
+        <div className={CSV_UPLOAD_OVERLAY_TOP}>
+          <div className={OVERLAY_HEADER}>
+            <p id="csv-upload-title" className={OVERLAY_TITLE}>
+              Import from CSV
+            </p>
+            <button type="button" onClick={onCancel} aria-label="Close" className={OVERLAY_CLOSE_BTN}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          <p className="font-normal text-[14px] leading-[1.5] text-[var(--edit-text-secondary)] w-full">
+            Match your CSV columns to our fields
+          </p>
+
+          {/* Bordered table card */}
+          <div className="w-full border border-[var(--edit-stone-200)] rounded-[8px] overflow-hidden">
+            {/* Column header row */}
+            <div
+              className="grid gap-x-4 px-4 py-3 border-b border-[var(--edit-stone-200)] bg-[var(--edit-bg-primary)]"
+              style={{ gridTemplateColumns: "1fr 1.4fr 1fr" }}
+            >
+              {["CSV column", "Delivery Optimizer column", "Preview"].map((h) => (
+                <span key={h} className="font-normal text-[14px] leading-[1.5] text-[var(--edit-text-primary)]">
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            <div className="overflow-y-auto max-h-[340px]">
+              {headers.map((header, idx) => (
+                <div
+                  key={header}
+                  className="grid gap-x-4 px-4 py-3 items-center bg-[var(--edit-bg-primary)]"
+                  style={{
+                    gridTemplateColumns: "1fr 1.4fr 1fr",
+                    borderBottom: idx < headers.length - 1 ? "1px solid var(--edit-stone-200)" : "none",
+                  }}
+                >
+                  <span className="font-normal text-[14px] leading-[1.5] text-[var(--edit-text-primary)]">
+                    {header.charAt(0).toUpperCase() + header.slice(1)}
+                  </span>
+
+                  {/* Native select overlaid on styled shell */}
+                  <div className="relative border border-[var(--edit-stone-200)] rounded-[6px] h-10 flex items-center overflow-hidden">
+                    <select
+                      value={mapping[header] ?? ""}
+                      onChange={(e) => onMappingChange(header, e.target.value as MappableField)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    >
+                      <option value="">Select</option>
+                      {(Object.keys(FIELD_LABELS) as Exclude<MappableField, "">[]).map((f) => (
+                        <option key={f} value={f}>{FIELD_LABELS[f]}</option>
+                      ))}
+                    </select>
+                    <span className={`flex-1 px-3 text-[14px] leading-[1.5] pointer-events-none truncate text-[var(--edit-text-primary)]`}>
+                      {mapping[header] ? FIELD_LABELS[mapping[header] as Exclude<MappableField, "">] : "Select"}
+                    </span>
+                    <svg className="shrink-0 mr-3 pointer-events-none rotate-90" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M6 4l4 4-4 4" stroke="var(--edit-text-primary)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+
+                  {/* Preview — up to 3 sample values */}
+                  <div className="flex flex-col gap-[2px] overflow-hidden">
+                    {previewRows.map((row, i) => {
+                      const val = row[headers.indexOf(header)] ?? "—";
+                      const fontSize = val.length > 40 ? "10px" : val.length > 25 ? "11px" : "12px";
+                      return (
+                        <span
+                          key={i}
+                          style={{ fontSize }}
+                          className="text-[var(--edit-text-secondary)] leading-[1.4] overflow-hidden text-ellipsis whitespace-nowrap block"
+                        >
+                          {val}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={OVERLAY_FOOTER}>
+        <button type="button" onClick={onCancel} className={OVERLAY_CANCEL_BTN}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!isMapped}
+          className={OVERLAY_PRIMARY_BTN}
+          style={{ opacity: isMapped ? 1 : 0.4, cursor: isMapped ? "pointer" : "not-allowed" }}
+        >
+          Next
+        </button>
+      </div>
+    </>
+  );
+}
+
+// ─── Step 2: Row Selector ─────────────────────────────────────────────────────
+
+function StepRowSelector({
+  headers,
+  dataRows,
+  mapping,
+  selected,
+  onToggleAll,
+  onToggleRow,
+  onBack,
+  onCancel,
+  onConfirm,
+}: {
+  headers: string[];
+  dataRows: string[][];
+  mapping: Record<string, MappableField>;
+  selected: Set<number>;
+  onToggleAll: (checked: boolean) => void;
+  onToggleRow: (index: number) => void;
+  onBack: () => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const mappedHeaders = headers.filter((h) => mapping[h]);
+  const allChecked = dataRows.length > 0 && selected.size === dataRows.length;
+  const someChecked = selected.size > 0 && !allChecked;
+  const COL_MIN = 160;
+
+  return (
+    <>
+      <div className={CSV_UPLOAD_OVERLAY_CONTENT}>
+        <div className={CSV_UPLOAD_OVERLAY_TOP}>
+          <div className={OVERLAY_HEADER}>
+            <p id="csv-upload-title" className={OVERLAY_TITLE}>
+              Import from CSV
+            </p>
+            <button type="button" onClick={onCancel} aria-label="Close" className={OVERLAY_CLOSE_BTN}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          <p className="font-normal text-[14px] leading-[1.5] text-[var(--edit-text-secondary)] w-full">
+            Review and select information to import
+          </p>
+
+          {/* Horizontally and vertically scrollable table */}
+          <div className="w-full overflow-x-auto overflow-y-auto max-h-[380px]">
+            <table
+              className="border-collapse w-full"
+              style={{ minWidth: `${52 + mappedHeaders.length * COL_MIN}px` }}
+            >
+              <thead>
+                <tr className="border-b border-[var(--edit-stone-200)]">
+                  <th className="w-[52px] px-4 pb-3 text-left sticky left-0 bg-[var(--edit-bg-primary)] z-10">
+                    <input
+                      type="checkbox"
+                      checked={allChecked}
+                      ref={(el) => { if (el) el.indeterminate = someChecked; }}
+                      onChange={(e) => onToggleAll(e.target.checked)}
+                      className="cursor-pointer accent-[var(--edit-teal-300)] w-4 h-4"
+                    />
+                  </th>
+                  {mappedHeaders.map((h) => (
+                    <th
+                      key={h}
+                      style={{ minWidth: `${COL_MIN}px` }}
+                      className="pb-3 pr-4 text-left font-semibold text-[13px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap"
+                    >
+                      {FIELD_LABELS[mapping[h] as Exclude<MappableField, "">] ?? h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {dataRows.map((row, i) => {
+                  const isChecked = selected.has(i);
+                  return (
+                    <tr
+                      key={i}
+                      onClick={() => onToggleRow(i)}
+                      className="border-b border-[var(--edit-stone-200)] cursor-pointer transition-colors"
+                      style={{ background: isChecked ? "var(--edit-container-active)" : "transparent" }}
+                    >
+                      <td
+                        className="px-4 py-3 sticky left-0 z-10"
+                        style={{ background: isChecked ? "var(--edit-container-active)" : "var(--edit-bg-primary)" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => onToggleRow(i)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="cursor-pointer accent-[var(--edit-teal-300)] w-4 h-4"
+                        />
+                      </td>
+                      {mappedHeaders.map((h) => {
+                        const val = row[headers.indexOf(h)] ?? "—";
+                        return (
+                          <td
+                            key={h}
+                            title={val}
+                            className="py-3 pr-4 font-normal text-[14px] leading-[1.5] text-[var(--edit-text-primary)] whitespace-nowrap overflow-hidden text-ellipsis"
+                            style={{ maxWidth: "240px" }}
+                          >
+                            {val}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between w-full gap-4">
+        <span className="font-normal text-[14px] leading-[1.5] text-[var(--edit-text-secondary)] shrink-0">
+          {selected.size} {selected.size === 1 ? "entry" : "entries"} will be imported
+        </span>
+        <div className={OVERLAY_FOOTER}>
+          <button type="button" onClick={onBack} className={OVERLAY_CANCEL_BTN}>
+            Back
+          </button>
+          <button type="button" onClick={onCancel} className={OVERLAY_CANCEL_BTN}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={selected.size === 0}
+            className={OVERLAY_PRIMARY_BTN}
+            style={{ opacity: selected.size > 0 ? 1 : 0.4, cursor: selected.size > 0 ? "pointer" : "not-allowed" }}
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 export default function CSVUploadOverlay({
   onClose,
-  onFileSelect,
+  importAddresses,
   onInvalidFile,
   initialFile,
 }: CSVUploadOverlayProps) {
+  // Step 0 state — file pick
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(
     initialFile && initialFile.size <= MAX_CSV_BYTES ? initialFile : null,
@@ -62,8 +401,40 @@ export default function CSVUploadOverlay({
       : null,
   );
 
+  // Steps 1 + 2 state — column mapper and row selector
+  const { csvData, isImportModalOpen, openImportModal, closeImportModal } = useCSVImport();
+
+  // If a file was pre-supplied (e.g. from upload-save-point), skip step 0 and
+  // go straight to the column mapper on first render.
+  const hasAutoOpenedRef = useRef(false);
+  if (initialFile && !hasAutoOpenedRef.current && !isImportModalOpen) {
+    hasAutoOpenedRef.current = true;
+    // Schedule outside render to avoid setState-during-render warning
+    setTimeout(() => openImportModal(initialFile), 0);
+  }
+
+  const headers = useMemo(() => csvData[0] ?? [], [csvData]);
+  const dataRows = useMemo(
+    () => csvData.slice(1).filter((row) => row.some((cell) => cell.trim() !== "")),
+    [csvData],
+  );
+
+  const [step, setStep] = useState<1 | 2>(1);
+  const [mapping, setMapping] = useState<Record<string, MappableField>>({});
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  // When csvData arrives, initialise mapping and selection
+  const prevHeadersRef = useRef<string[]>([]);
+  if (headers.length > 0 && headers !== prevHeadersRef.current) {
+    prevHeadersRef.current = headers;
+    setMapping(Object.fromEntries(headers.map((h) => [h, "" as MappableField])));
+    setSelected(new Set(dataRows.map((_, i) => i)));
+    setStep(1);
+  }
+
   function handleClose() {
     setIsUploading(false);
+    closeImportModal();
     onClose();
   }
 
@@ -88,10 +459,10 @@ export default function CSVUploadOverlay({
   }
 
   function handleNext() {
-    if (selectedFile) {
-      setIsUploading(true);
-      onFileSelect(selectedFile);
-    }
+    if (!selectedFile) return;
+    setIsUploading(true);
+    openImportModal(selectedFile);
+    setIsUploading(false);
   }
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
@@ -124,6 +495,75 @@ export default function CSVUploadOverlay({
     }
   }
 
+  const handleMappingChange = useCallback((header: string, field: MappableField) => {
+    setMapping((prev) => ({ ...prev, [header]: field }));
+  }, []);
+
+  const handleToggleAll = useCallback((checked: boolean) => {
+    setSelected(checked ? new Set(dataRows.map((_, i) => i)) : new Set());
+  }, [dataRows]);
+
+  const handleToggleRow = useCallback((index: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleConfirm = useCallback(() => {
+    const cards = buildAddressCards(dataRows, headers, mapping, selected);
+    importAddresses(cards);
+    onClose();
+  }, [dataRows, headers, mapping, selected, importAddresses, onClose]);
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  // Steps 1 + 2: column mapper and row selector
+  if (isImportModalOpen) {
+    return (
+      <div className={OVERLAY_BACKDROP} onClick={handleClose}>
+        <div
+          className={CSV_UPLOAD_OVERLAY_PANEL}
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="csv-upload-title"
+        >
+          <div className={CSV_UPLOAD_OVERLAY_INNER}>
+            {step === 1 ? (
+              <StepColumnMapper
+                headers={headers}
+                dataRows={dataRows}
+                mapping={mapping}
+                onMappingChange={handleMappingChange}
+                onCancel={handleClose}
+                onNext={() => setStep(2)}
+              />
+            ) : (
+              <StepRowSelector
+                headers={headers}
+                dataRows={dataRows}
+                mapping={mapping}
+                selected={selected}
+                onToggleAll={handleToggleAll}
+                onToggleRow={handleToggleRow}
+                onBack={() => setStep(1)}
+                onCancel={handleClose}
+                onConfirm={handleConfirm}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 0: file pick
   return (
     <div className={OVERLAY_BACKDROP} onClick={handleClose}>
       <div
@@ -136,7 +576,6 @@ export default function CSVUploadOverlay({
         <div className={CSV_UPLOAD_OVERLAY_INNER}>
           <div className={CSV_UPLOAD_OVERLAY_CONTENT}>
             <div className={CSV_UPLOAD_OVERLAY_TOP}>
-              {/* Header */}
               <div className={OVERLAY_HEADER}>
                 <p id="csv-upload-title" className={OVERLAY_TITLE}>
                   Import from CSV
@@ -147,30 +586,14 @@ export default function CSVUploadOverlay({
                   aria-label="Close"
                   className={OVERLAY_CLOSE_BTN}
                 >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M4 4l16 16M20 4L4 20"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                   </svg>
                 </button>
               </div>
 
-              {/* Drop zone */}
               <div
-                className={
-                  isDragOver
-                    ? CSV_UPLOAD_DROP_ZONE_ACTIVE
-                    : CSV_UPLOAD_DROP_ZONE
-                }
+                className={isDragOver ? CSV_UPLOAD_DROP_ZONE_ACTIVE : CSV_UPLOAD_DROP_ZONE}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -180,20 +603,12 @@ export default function CSVUploadOverlay({
                     <SpinnerIcon />
                   ) : (
                     <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="40"
-                        height="40"
-                        viewBox="0 0 40 40"
-                        fill="none"
-                        aria-hidden="true"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
                         <path
                           d="M18.667 31.6112H21.4449V23.7083L24.6116 26.875L26.5557 24.9166L20.0003 18.4721L13.5003 24.9721L15.4587 26.9166L18.667 23.7083V31.6112ZM9.44491 36.6666C8.69491 36.6666 8.04435 36.3912 7.49324 35.8404C6.94241 35.2893 6.66699 34.6387 6.66699 33.8887V6.11123C6.66699 5.36123 6.94241 4.71068 7.49324 4.15956C8.04435 3.60873 8.69491 3.33331 9.44491 3.33331H23.917L33.3337 12.75V33.8887C33.3337 34.6387 33.0582 35.2893 32.5074 35.8404C31.9563 36.3912 31.3057 36.6666 30.5557 36.6666H9.44491ZM22.5282 14.0554V6.11123H9.44491V33.8887H30.5557V14.0554H22.5282Z"
                           fill="var(--edit-primary-icon)"
                         />
                       </svg>
-
                       <div className={CSV_UPLOAD_DROP_ZONE_PROMPT}>
                         <p className={CSV_UPLOAD_DROP_ZONE_TEXT}>
                           Drag and drop CSV files here, or
@@ -209,7 +624,6 @@ export default function CSVUploadOverlay({
                     </>
                   )}
                 </div>
-
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -220,67 +634,37 @@ export default function CSVUploadOverlay({
                 />
               </div>
 
-              {/* Description */}
               <p className={CSV_UPLOAD_DESCRIPTION}>
-                Import delivery details from a CSV file. Maximum file size of 10
-                MB.
+                Import delivery details from a CSV file. Maximum file size of 10 MB.
               </p>
               {fileSizeError !== null && (
-                <p
-                  role="alert"
-                  aria-live="assertive"
-                  className={CSV_UPLOAD_SIZE_ERROR}
-                >
+                <p role="alert" aria-live="assertive" className={CSV_UPLOAD_SIZE_ERROR}>
                   {fileSizeError}
                 </p>
               )}
             </div>
 
-            {/* File chip — visible only when a file is selected and not uploading */}
             {selectedFile !== null && !isUploading && (
               <div className={CSV_UPLOAD_FILE_CHIP}>
                 <div className={CSV_UPLOAD_FILE_CHIP_LEFT}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    aria-hidden="true"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
                     <path
                       d="M11.4729 15.6843C10.4515 16.7056 9.22387 17.2163 7.79001 17.2163C6.35616 17.2163 5.12854 16.7056 4.10716 15.6843C3.08579 14.6629 2.5751 13.4353 2.5751 12.0014C2.5751 10.5675 3.08579 9.33993 4.10716 8.31856L9.55778 2.86794C10.2943 2.13137 11.1782 1.76309 12.2094 1.76309C13.2406 1.76309 14.1245 2.13137 14.8611 2.86794C15.5976 3.60451 15.9659 4.48839 15.9659 5.51959C15.9659 6.55079 15.5976 7.43467 14.8611 8.17124L9.70509 13.3272C9.25333 13.779 8.71318 14.0049 8.08464 14.0049C7.4561 14.0049 6.91595 13.779 6.46419 13.3272C6.01242 12.8755 5.78654 12.3353 5.78654 11.7068C5.78654 11.0782 6.01242 10.5381 6.46419 10.0863L11.9148 4.63571L13.0933 5.81422L7.6427 11.2648C7.51503 11.3925 7.45119 11.5398 7.45119 11.7068C7.45119 11.8737 7.51503 12.021 7.6427 12.1487C7.77037 12.2764 7.91768 12.3402 8.08464 12.3402C8.2516 12.3402 8.39891 12.2764 8.52658 12.1487L13.6826 6.99273C14.0852 6.57043 14.289 6.07693 14.2939 5.51223C14.2988 4.94752 14.095 4.45893 13.6826 4.04645C13.2701 3.63397 12.779 3.42773 12.2094 3.42773C11.6398 3.42773 11.1488 3.63397 10.7363 4.04645L5.28568 9.49707C4.57857 10.1845 4.22747 11.0169 4.23238 11.994C4.23729 12.9712 4.58839 13.8085 5.28568 14.5057C5.97314 15.1932 6.80055 15.5345 7.76791 15.5296C8.73528 15.5247 9.57742 15.1834 10.2943 14.5057L16.0396 8.7605L17.2181 9.93901L11.4729 15.6843Z"
                       fill="var(--edit-primary-icon)"
                     />
                   </svg>
-                  <p className={CSV_UPLOAD_FILE_CHIP_FILENAME}>
-                    {selectedFile.name}
-                  </p>
+                  <p className={CSV_UPLOAD_FILE_CHIP_FILENAME}>{selectedFile.name}</p>
                 </div>
-
                 <div className={CSV_UPLOAD_FILE_CHIP_RIGHT}>
-                  <p className={CSV_UPLOAD_FILE_CHIP_SIZE}>
-                    {formatFileSize(selectedFile.size)}
-                  </p>
+                  <p className={CSV_UPLOAD_FILE_CHIP_SIZE}>{formatFileSize(selectedFile.size)}</p>
                   <button
                     type="button"
                     onClick={handleRemoveFile}
                     aria-label="Remove file"
                     className={CSV_UPLOAD_FILE_CHIP_REMOVE}
                   >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M2.5 2.5l11 11M13.5 2.5l-11 11"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      />
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M2.5 2.5l11 11M13.5 2.5l-11 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                     </svg>
                   </button>
                 </div>
@@ -288,13 +672,8 @@ export default function CSVUploadOverlay({
             )}
           </div>
 
-          {/* Footer */}
           <div className={OVERLAY_FOOTER}>
-            <button
-              type="button"
-              onClick={handleClose}
-              className={OVERLAY_CANCEL_BTN}
-            >
+            <button type="button" onClick={handleClose} className={OVERLAY_CANCEL_BTN}>
               Cancel
             </button>
             <button
