@@ -11,7 +11,7 @@ spec:
         autoscaling.knative.dev/maxScale: "4"
     spec:
       containerConcurrency: 80
-      timeoutSeconds: 60
+      timeoutSeconds: 300
       serviceAccountName: SERVICE_ACCOUNT
       containers:
         - name: api
