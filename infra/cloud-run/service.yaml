@@ -6,7 +6,7 @@ spec:
   template:
     metadata:
       annotations:
-        run.googleapis.com/container-dependencies: '{"api":["osrm"]}'
+        run.googleapis.com/container-dependencies: '{"api":["osrm","postgres"]}'
         autoscaling.knative.dev/minScale: "0"
         autoscaling.knative.dev/maxScale: "4"
     spec:
@@ -29,6 +29,8 @@ spec:
               value: /usr/local/bin/vroom
             - name: VROOM_ROUTER
               value: osrm
+            - name: DELIVERYOPTIMIZER_PG_DSN
+              value: host=localhost port=5432 dbname=deliveryoptimizer user=deliveryoptimizer password=deliveryoptimizer
           resources:
             limits:
               memory: 1Gi
@@ -58,3 +60,21 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 30
+        - name: postgres
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_DB
+              value: deliveryoptimizer
+            - name: POSTGRES_USER
+              value: deliveryoptimizer
+            - name: POSTGRES_PASSWORD
+              value: deliveryoptimizer
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "0.5"
+          startupProbe:
+            tcpSocket:
+              port: 5432
+            periodSeconds: 5
+            failureThreshold: 12
