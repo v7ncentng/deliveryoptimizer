@@ -15,6 +15,7 @@ import {
 import { SUPPORTED_STATES } from "@/app/edit/constants/supportedRegions";
 import { setOptimizeResults } from "@/app/edit/utils/hasOptimizeResults";
 import { vroomToRoutes } from "@/app/edit/utils/vroomToRoutes";
+import { saveEditPageDraft } from "@/lib/session/editPageDraft";
 import type {
   AddressCard,
   CapacityUnit,
@@ -85,11 +86,10 @@ function sleep(ms: number): Promise<void> {
 export function useOptimize(
   vehicles: VehicleRow[],
   addresses: AddressCard[],
-  cacheVehicleLocation: (
-    id: number,
-    lat: number,
-    lng: number,
-    state?: string | null,
+  setVehiclesStartLocation: (
+    ids: number[],
+    startLocation: string,
+    location: { lat: number; lng: number; state?: string | null },
   ) => void,
   cacheAddressLocation: (
     id: number,
@@ -198,14 +198,27 @@ export function useOptimize(
           );
           return;
         }
-        for (const v of availableVehicles) {
-          cacheVehicleLocation(
-            v.id,
-            depotLoc.lat,
-            depotLoc.lng,
-            depotLoc.state,
-          );
-        }
+        const depotVehicleIds = availableVehicles.map((v) => v.id);
+        setVehiclesStartLocation(
+          depotVehicleIds,
+          trimmedDepotAddress,
+          depotLoc,
+        );
+        const depotVehicleIdSet = new Set(depotVehicleIds);
+        const vehiclesWithDepotLocation = vehicles.map((vehicle) =>
+          depotVehicleIdSet.has(vehicle.id)
+            ? {
+                ...vehicle,
+                startLocation: trimmedDepotAddress,
+                cachedLocation: {
+                  lat: depotLoc.lat,
+                  lng: depotLoc.lng,
+                  state: depotLoc.state ?? null,
+                },
+              }
+            : vehicle,
+        );
+        saveEditPageDraft(vehiclesWithDepotLocation, addresses);
         const vehicleLocations: Map<
           number,
           { lat: number; lng: number; state: string | null }
@@ -395,7 +408,13 @@ export function useOptimize(
         setIsOptimizing(false);
       }
     },
-    [vehicles, addresses, router, cacheVehicleLocation, cacheAddressLocation],
+    [
+      vehicles,
+      addresses,
+      router,
+      setVehiclesStartLocation,
+      cacheAddressLocation,
+    ],
   );
 
   const clearOptimizeError = useCallback(() => {

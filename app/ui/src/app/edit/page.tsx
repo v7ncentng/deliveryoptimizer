@@ -80,7 +80,7 @@ export default function Page() {
   } = useOptimize(
     vehicleState.vehicles,
     addressState.addresses,
-    vehicleState.cacheVehicleLocation,
+    vehicleState.setVehiclesStartLocation,
     addressState.cacheAddressLocation,
   );
 

@@ -1,6 +1,7 @@
 import type { AddressCard, VehicleRow } from "@/app/edit/types/delivery";
 
-type DraftVehicle = Omit<VehicleRow, "startLocation" | "cachedLocation">;
+type DraftVehicle = Omit<VehicleRow, "startLocation" | "cachedLocation"> &
+  Partial<Pick<VehicleRow, "startLocation" | "cachedLocation">>;
 
 type EditPageDraft = {
   version: 1;
@@ -28,6 +29,8 @@ export function saveEditPageDraft(
         capacity: v.capacity,
         available: v.available,
         departureTime: v.departureTime,
+        startLocation: v.startLocation,
+        cachedLocation: v.cachedLocation,
       })),
       addresses,
     };
@@ -60,8 +63,8 @@ export function loadEditPageDraft(): {
     const draft = parsed as EditPageDraft;
     const vehicles: VehicleRow[] = draft.vehicles.map((v) => ({
       ...v,
-      startLocation: "",
-      cachedLocation: undefined,
+      startLocation: v.startLocation ?? "",
+      cachedLocation: v.cachedLocation,
     }));
 
     return { vehicles, addresses: draft.addresses };
