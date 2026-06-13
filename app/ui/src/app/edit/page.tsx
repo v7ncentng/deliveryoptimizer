@@ -42,6 +42,10 @@ import type { AddressCard } from "@/app/edit/types/delivery";
 import { loadSessionFromFile } from "@/lib/session/importSession";
 import { downloadSessionSave } from "@/lib/session/exportSession";
 import {
+  saveEditPageDraft,
+  loadEditPageDraft,
+} from "@/lib/session/editPageDraft";
+import {
   mapEditStateToOptimizeRequest,
   mapOptimizeRequestToEditState,
 } from "@/app/edit/utils/sessionMapper";
@@ -148,6 +152,16 @@ export default function Page() {
         }
         return;
       }
+
+      // Auto-saved draft — restore vehicles and addresses when navigating back
+      // from the results page. Lower priority than savePointFile/importedCards.
+      const draft = loadEditPageDraft();
+      if (draft) {
+        if (!cancelled) {
+          if (draft.vehicles.length > 0) importVehicles(draft.vehicles);
+          if (draft.addresses.length > 0) importAddresses(draft.addresses);
+        }
+      }
     };
 
     void hydrateImportedState();
@@ -156,6 +170,10 @@ export default function Page() {
       cancelled = true;
     };
   }, [importAddresses, importVehicles]);
+
+  useEffect(() => {
+    saveEditPageDraft(vehicleState.vehicles, addressState.addresses);
+  }, [vehicleState.vehicles, addressState.addresses]);
 
   const handleExportSession = useCallback(async () => {
     setSessionError(null);
