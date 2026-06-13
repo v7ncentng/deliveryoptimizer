@@ -230,13 +230,14 @@ export function useOptimize(
         > = new Map();
         const failedAddresses: { id: number; address: string }[] = [];
         for (const a of addresses) {
-          const loc = a.cachedLocation
-            ? {
-                lat: a.cachedLocation.lat,
-                lng: a.cachedLocation.lng,
-                state: a.cachedLocation.state ?? null,
-              }
-            : await geocodeAddress(a.recipientAddress);
+          const loc =
+            a.cachedLocation?.state != null
+              ? {
+                  lat: a.cachedLocation.lat,
+                  lng: a.cachedLocation.lng,
+                  state: a.cachedLocation.state,
+                }
+              : await geocodeAddress(a.recipientAddress);
           if (!loc) {
             failedAddresses.push({ id: a.id, address: a.recipientAddress });
           } else {
