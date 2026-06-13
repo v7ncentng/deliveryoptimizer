@@ -28,7 +28,8 @@ import {
   CSV_UPLOAD_FILE_CHIP_REMOVE,
   CSV_UPLOAD_SIZE_ERROR,
 } from "@/app/edit/formStyles.v2";
-import SpinnerIcon from "@/app/edit/components/shared/SpinnerIcon";
+// HIGH fix: import ErrorOverlay to surface parse errors to the user.
+import ErrorOverlay from "@/app/edit/components/shared/ErrorOverlay";
 import type { AddressCard } from "@/app/edit/types/delivery";
 import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 
@@ -479,7 +480,6 @@ export default function CSVUploadOverlay({
   const [selectedFile, setSelectedFile] = useState<File | null>(
     initialFile && initialFile.size <= MAX_CSV_BYTES ? initialFile : null,
   );
-  const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [fileSizeError, setFileSizeError] = useState<string | null>(
     initialFile && initialFile.size > MAX_CSV_BYTES
@@ -487,11 +487,16 @@ export default function CSVUploadOverlay({
       : null,
   );
 
-  const { csvData, isImportModalOpen, openImportModal, closeImportModal } =
-    useCSVImport();
+  // HIGH fix: destructure parseError so malformed files show user-facing
+  // feedback instead of opening a blank column mapper silently.
+  const {
+    csvData,
+    isImportModalOpen,
+    parseError,
+    openImportModal,
+    closeImportModal,
+  } = useCSVImport();
 
-  // Fix warning 1: wrap headers and dataRows in useMemo so their references
-  // are stable across renders and useCallback deps don't change on every render.
   const headers = useMemo(() => csvData[0] ?? [], [csvData]);
   const dataRows = useMemo(
     () =>
@@ -501,8 +506,6 @@ export default function CSVUploadOverlay({
 
   const [step, setStep] = useState<1 | 2>(1);
 
-  // Derive mapping and selected directly from headers/dataRows so no effect
-  // is needed — avoids the setState-in-effect cascading render lint error.
   const mapping = useMemo(
     () => Object.fromEntries(headers.map((h) => [h, "" as MappableField])),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -521,15 +524,18 @@ export default function CSVUploadOverlay({
     MappableField
   > | null>(null);
 
-  // Reset overrides when a new file is parsed (headers change)
-  const prevHeadersKeyRef = useRef<string>("");
+  // MEDIUM fix: reset overrides in a useEffect instead of during render to
+  // avoid the setState-during-render React violation.
   const headersKey = headers.join(",");
-  if (headersKey !== prevHeadersKeyRef.current) {
-    prevHeadersKeyRef.current = headersKey;
-    if (selectedOverride !== null) setSelectedOverride(null);
-    if (mappingOverride !== null) setMappingOverride(null);
-    if (step !== 1) setStep(1);
-  }
+  const prevHeadersKeyRef = useRef<string>("");
+  useEffect(() => {
+    if (headersKey !== "" && headersKey !== prevHeadersKeyRef.current) {
+      prevHeadersKeyRef.current = headersKey;
+      setSelectedOverride(null);
+      setMappingOverride(null);
+      setStep(1);
+    }
+  }, [headersKey]);
 
   const activeMapping = mappingOverride ?? mapping;
   const activeSelected = selectedOverride ?? defaultSelected;
@@ -545,7 +551,6 @@ export default function CSVUploadOverlay({
   }, [initialFile, isImportModalOpen, openImportModal]);
 
   function handleClose() {
-    setIsUploading(false);
     closeImportModal();
     onClose();
   }
@@ -570,11 +575,11 @@ export default function CSVUploadOverlay({
     setFileSizeError(null);
   }
 
+  // LOW fix: removed isUploading state — React 18 batches set+clear into one
+  // render so the spinner never showed. Parsing is fast enough to not need it.
   function handleNext() {
     if (!selectedFile) return;
-    setIsUploading(true);
     openImportModal(selectedFile);
-    setIsUploading(false);
   }
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
@@ -657,6 +662,12 @@ export default function CSVUploadOverlay({
   ]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
+
+  // HIGH fix: surface parseError from useCSVImport. closeImportModal also
+  // clears parseError so dismissing the error resets the overlay correctly.
+  if (parseError) {
+    return <ErrorOverlay message={parseError} onClose={handleClose} />;
+  }
 
   if (isImportModalOpen) {
     return (
@@ -748,37 +759,33 @@ export default function CSVUploadOverlay({
                 onDrop={handleDrop}
               >
                 <div className={CSV_UPLOAD_DROP_ZONE_INNER}>
-                  {isUploading ? (
-                    <SpinnerIcon />
-                  ) : (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="40"
-                        height="40"
-                        viewBox="0 0 40 40"
-                        fill="none"
-                        aria-hidden="true"
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="40"
+                      height="40"
+                      viewBox="0 0 40 40"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M18.667 31.6112H21.4449V23.7083L24.6116 26.875L26.5557 24.9166L20.0003 18.4721L13.5003 24.9721L15.4587 26.9166L18.667 23.7083V31.6112ZM9.44491 36.6666C8.69491 36.6666 8.04435 36.3912 7.49324 35.8404C6.94241 35.2893 6.66699 34.6387 6.66699 33.8887V6.11123C6.66699 5.36123 6.94241 4.71068 7.49324 4.15956C8.04435 3.60873 8.69491 3.33331 9.44491 3.33331H23.917L33.3337 12.75V33.8887C33.3337 34.6387 33.0582 35.2893 32.5074 35.8404C31.9563 36.3912 31.3057 36.6666 30.5557 36.6666H9.44491ZM22.5282 14.0554V6.11123H9.44491V33.8887H30.5557V14.0554H22.5282Z"
+                        fill="var(--edit-primary-icon)"
+                      />
+                    </svg>
+                    <div className={CSV_UPLOAD_DROP_ZONE_PROMPT}>
+                      <p className={CSV_UPLOAD_DROP_ZONE_TEXT}>
+                        Drag and drop CSV files here, or
+                      </p>
+                      <button
+                        type="button"
+                        className={CSV_UPLOAD_BROWSE_BTN}
+                        onClick={() => fileInputRef.current?.click()}
                       >
-                        <path
-                          d="M18.667 31.6112H21.4449V23.7083L24.6116 26.875L26.5557 24.9166L20.0003 18.4721L13.5003 24.9721L15.4587 26.9166L18.667 23.7083V31.6112ZM9.44491 36.6666C8.69491 36.6666 8.04435 36.3912 7.49324 35.8404C6.94241 35.2893 6.66699 34.6387 6.66699 33.8887V6.11123C6.66699 5.36123 6.94241 4.71068 7.49324 4.15956C8.04435 3.60873 8.69491 3.33331 9.44491 3.33331H23.917L33.3337 12.75V33.8887C33.3337 34.6387 33.0582 35.2893 32.5074 35.8404C31.9563 36.3912 31.3057 36.6666 30.5557 36.6666H9.44491ZM22.5282 14.0554V6.11123H9.44491V33.8887H30.5557V14.0554H22.5282Z"
-                          fill="var(--edit-primary-icon)"
-                        />
-                      </svg>
-                      <div className={CSV_UPLOAD_DROP_ZONE_PROMPT}>
-                        <p className={CSV_UPLOAD_DROP_ZONE_TEXT}>
-                          Drag and drop CSV files here, or
-                        </p>
-                        <button
-                          type="button"
-                          className={CSV_UPLOAD_BROWSE_BTN}
-                          onClick={() => fileInputRef.current?.click()}
-                        >
-                          Browse files
-                        </button>
-                      </div>
-                    </>
-                  )}
+                        Browse files
+                      </button>
+                    </div>
+                  </>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -805,7 +812,7 @@ export default function CSVUploadOverlay({
               )}
             </div>
 
-            {selectedFile !== null && !isUploading && (
+            {selectedFile !== null && (
               <div className={CSV_UPLOAD_FILE_CHIP}>
                 <div className={CSV_UPLOAD_FILE_CHIP_LEFT}>
                   <svg
@@ -866,7 +873,7 @@ export default function CSVUploadOverlay({
             <button
               type="button"
               onClick={handleNext}
-              disabled={selectedFile === null || isUploading}
+              disabled={selectedFile === null}
               className={OVERLAY_PRIMARY_BTN}
             >
               Next

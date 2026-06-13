@@ -119,6 +119,9 @@ export default function Page() {
         return;
       }
 
+      // TODO: remove importedCards path after one release cycle — the only
+      // writer (CSVImportModal.handleConfirm) was deleted in this PR. Kept
+      // as a migration safety net for any in-flight sessions.
       const storedImportedCards = sessionStorage.getItem("importedCards");
       if (storedImportedCards) {
         sessionStorage.removeItem("importedCards");
@@ -142,7 +145,11 @@ export default function Page() {
             name: string;
             content: string;
           };
-          const file = new File([content], name, { type: "text/csv" });
+          // MEDIUM fix: use the correct MIME type so useCSVImport's
+          // extension-based dispatch handles .json files correctly
+          // rather than feeding JSON syntax to the CSV tokeniser.
+          const type = name.endsWith(".json") ? "application/json" : "text/csv";
+          const file = new File([content], name, { type });
           if (!cancelled) {
             setPendingCSVFile(file);
             setIsUploadOverlayOpen(true);
