@@ -28,10 +28,18 @@ declare const process: {
 const DAVIS_CENTER = { lat: 38.5449, lng: -121.7405 };
 const MARKER_ICON_WIDTH = 28;
 const MARKER_ICON_HEIGHT = 40;
+const STOP_MARKER_ANCHOR = {
+  x: MARKER_ICON_WIDTH / 2,
+  y: MARKER_ICON_HEIGHT,
+} as const;
 
-function getMarkerScaledSize(): google.maps.Size | undefined {
+function createStopMarkerIcon(iconUrl: string): google.maps.Icon | undefined {
   if (typeof google === "undefined") return undefined;
-  return new google.maps.Size(MARKER_ICON_WIDTH, MARKER_ICON_HEIGHT);
+  return {
+    url: iconUrl,
+    scaledSize: new google.maps.Size(MARKER_ICON_WIDTH, MARKER_ICON_HEIGHT),
+    anchor: new google.maps.Point(STOP_MARKER_ANCHOR.x, STOP_MARKER_ANCHOR.y),
+  };
 }
 
 // fillColor is always a route palette hex from routeColorHex, never user input.
@@ -44,8 +52,8 @@ function createRoutePinElement(fillColor: string): HTMLElement {
   const wrapper = document.createElement("div");
   wrapper.style.width = `${MARKER_ICON_WIDTH}px`;
   wrapper.style.height = `${MARKER_ICON_HEIGHT}px`;
-  // Anchor bottom-center of the pin on the stop (tip is at y=40 in the SVG).
-  wrapper.style.transform = "translate(-50%, -100%)";
+  // AdvancedMarkerElement anchors at bottom-center by default; do not apply an
+  // extra translate or the pin tip drifts by a fixed pixel offset when zooming.
   wrapper.style.filter = "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))";
 
   const img = document.createElement("img");
@@ -645,7 +653,7 @@ export default function MapComponent({
             routes.map((route, routeIndex) => {
               const accentColor = routeColorHex(routeIndex);
               const iconUrl = markerSvgDataUrl(accentColor);
-              const scaledSize = getMarkerScaledSize();
+              const stopIcon = createStopMarkerIcon(iconUrl);
               const sorted = [...route.stops].sort(
                 (a, b) => a.sequence - b.sequence,
               );
@@ -682,18 +690,7 @@ export default function MapComponent({
                       <Marker
                         key={stop.id}
                         position={position}
-                        icon={
-                          scaledSize
-                            ? {
-                                url: iconUrl,
-                                scaledSize,
-                                anchor: new google.maps.Point(
-                                  MARKER_ICON_WIDTH / 2,
-                                  MARKER_ICON_HEIGHT,
-                                ),
-                              }
-                            : { url: iconUrl }
-                        }
+                        icon={stopIcon}
                         draggable={isEditMode}
                         onMouseOver={() =>
                           handleStopHover({
