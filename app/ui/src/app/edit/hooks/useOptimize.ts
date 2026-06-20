@@ -13,6 +13,7 @@ import {
   vehicleRowToVehicleInput,
 } from "@/app/edit/utils/optimizeMapper";
 import { SUPPORTED_STATES } from "@/app/edit/constants/supportedRegions";
+import { hasCachedLocationWithState } from "@/app/edit/utils/deliveryHelpers";
 import { setOptimizeResults } from "@/app/edit/utils/hasOptimizeResults";
 import { vroomToRoutes } from "@/app/edit/utils/vroomToRoutes";
 import { saveEditPageDraft } from "@/lib/session/editPageDraft";
@@ -230,14 +231,13 @@ export function useOptimize(
         > = new Map();
         const failedAddresses: { id: number; address: string }[] = [];
         for (const a of addresses) {
-          const loc =
-            a.cachedLocation?.state != null
-              ? {
-                  lat: a.cachedLocation.lat,
-                  lng: a.cachedLocation.lng,
-                  state: a.cachedLocation.state,
-                }
-              : await geocodeAddress(a.recipientAddress);
+          const loc = hasCachedLocationWithState(a)
+            ? {
+                lat: a.cachedLocation!.lat,
+                lng: a.cachedLocation!.lng,
+                state: a.cachedLocation!.state!,
+              }
+            : await geocodeAddress(a.recipientAddress);
           if (!loc) {
             failedAddresses.push({ id: a.id, address: a.recipientAddress });
           } else {

@@ -5,6 +5,8 @@
 import {
   default as React,
   useCallback,
+  useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -41,6 +43,9 @@ function readInitialRoutes(): RouteLoadResult {
     return EMPTY_ROUTE_LOAD_RESULT;
   }
   const forceMock = new URLSearchParams(window.location.search).get("mock");
+  // Intentionally not removed after reading (unlike the old page): this is re-read on
+  // every "storage"/"optimize-results-updated" event via useSyncExternalStore, so
+  // deleting it here would break that subscription.
   const stored = sessionStorage.getItem("optimizeResults");
   const cacheKey = forceMock === "1" ? "mock" : `stored:${stored ?? ""}`;
 
@@ -103,6 +108,10 @@ export default function ResultsPage() {
   const [draftRoutes, setDraftRoutes] = useState<Route[] | null>(null);
   const routes = draftRoutes ?? routeLoadResult.routes;
   const error = routeLoadResult.error;
+  const routesRef = useRef(routes);
+  useEffect(() => {
+    routesRef.current = routes;
+  }, [routes]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -112,15 +121,12 @@ export default function ResultsPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [exportWarningOpen, setExportWarningOpen] = useState(false);
 
-  const setRoutes = useCallback(
-    (update: React.SetStateAction<Route[]>) => {
-      setDraftRoutes((prev) => {
-        const baseRoutes = prev ?? routes;
-        return typeof update === "function" ? update(baseRoutes) : update;
-      });
-    },
-    [routes],
-  );
+  const setRoutes = useCallback((update: React.SetStateAction<Route[]>) => {
+    setDraftRoutes((prev) => {
+      const baseRoutes = prev ?? routesRef.current;
+      return typeof update === "function" ? update(baseRoutes) : update;
+    });
+  }, []);
 
   const updateStopNote = useCallback(
     (routeId: string, stopId: string, note: string) => {

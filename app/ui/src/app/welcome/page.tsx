@@ -9,6 +9,12 @@ import { clearOptimizeResults } from "@/app/edit/utils/hasOptimizeResults";
 export default function WelcomePage() {
   const router = useRouter();
 
+  const handleNewSession = () => {
+    clearEditPageDraft();
+    clearOptimizeResults();
+    router.push("/edit");
+  };
+
   return (
     <>
       <style>{`
@@ -198,17 +204,11 @@ export default function WelcomePage() {
               role="button"
               tabIndex={0}
               aria-label="New user — continue"
-              onClick={() => {
-                clearEditPageDraft();
-                clearOptimizeResults();
-                router.push("/edit");
-              }}
+              onClick={handleNewSession}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  clearEditPageDraft();
-                  clearOptimizeResults();
-                  router.push("/edit");
+                  handleNewSession();
                 }
               }}
             >
