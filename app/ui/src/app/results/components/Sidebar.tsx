@@ -87,9 +87,9 @@ export default function Sidebar({
               type="button"
               onClick={onSendRoutes}
               disabled={routes.length === 0}
-              className="h-9 shrink-0 rounded-[6px] border border-[var(--edit-stone-700)] bg-white px-4 text-sm font-semibold text-[var(--edit-text-primary)] hover:bg-[var(--edit-stone-50)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-9 shrink-0 rounded-[6px] bg-[var(--edit-btn-primary)] px-4 text-sm font-semibold text-[var(--edit-text-primary)] hover:brightness-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Send Routes
+              Send
             </button>
             <button
               type="button"

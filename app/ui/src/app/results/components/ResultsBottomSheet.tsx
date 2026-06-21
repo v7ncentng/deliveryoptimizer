@@ -103,11 +103,11 @@ export default function ResultsBottomSheet({
                 </button>
                 <button
                   type="button"
-                  className={RESULTS_BOTTOM_SHEET_BTN_RECT_OUTLINE}
+                  className={RESULTS_BOTTOM_SHEET_BTN_RECT_FILLED}
                   onClick={onSendRoutesClick}
                   disabled={routes.length === 0}
                 >
-                  Send Routes
+                  Send
                 </button>
                 <button
                   type="button"
