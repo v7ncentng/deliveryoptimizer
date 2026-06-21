@@ -11,6 +11,10 @@ export interface MockRouteStop {
   address: string;
   status: string;
   sequence: number;
+  addresseeName?: string;
+  phoneNumber?: string;
+  timeWindow?: string;
+  note?: string;
 }
 
 export interface MockRouteJson {
@@ -27,9 +31,13 @@ export function mockRouteToRoute(data: MockRouteJson): Route {
     lng: s.lng,
     sequence: s.sequence,
     capacityUsed: 1,
-    timeWindow: { kind: "by" as const, time: "12:00" },
-    note: "",
-    addresseeName: undefined, // if no name, we show "—"
+    timeWindow: {
+      kind: "at" as const,
+      time: s.timeWindow?.trim() || "12:00",
+    },
+    note: s.note ?? "",
+    addresseeName: s.addresseeName,
+    phoneNumber: s.phoneNumber,
   }));
   return {
     vehicleId: "mock-vehicle-1",
