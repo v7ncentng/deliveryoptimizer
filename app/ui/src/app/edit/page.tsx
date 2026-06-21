@@ -85,13 +85,7 @@ export default function Page() {
     addressState.cacheAddressLocation,
   );
 
-  const {
-    csvData,
-    isImportModalOpen,
-    parseError,
-    openImportModal,
-    closeImportModal,
-  } = useCSVImport();
+  const { isImportModalOpen } = useCSVImport();
 
   const [isHydrated, setIsHydrated] = useState(false);
 
