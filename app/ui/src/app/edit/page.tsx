@@ -10,6 +10,7 @@ import Navbar from "@/app/components/navbar/Navbar";
 import MobileNavbar from "@/app/components/navbar/MobileNavbar";
 import MobileSidebar from "@/app/components/sidebar/MobileSidebar";
 import OptimizingModal from "@/app/edit/components/shared/OptimizingModal";
+import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import ErrorOverlay from "@/app/edit/components/shared/ErrorOverlay";
 import Sidebar from "@/app/components/sidebar/Sidebar";
 import SidebarEditButton from "@/app/components/sidebar/SidebarEditButton";
@@ -92,7 +93,6 @@ export default function Page() {
     closeImportModal,
   } = useCSVImport();
 
-  const [isUploadOverlayOpen, setIsUploadOverlayOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
   const isDraggingOverPage =

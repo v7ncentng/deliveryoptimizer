@@ -48,8 +48,8 @@ const FIELD_LABELS: Record<Exclude<MappableField, "">, string> = {
   recipientAddress: "Recipient Address",
   deliveryTimeStart: "Delivery Time Start",
   deliveryTimeEnd: "Delivery Time End",
-  deliveryQuantity: "Delivery Quantity",
   timeBuffer: "Time Buffer",
+  deliveryQuantity: "Delivery Quantity",
   notes: "Notes",
 };
 
