@@ -99,8 +99,16 @@ export default function RouteCard({
                 >
                   Route {routeIndex + 1}
                 </div>
-                <div className="mt-1 text-[13px] font-medium leading-none text-[var(--edit-text-primary)]">
-                  {route.driverName}
+                <div className="mt-1 flex items-center gap-2 text-[13px] font-medium leading-none text-[var(--edit-text-primary)]">
+                  <span>{route.driverName}</span>
+                  {route.lastSentAt && (
+                    <span
+                      className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-700"
+                      title={`Sent ${new Date(route.lastSentAt).toLocaleString()}`}
+                    >
+                      Sent
+                    </span>
+                  )}
                 </div>
               </button>
 

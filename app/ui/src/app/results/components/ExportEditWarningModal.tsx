@@ -9,12 +9,16 @@ type ExportEditWarningModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onDoneEditing: () => void;
+  warningMessage?: string;
+  bodyMessage?: string;
 };
 
 export default function ExportEditWarningModal({
   isOpen,
   onClose,
   onDoneEditing,
+  warningMessage = "Unable to export while currently editing",
+  bodyMessage = "Please save your changes before exporting routes. This ensures the exported data matches your current view.",
 }: ExportEditWarningModalProps) {
   const isClient = useIsClient();
 
@@ -33,6 +37,8 @@ export default function ExportEditWarningModal({
     <ExportEditWarningModalPanel
       onClose={onClose}
       onDoneEditing={onDoneEditing}
+      warningMessage={warningMessage}
+      bodyMessage={bodyMessage}
     />,
     document.body,
   );
@@ -41,11 +47,15 @@ export default function ExportEditWarningModal({
 type ExportEditWarningModalPanelProps = {
   onClose: () => void;
   onDoneEditing: () => void;
+  warningMessage: string;
+  bodyMessage: string;
 };
 
 function ExportEditWarningModalPanel({
   onClose,
   onDoneEditing,
+  warningMessage,
+  bodyMessage,
 }: ExportEditWarningModalPanelProps) {
   const panelRef = useFocusTrap<HTMLDivElement>(true);
 
@@ -117,14 +127,11 @@ function ExportEditWarningModalPanel({
               clipRule="evenodd"
             />
           </svg>
-          <p className="text-sm font-medium text-amber-800">
-            Unable to export while currently editing
-          </p>
+          <p className="text-sm font-medium text-amber-800">{warningMessage}</p>
         </div>
 
         <p className="mt-4 text-sm leading-relaxed text-zinc-800">
-          Please save your changes before exporting routes. This ensures the
-          exported data matches your current view.
+          {bodyMessage}
         </p>
 
         <div className="mt-6 flex justify-end gap-2">
