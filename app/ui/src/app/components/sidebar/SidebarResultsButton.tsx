@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useHasOptimizeResults } from "@/app/edit/utils/hasOptimizeResults";
+import { useHasOptimizeResults } from "@/app/edit/hooks/useHasOptimizeResults";
 import {
   SIDEBAR_NAV_ITEM_ACTIVE,
   SIDEBAR_NAV_ITEM_DISABLED,
@@ -32,7 +32,8 @@ const SIDEBAR_RESULTS_ICON = (
 export default function SidebarResultsButton() {
   const pathname = usePathname();
   const isResultsPage = pathname === "/results";
-  const hasStoredRoutes = useHasOptimizeResults();
+  const hasOptimizeResults = useHasOptimizeResults();
+  const hasStoredRoutes = !isResultsPage && hasOptimizeResults;
 
   if (isResultsPage) {
     return (
@@ -55,16 +56,9 @@ export default function SidebarResultsButton() {
   }
 
   return (
-    <Link
-      href="#"
-      className={SIDEBAR_NAV_ITEM_DISABLED}
-      aria-disabled={true}
-      tabIndex={-1}
-    >
-      {" "}
-      {/* TODO: add results page link when at least one route exists */}
+    <button type="button" disabled className={SIDEBAR_NAV_ITEM_DISABLED}>
       <span className={SIDEBAR_NAV_PILL_INACTIVE}>{SIDEBAR_RESULTS_ICON}</span>
       <span className={SIDEBAR_NAV_LABEL_INACTIVE}>Results</span>
-    </Link>
+    </button>
   );
 }

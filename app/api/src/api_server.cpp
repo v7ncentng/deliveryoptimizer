@@ -110,7 +110,6 @@ int RunApiServer() {
           checks["optimization_job_workers_expected"] = static_cast<Json::UInt64>(
               job_runtime == nullptr ? 0U : job_runtime->ExpectedWorkerCount());
           checks["optimization_job_workers_healthy"] = 0U;
-          overall_ready = false;
           return;
         }
 
