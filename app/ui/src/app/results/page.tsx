@@ -10,7 +10,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useRouter } from "next/navigation";
 import { NAVBAR_V2_LOGO, NAVBAR_V2_ROOT } from "../edit/formStyles.v2";
 import styles from "../edit/edit.module.css";
 import MobileSidebar from "../components/sidebar/MobileSidebar";
@@ -71,7 +70,7 @@ function readInitialRoutes(): RouteLoadResult {
 
   if (!stored) {
     // No prior optimize run for this session (e.g. /results visited directly): there is
-    // nothing to show. ResultsPage redirects to /edit instead of rendering mock data.
+    // nothing to show, so the page falls through to its normal empty-routes UI.
     cachedRouteLoadKey = cacheKey;
     cachedRouteLoadResult = EMPTY_ROUTE_LOAD_RESULT;
     return cachedRouteLoadResult;
@@ -103,7 +102,6 @@ function subscribeToRouteStorage(onChange: () => void): () => void {
 }
 
 export default function ResultsPage() {
-  const router = useRouter();
   const routeLoadResult = useSyncExternalStore(
     subscribeToRouteStorage,
     readInitialRoutes,
@@ -117,17 +115,6 @@ export default function ResultsPage() {
     routesRef.current = routes;
   }, [routes]);
 
-  // No optimize results for this session (e.g. /results was typed/bookmarked directly):
-  // bounce back to /edit instead of showing an empty page or mock data. Keyed off
-  // routeLoadResult (sessionStorage), not the merged `routes`, so locally deleting every
-  // route via handleDeleteRoute below does not also trigger a redirect.
-  const hasNoStoredRoutes =
-    routeLoadResult.routes.length === 0 && routeLoadResult.error === null;
-  useEffect(() => {
-    if (hasNoStoredRoutes) {
-      router.replace("/edit");
-    }
-  }, [hasNoStoredRoutes, router]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSheetExpanded, setIsSheetExpanded] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -283,12 +270,6 @@ export default function ResultsPage() {
     },
     [pendingPinMove, setRoutes],
   );
-
-  // Render nothing while the redirect effect above sends us to /edit, rather than
-  // flashing an empty routes panel/map for a frame.
-  if (draftRoutes === null && hasNoStoredRoutes) {
-    return null;
-  }
 
   return (
     <main
