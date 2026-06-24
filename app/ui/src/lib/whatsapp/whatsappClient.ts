@@ -18,7 +18,9 @@ export async function sendRoutesToWhatsApp(
   items: SendRouteItem[],
 ): Promise<WhatsAppSendResult[]> {
   for (const item of items) {
-    console.log(`[whatsapp:mock] would send route ${item.vehicleId} to ${item.driverPhoneNumber}`);
+    console.log(
+      `[whatsapp:mock] would send route ${item.vehicleId} to ${item.driverPhoneNumber}`,
+    );
   }
 
   await new Promise((resolve) => setTimeout(resolve, MOCK_LATENCY_MS));
