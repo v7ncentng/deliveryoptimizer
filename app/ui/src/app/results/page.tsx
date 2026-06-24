@@ -231,12 +231,10 @@ export default function ResultsPage() {
 
   const handleDoneEditingForWarning = useCallback(() => {
     handleEditModeChange(false);
-    setPendingWarningAction((action) => {
-      if (action === "export") setExportOpen(true);
-      if (action === "send") setSendRoutesOpen(true);
-      return null;
-    });
-  }, [handleEditModeChange]);
+    if (pendingWarningAction === "export") setExportOpen(true);
+    if (pendingWarningAction === "send") setSendRoutesOpen(true);
+    setPendingWarningAction(null);
+  }, [handleEditModeChange, pendingWarningAction]);
 
   const handleExportSingleRoute = useCallback(
     (vehicleId: string) => {

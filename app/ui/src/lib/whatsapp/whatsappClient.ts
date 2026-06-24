@@ -4,7 +4,7 @@ const MOCK_LATENCY_MS = Number(process.env.WHATSAPP_MOCK_LATENCY_MS ?? 600);
 
 export type WhatsAppSendResult = {
   vehicleId: string;
-  status: "sent";
+  status: "sent" | "failed";
   whatsappMessageId: string;
 };
 
