@@ -133,9 +133,6 @@ export default function Page() {
           }
           return;
         }
-
-        // Fully-built AddressCard[] written by CSVImportModal's onConfirmAndNavigate path.
-        // No parsing needed — import directly into address state.
         const storedImportedCards = sessionStorage.getItem("importedCards");
         if (storedImportedCards) {
           sessionStorage.removeItem("importedCards");
@@ -148,9 +145,30 @@ export default function Page() {
           }
           return;
         }
+        const storedPendingCSV = sessionStorage.getItem("pendingCSVFile");
+        if (storedPendingCSV) {
+          sessionStorage.removeItem("pendingCSVFile");
+          try {
+            const { name, content } = JSON.parse(storedPendingCSV) as {
+              name: string;
+              content: string;
+            };
+            const type = name.endsWith(".json")
+              ? "application/json"
+              : "text/csv";
+            const file = new File([content], name, { type });
+            if (!cancelled) {
+              setPendingCSVFile(file);
+              setIsUploadOverlayOpen(true);
+            }
+          } catch {
+            // silently ignore malformed stored file
+          }
+          return;
+        }
 
         // Auto-saved draft — restore vehicles and addresses when navigating back
-        // from the results page. Lower priority than savePointFile/importedCards.
+        // from the results page. Lower priority than all sessionStorage paths above.
         const draft = loadEditPageDraft();
         if (draft) {
           if (!cancelled) {
@@ -162,30 +180,6 @@ export default function Page() {
         // Signal that initial hydration is complete so the save effect can run.
         // Runs on every exit path (success, error, early return) except cancellation.
         if (!cancelled) setIsHydrated(true);
-      }
-
-      // CSV/JSON file forwarded from upload-save-point — open CSVUploadOverlay
-      // automatically so the user lands directly in the column mapper.
-      const storedPendingCSV = sessionStorage.getItem("pendingCSVFile");
-      if (storedPendingCSV) {
-        sessionStorage.removeItem("pendingCSVFile");
-        try {
-          const { name, content } = JSON.parse(storedPendingCSV) as {
-            name: string;
-            content: string;
-          };
-          // MEDIUM fix: use the correct MIME type so useCSVImport's
-          // extension-based dispatch handles .json files correctly
-          // rather than feeding JSON syntax to the CSV tokeniser.
-          const type = name.endsWith(".json") ? "application/json" : "text/csv";
-          const file = new File([content], name, { type });
-          if (!cancelled) {
-            setPendingCSVFile(file);
-            setIsUploadOverlayOpen(true);
-          }
-        } catch {
-          // silently ignore malformed stored file
-        }
       }
     };
 

@@ -89,10 +89,19 @@ export default function UploadSavePointPage() {
       // CSV or raw JSON array: store the file content and navigate to /edit,
       // which will open CSVUploadOverlay automatically on mount.
       const text = await file.text();
-      sessionStorage.setItem(
-        "pendingCSVFile",
-        JSON.stringify({ name: file.name, content: text }),
-      );
+      try {
+        sessionStorage.setItem(
+          "pendingCSVFile",
+          JSON.stringify({ name: file.name, content: text }),
+        );
+      } catch {
+        // sessionStorage has a ~5 MB quota — large files can exceed it.
+        // Fail visibly rather than silently navigating to a blank column mapper.
+        setContinueError(
+          "This file is too large to import directly. Please use a smaller file (under 5 MB).",
+        );
+        return;
+      }
       router.push("/edit");
     } catch (err) {
       setContinueError(
