@@ -1,39 +1,12 @@
 import { ZodError, z } from "zod";
 
 import type { DriverRoute, OptimizeRequestLike } from "./types";
-import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
+import {
+  migrateSessionSaveFile,
+  sessionSaveDataSchema,
+} from "@/lib/validation/session.schema";
 
 const MAX_SESSION_FILE_BYTES = 1_000_000;
-
-const locationSchema = z.object({
-  lat: z.number(),
-  lng: z.number(),
-});
-
-const demandSchema = z.object({
-  value: z.number().optional(),
-});
-
-const deliverySchema = z.object({
-  id: z.number(),
-  recipientName: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  address: z.string().optional(),
-  notes: z.string().optional(),
-  location: locationSchema.optional(),
-  demand: demandSchema.optional(),
-});
-
-const vehicleSchema = z.object({
-  id: z.number(),
-  driverName: z.string().optional(),
-  vehicleType: z.string().optional(),
-});
-
-const optimizeRequestSchema = z.object({
-  deliveries: z.array(deliverySchema),
-  vehicles: z.array(vehicleSchema),
-});
 
 const persistedStopSchema = z.object({
   id: z.string(),
@@ -101,9 +74,8 @@ export function loadSessionFromText(text: string): OptimizeRequestLike {
     return migrateSessionSaveFile(parsed).data;
   } catch (error) {
     try {
-      // Also accept the raw optimize request shape for test fixtures and
-      // simple hand-authored JSON files.
-      return optimizeRequestSchema.parse(parsed);
+      // Also accept the same data shape without the version/savedAt envelope.
+      return sessionSaveDataSchema.parse(parsed);
     } catch {
       throw new Error(
         formatValidationError(error) ?? "Invalid save file format.",

@@ -1,3 +1,5 @@
+import type { SessionSaveData } from "@/lib/validation/session.schema";
+
 export type DeliveryStatus = "pending" | "completed" | "failed";
 
 export type DeliveryStop = {
@@ -21,24 +23,4 @@ export type DriverRoute = {
   stops: DeliveryStop[];
 };
 
-export type OptimizeRequestLike = {
-  deliveries?: {
-    id: number;
-    recipientName?: string;
-    phoneNumber?: string;
-    address?: string;
-    notes?: string;
-    location?: {
-      lat: number;
-      lng: number;
-    };
-    demand?: {
-      value?: number;
-    };
-  }[];
-  vehicles?: {
-    id: number;
-    driverName?: string;
-    vehicleType?: string;
-  }[];
-};
+export type OptimizeRequestLike = SessionSaveData;

@@ -105,7 +105,7 @@ describe("driver route import", () => {
     );
   });
 
-  it("also accepts a direct optimize request JSON file", () => {
+  it("also accepts the same session data shape without the save envelope", () => {
     const session = loadSessionFromText(
       JSON.stringify({
         deliveries: [
@@ -114,9 +114,17 @@ describe("driver route import", () => {
             recipientName: "Recipient 2",
             address: "620 G St, Davis, CA 95616",
             location: { lat: 38.5464, lng: -121.7446 },
+            demand: { type: "units", value: 1 },
           },
         ],
-        vehicles: [{ id: 2, driverName: "driver2" }],
+        vehicles: [
+          {
+            id: 2,
+            driverName: "driver2",
+            vehicleType: "car",
+            capacity: { type: "units", value: 10 },
+          },
+        ],
       }),
     );
 
