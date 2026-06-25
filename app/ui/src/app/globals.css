@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: "Courier New", Consolas, monospace;
+  --font-manrope: Arial, Helvetica, sans-serif;
 
   /* Edit / results design tokens (global so portaled modals and menus resolve them) */
   --edit-teal-300: #57ac91;
