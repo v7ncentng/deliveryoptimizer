@@ -1,6 +1,6 @@
-import type { OptimizeRequest } from "@/lib/types/optimize.types";
 import {
   sessionSaveSchema,
+  type SessionSaveData,
   type SessionSaveFile,
 } from "@/lib/validation/session.schema";
 
@@ -48,7 +48,7 @@ export function downloadJsonFile(
 }
 
 export function buildSessionSave(
-  state: OptimizeRequest,
+  state: SessionSaveData,
   now: Date = new Date(),
 ): SessionSaveFile {
   const saveFile = {
@@ -62,7 +62,7 @@ export function buildSessionSave(
 }
 
 export function downloadSessionSave(
-  state: OptimizeRequest,
+  state: SessionSaveData,
 ): SessionExportResult {
   try {
     const now = new Date();
