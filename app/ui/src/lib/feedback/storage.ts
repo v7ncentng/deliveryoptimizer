@@ -65,7 +65,9 @@ export async function uploadFeedbackScreenshot(
   return { bucket, objectName };
 }
 
-export async function isFeedbackShutdownGuardActive(): Promise<boolean> {
+export async function isFeedbackShutdownGuardActive(
+  now = new Date(),
+): Promise<boolean> {
   if (process.env.FEEDBACK_SHUTDOWN === "1") return true;
 
   const bucket = process.env.FEEDBACK_SCREENSHOT_BUCKET;
@@ -76,7 +78,7 @@ export async function isFeedbackShutdownGuardActive(): Promise<boolean> {
     const response = await fetch(
       `https://storage.googleapis.com/storage/v1/b/${encodeURIComponent(
         bucket,
-      )}/o/${encodeURIComponent("feedback/guard/shutdown.json")}`,
+      )}/o/${encodeURIComponent(feedbackShutdownGuardObjectName(now))}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       },
@@ -90,6 +92,7 @@ export async function isFeedbackShutdownGuardActive(): Promise<boolean> {
 
 export async function writeFeedbackShutdownGuard(
   reason: string,
+  now = new Date(),
 ): Promise<void> {
   const bucket = process.env.FEEDBACK_SCREENSHOT_BUCKET;
   if (!bucket) return;
@@ -97,13 +100,14 @@ export async function writeFeedbackShutdownGuard(
   const token = await getGoogleAccessToken();
   const body = JSON.stringify({
     reason,
-    createdAt: new Date().toISOString(),
+    date: formatDate(now),
+    createdAt: now.toISOString(),
   });
 
   await fetch(
     `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(
       bucket,
-    )}/o?uploadType=media&name=${encodeURIComponent("feedback/guard/shutdown.json")}`,
+    )}/o?uploadType=media&name=${encodeURIComponent(feedbackShutdownGuardObjectName(now))}`,
     {
       method: "POST",
       headers: {
@@ -136,4 +140,8 @@ async function getGoogleAccessToken(): Promise<string> {
 
 function formatDate(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function feedbackShutdownGuardObjectName(now = new Date()): string {
+  return `feedback/guard/shutdown-${formatDate(now)}.json`;
 }

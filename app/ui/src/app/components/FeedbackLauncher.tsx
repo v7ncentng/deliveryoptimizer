@@ -72,7 +72,12 @@ export default function FeedbackLauncher() {
     () => submitState.kind !== "submitting" && message.trim().length >= 8,
     [message, submitState.kind],
   );
-  const shouldClearFooter = pathname === "/" || pathname === "/welcome";
+  const isDriverAssistPath =
+    pathname === "/driver_assist" || pathname.startsWith("/driver_assist/");
+  const shouldClearPersistentFooter =
+    pathname === "/" || pathname === "/welcome" || isDriverAssistPath;
+  const shouldClearMobileBottomBar = pathname === "/edit";
+  const shouldClearMobileBottomSheet = pathname === "/results";
 
   useEffect(() => {
     const siteKey = process.env.NEXT_PUBLIC_FEEDBACK_RECAPTCHA_SITE_KEY;
@@ -239,9 +244,16 @@ export default function FeedbackLauncher() {
     <>
       <button
         type="button"
-        className={`${styles.launcher} ${
-          shouldClearFooter ? styles.launcherAboveFooter : ""
-        }`}
+        className={[
+          styles.launcher,
+          shouldClearPersistentFooter ? styles.launcherAboveFooter : "",
+          shouldClearMobileBottomBar ? styles.launcherAboveMobileFooter : "",
+          shouldClearMobileBottomSheet
+            ? styles.launcherAboveTallMobileFooter
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onClick={() => setIsOpen(true)}
         aria-haspopup="dialog"
         aria-label="Report bug or feedback"

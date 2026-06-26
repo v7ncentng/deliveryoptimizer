@@ -38,6 +38,16 @@
   --feedback-footer-clearance: 84px;
 }
 
+@media (max-width: 1023px) {
+  .launcherAboveMobileFooter {
+    --feedback-footer-clearance: 84px;
+  }
+
+  .launcherAboveTallMobileFooter {
+    --feedback-footer-clearance: 144px;
+  }
+}
+
 .launcher:hover,
 .launcher:focus-visible {
   background: #f8f7f5;

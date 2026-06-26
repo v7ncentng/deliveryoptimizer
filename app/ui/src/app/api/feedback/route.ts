@@ -18,15 +18,20 @@ type RateLimitEntry = {
 
 const rateLimits = new Map<string, RateLimitEntry>();
 let acceptedToday = { date: todayKey(), count: 0 };
-let inMemoryShutdown = false;
+let inMemoryShutdownDate: string | null = null;
 
 export async function POST(req: Request) {
-  if (process.env.FEEDBACK_ENABLED === "0" || inMemoryShutdown) {
+  const now = new Date();
+  const currentDate = todayKey(now);
+
+  if (process.env.FEEDBACK_ENABLED === "0") {
     return feedbackUnavailable();
   }
 
-  if (await isFeedbackShutdownGuardActive()) {
-    inMemoryShutdown = true;
+  if (
+    process.env.FEEDBACK_SHUTDOWN === "1" ||
+    isInMemoryShutdownActive(currentDate)
+  ) {
     return feedbackUnavailable();
   }
 
@@ -38,6 +43,11 @@ export async function POST(req: Request) {
       },
       { status: 429 },
     );
+  }
+
+  if (await isFeedbackShutdownGuardActive(now)) {
+    inMemoryShutdownDate = currentDate;
+    return feedbackUnavailable();
   }
 
   let body: unknown;
@@ -118,7 +128,8 @@ function consumeRateLimit(clientIp: string): boolean {
 }
 
 async function recordAcceptedFeedback(): Promise<void> {
-  const currentDate = todayKey();
+  const now = new Date();
+  const currentDate = todayKey(now);
   if (acceptedToday.date !== currentDate) {
     acceptedToday = { date: currentDate, count: 0 };
   }
@@ -128,9 +139,15 @@ async function recordAcceptedFeedback(): Promise<void> {
     process.env.FEEDBACK_DAILY_SHUTDOWN_THRESHOLD ?? "100",
   );
   if (acceptedToday.count >= threshold) {
-    inMemoryShutdown = true;
-    await writeFeedbackShutdownGuard("daily feedback threshold exceeded");
+    inMemoryShutdownDate = currentDate;
+    await writeFeedbackShutdownGuard("daily feedback threshold exceeded", now);
   }
+}
+
+function isInMemoryShutdownActive(currentDate: string): boolean {
+  if (inMemoryShutdownDate === currentDate) return true;
+  if (inMemoryShutdownDate) inMemoryShutdownDate = null;
+  return false;
 }
 
 function getClientIp(req: Request): string {
@@ -144,6 +161,6 @@ function getClientIp(req: Request): string {
   );
 }
 
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+function todayKey(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
 }
