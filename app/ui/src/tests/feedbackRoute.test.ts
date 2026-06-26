@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  feedbackScreenshotMaxBytes,
+  feedbackScreenshotTooLargeMessage,
+} from "@/lib/feedback/screenshot";
+
 const originalEnv = { ...process.env };
 
 describe("feedback route guard ordering", () => {
@@ -56,6 +61,22 @@ describe("feedback route guard ordering", () => {
 
     expect(nextDay.status).toBe(201);
   });
+
+  it("returns 400 when a schema-valid screenshot exceeds the binary limit", async () => {
+    const { POST, github } = await importRouteWithActualScreenshotDecoder();
+    const dataUrl = `data:image/png;base64,${Buffer.alloc(
+      feedbackScreenshotMaxBytes + 1,
+    ).toString("base64")}`;
+
+    const response = await POST(
+      feedbackRequest("203.0.113.30", { screenshot: { dataUrl } }),
+    );
+    const body = (await response.json()) as { error?: string };
+
+    expect(response.status).toBe(400);
+    expect(body.error).toBe(feedbackScreenshotTooLargeMessage);
+    expect(github.createFeedbackIssue).not.toHaveBeenCalled();
+  });
 });
 
 async function importRouteWithMocks() {
@@ -90,7 +111,27 @@ async function importRouteWithMocks() {
   return { POST: route.POST, github, security, storage };
 }
 
-function feedbackRequest(clientIp: string): Request {
+async function importRouteWithActualScreenshotDecoder() {
+  const github = {
+    createFeedbackIssue: vi.fn(
+      async () => "https://github.com/example/repo/issues/1",
+    ),
+  };
+  const security = {
+    verifyRecaptchaToken: vi.fn(async () => ({ ok: true })),
+  };
+
+  vi.doMock("@/lib/feedback/github", () => github);
+  vi.doMock("@/lib/feedback/security", () => security);
+
+  const route = await import("@/app/api/feedback/route");
+  return { POST: route.POST, github, security };
+}
+
+function feedbackRequest(
+  clientIp: string,
+  payloadOverrides: Record<string, unknown> = {},
+): Request {
   return new Request("http://localhost/api/feedback", {
     method: "POST",
     headers: {
@@ -102,6 +143,7 @@ function feedbackRequest(clientIp: string): Request {
       message: "The route editor failed to save the latest stop.",
       diagnostics: {},
       recaptchaToken: "token",
+      ...payloadOverrides,
     }),
   });
 }

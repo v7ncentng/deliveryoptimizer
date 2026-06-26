@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createFeedbackIssue } from "@/lib/feedback/github";
 import { feedbackPayloadSchema } from "@/lib/feedback/schema";
+import { InvalidFeedbackScreenshotError } from "@/lib/feedback/screenshot";
 import { verifyRecaptchaToken } from "@/lib/feedback/security";
 import {
   isFeedbackShutdownGuardActive,
@@ -16,6 +17,9 @@ type RateLimitEntry = {
   resetAt: number;
 };
 
+// Process-local guard state: on multi-instance hosting this is best-effort per
+// instance. The GCS shutdown guard is the cross-instance fallback when a
+// feedback storage bucket is configured.
 const rateLimits = new Map<string, RateLimitEntry>();
 let acceptedToday = { date: todayKey(), count: 0 };
 let inMemoryShutdownDate: string | null = null;
@@ -94,6 +98,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, issueUrl }, { status: 201 });
   } catch (error) {
+    if (error instanceof InvalidFeedbackScreenshotError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     console.error("feedback submission failed", error);
     return NextResponse.json(
       { error: "Feedback could not be submitted right now." },

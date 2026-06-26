@@ -48,6 +48,9 @@ describe("feedback issue formatting", () => {
 
     expect(body).toContain("## Feedback");
     expect(body).toContain("The route map does not redraw");
+    expect(body).toContain(
+      "## Feedback\nThe route map does not redraw after I move a stop.\n\n## Category",
+    );
     expect(body).toContain("## Reproduction steps");
     expect(body).toContain(
       "Private object: gs://feedback-private/feedback/screenshots/2026-05-14/example.jpg",

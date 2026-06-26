@@ -5,6 +5,10 @@ import {
   isFeedbackShutdownGuardActive,
   writeFeedbackShutdownGuard,
 } from "@/lib/feedback/storage";
+import {
+  feedbackScreenshotMaxBytes,
+  feedbackScreenshotTooLargeMessage,
+} from "@/lib/feedback/screenshot";
 
 const originalBucket = process.env.FEEDBACK_SCREENSHOT_BUCKET;
 const originalShutdown = process.env.FEEDBACK_SHUTDOWN;
@@ -39,6 +43,16 @@ describe("feedback screenshot decoding", () => {
         `data:text/plain;base64,${Buffer.from("x").toString("base64")}`,
       ),
     ).toThrow("Screenshot must be a PNG, JPEG, or WebP data URL.");
+  });
+
+  it("rejects screenshots over the binary size limit", () => {
+    const dataUrl = `data:image/png;base64,${Buffer.alloc(
+      feedbackScreenshotMaxBytes + 1,
+    ).toString("base64")}`;
+
+    expect(() => decodeScreenshotDataUrl(dataUrl)).toThrow(
+      feedbackScreenshotTooLargeMessage,
+    );
   });
 });
 

@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  feedbackScreenshotDataUrlMaxLength,
+  feedbackScreenshotTooLargeMessage,
+} from "./screenshot";
+
 export const feedbackCategories = [
   "bug",
   "enhancement",
@@ -17,7 +22,9 @@ export const feedbackCategoryLabels: Record<FeedbackCategory, string> = {
 };
 
 export const feedbackScreenshotSchema = z.object({
-  dataUrl: z.string().max(4_000_000),
+  dataUrl: z
+    .string()
+    .max(feedbackScreenshotDataUrlMaxLength, feedbackScreenshotTooLargeMessage),
   name: z.string().max(120).optional(),
 });
 

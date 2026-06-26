@@ -83,7 +83,7 @@ export function buildFeedbackIssueBody(
     formatDiagnostic("Last client error", diagnostics.lastClientError),
   );
 
-  return parts.filter((part) => part !== "").join("\n");
+  return parts.join("\n");
 }
 
 function formatDiagnostic(label: string, value: string | undefined): string {

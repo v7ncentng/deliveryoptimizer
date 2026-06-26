@@ -13,12 +13,22 @@ type RecaptchaSiteVerifyResponse = {
   "error-codes"?: string[];
 };
 
+let warnedMissingRecaptchaSecret = false;
+
 export async function verifyRecaptchaToken(
   token: string | undefined,
   remoteIp: string | undefined,
 ): Promise<RecaptchaResult> {
   const secret = process.env.FEEDBACK_RECAPTCHA_SECRET;
-  if (!secret) return { ok: true };
+  if (!secret) {
+    if (!warnedMissingRecaptchaSecret) {
+      console.warn(
+        "FEEDBACK_RECAPTCHA_SECRET is not configured; feedback reCAPTCHA verification is disabled.",
+      );
+      warnedMissingRecaptchaSecret = true;
+    }
+    return { ok: true };
+  }
   if (!token) return { ok: false, reason: "missing_recaptcha_token" };
 
   const params = new URLSearchParams({

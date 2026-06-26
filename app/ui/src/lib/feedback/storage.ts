@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
 
+import {
+  feedbackScreenshotMaxBytes,
+  feedbackScreenshotTooLargeMessage,
+  feedbackScreenshotUnsupportedMessage,
+  InvalidFeedbackScreenshotError,
+} from "./screenshot";
+
 const metadataTokenUrl =
   "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
 
@@ -16,12 +23,14 @@ export function decodeScreenshotDataUrl(dataUrl: string): DecodedScreenshot {
   const match =
     /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
   if (!match) {
-    throw new Error("Screenshot must be a PNG, JPEG, or WebP data URL.");
+    throw new InvalidFeedbackScreenshotError(
+      feedbackScreenshotUnsupportedMessage,
+    );
   }
 
   const bytes = Buffer.from(match[2], "base64");
-  if (bytes.length > 2_500_000) {
-    throw new Error("Screenshot must be smaller than 2.5MB.");
+  if (bytes.length > feedbackScreenshotMaxBytes) {
+    throw new InvalidFeedbackScreenshotError(feedbackScreenshotTooLargeMessage);
   }
 
   return {
@@ -34,12 +43,12 @@ export async function uploadFeedbackScreenshot(
   dataUrl: string,
   now = new Date(),
 ): Promise<{ bucket: string; objectName: string }> {
+  const screenshot = decodeScreenshotDataUrl(dataUrl);
   const bucket = process.env.FEEDBACK_SCREENSHOT_BUCKET;
   if (!bucket) {
     throw new Error("Feedback screenshot bucket is not configured.");
   }
 
-  const screenshot = decodeScreenshotDataUrl(dataUrl);
   const extension = screenshot.mimeType.split("/")[1].replace("jpeg", "jpg");
   const objectName = `feedback/screenshots/${formatDate(now)}/${randomUUID()}.${extension}`;
   const token = await getGoogleAccessToken();
