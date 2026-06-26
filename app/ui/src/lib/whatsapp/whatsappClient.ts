@@ -8,6 +8,10 @@ export type WhatsAppSendResult = {
   whatsappMessageId: string;
 };
 
+export function toWhatsAppRecipientNumber(phoneNumber: string): string {
+  return phoneNumber.replace(/^\+/, "");
+}
+
 /**
  * Always mocks the WhatsApp send for now: logs what would be sent and simulates send
  * latency. Real Cloud API integration is a separate future task. Callers depend on a
@@ -18,8 +22,11 @@ export async function sendRoutesToWhatsApp(
   items: SendRouteItem[],
 ): Promise<WhatsAppSendResult[]> {
   for (const item of items) {
+    const recipientPhoneNumber = toWhatsAppRecipientNumber(
+      item.driverPhoneNumber,
+    );
     console.log(
-      `[whatsapp:mock] would send route ${item.vehicleId} to ${item.driverPhoneNumber}`,
+      `[whatsapp:mock] would send route ${item.vehicleId} to ${recipientPhoneNumber}`,
     );
   }
 

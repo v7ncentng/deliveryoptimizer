@@ -33,6 +33,15 @@ function pickSentVehicleIds(results: WhatsAppSendResult[]): string[] {
   return results.filter((r) => r.status === "sent").map((r) => r.vehicleId);
 }
 
+export function removeSentVehicleIds(
+  selectedIds: Set<string>,
+  sentIds: string[],
+): Set<string> {
+  const next = new Set(selectedIds);
+  sentIds.forEach((id) => next.delete(id));
+  return next;
+}
+
 export default function SendRoutesModal({
   isOpen,
   onClose,
@@ -155,6 +164,7 @@ function SendRoutesModalPanel({
 
       if (sentIds.length > 0) {
         onSendComplete(sentIds, new Date().toISOString());
+        setSelectedIds((prev) => removeSentVehicleIds(prev, sentIds));
       }
 
       if (failedCount > 0) {

@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { sendRoutesToWhatsApp } from "@/lib/whatsapp/whatsappClient";
+import {
+  sendRoutesToWhatsApp,
+  toWhatsAppRecipientNumber,
+} from "@/lib/whatsapp/whatsappClient";
 import type { SendRouteItem } from "@/lib/validation/whatsapp.schema";
 
 describe("sendRoutesToWhatsApp (mock mode)", () => {
@@ -43,6 +46,8 @@ describe("sendRoutesToWhatsApp (mock mode)", () => {
     });
     expect(logSpy).toHaveBeenCalledTimes(2);
     expect(logSpy.mock.calls[0][0]).toContain("vehicle-1");
+    expect(logSpy.mock.calls[0][0]).toContain("14155551234");
+    expect(logSpy.mock.calls[0][0]).not.toContain("+14155551234");
   });
 
   it("resolves an empty array for an empty input list", async () => {
@@ -50,5 +55,10 @@ describe("sendRoutesToWhatsApp (mock mode)", () => {
     await vi.runAllTimersAsync();
     const results = await resultPromise;
     expect(results).toEqual([]);
+  });
+
+  it("formats E.164 numbers for the WhatsApp recipient field", () => {
+    expect(toWhatsAppRecipientNumber("+14155551234")).toBe("14155551234");
+    expect(toWhatsAppRecipientNumber("14155551234")).toBe("14155551234");
   });
 });
