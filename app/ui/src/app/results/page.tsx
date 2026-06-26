@@ -15,6 +15,7 @@ import styles from "../edit/edit.module.css";
 import MobileSidebar from "../components/sidebar/MobileSidebar";
 import ExportEditWarningModal from "./components/ExportEditWarningModal";
 import ExportRoutesModal from "./components/ExportRoutesModal";
+import SendRoutesModal from "./components/SendRoutesModal";
 import MapComponent from "./components/Map";
 import MobileResultsNavbar from "./components/MobileResultsNavbar";
 import ResultsBottomSheet from "./components/ResultsBottomSheet";
@@ -30,6 +31,7 @@ import {
 } from "./formStyles.mobile";
 import type { PendingPinMove, Route } from "./types";
 import { downloadRoutesAsJsonFiles } from "./utils/downloadRouteJson";
+import { duplicateRoute } from "./utils/duplicateRoute";
 
 // Dev-only QA tooling (see the ?mock=1 branch below) must never run in production.
 const MOCK_DATA_ENABLED = process.env.NODE_ENV !== "production";
@@ -124,7 +126,10 @@ export default function ResultsPage() {
     null,
   );
   const [exportOpen, setExportOpen] = useState(false);
-  const [exportWarningOpen, setExportWarningOpen] = useState(false);
+  const [sendRoutesOpen, setSendRoutesOpen] = useState(false);
+  const [pendingWarningAction, setPendingWarningAction] = useState<
+    "export" | "send" | null
+  >(null);
 
   const setRoutes = useCallback((update: React.SetStateAction<Route[]>) => {
     setDraftRoutes((prev) => {
@@ -212,22 +217,31 @@ export default function ResultsPage() {
 
   const handleExportClick = useCallback(() => {
     if (isEditMode || pendingPinMove != null) {
-      setExportWarningOpen(true);
+      setPendingWarningAction("export");
       return;
     }
     setExportOpen(true);
   }, [isEditMode, pendingPinMove]);
 
-  const handleDoneEditingForExport = useCallback(() => {
+  const handleSendRoutesClick = useCallback(() => {
+    if (isEditMode || pendingPinMove != null) {
+      setPendingWarningAction("send");
+      return;
+    }
+    setSendRoutesOpen(true);
+  }, [isEditMode, pendingPinMove]);
+
+  const handleDoneEditingForWarning = useCallback(() => {
     handleEditModeChange(false);
-    setExportWarningOpen(false);
-    setExportOpen(true);
-  }, [handleEditModeChange]);
+    if (pendingWarningAction === "export") setExportOpen(true);
+    if (pendingWarningAction === "send") setSendRoutesOpen(true);
+    setPendingWarningAction(null);
+  }, [handleEditModeChange, pendingWarningAction]);
 
   const handleExportSingleRoute = useCallback(
     (vehicleId: string) => {
       if (isEditMode || pendingPinMove != null) {
-        setExportWarningOpen(true);
+        setPendingWarningAction("export");
         return;
       }
       const routeIndex = routes.findIndex((r) => r.vehicleId === vehicleId);
@@ -237,6 +251,33 @@ export default function ResultsPage() {
     [routes, isEditMode, pendingPinMove],
   );
 
+  const updateDriverPhone = useCallback(
+    (vehicleId: string, phone: string) => {
+      setRoutes((prev) =>
+        prev.map((route) =>
+          route.vehicleId === vehicleId
+            ? { ...route, driverPhoneNumber: phone }
+            : route,
+        ),
+      );
+    },
+    [setRoutes],
+  );
+
+  const markRoutesSent = useCallback(
+    (vehicleIds: string[], sentAtIso: string) => {
+      const sentIds = new Set(vehicleIds);
+      setRoutes((prev) =>
+        prev.map((route) =>
+          sentIds.has(route.vehicleId)
+            ? { ...route, lastSentAt: sentAtIso }
+            : route,
+        ),
+      );
+    },
+    [setRoutes],
+  );
+
   const handleDuplicateRoute = useCallback(
     (vehicleId: string) => {
       setRoutes((prev) => {
@@ -244,15 +285,7 @@ export default function ResultsPage() {
         if (routeIndex === -1) return prev;
         const source = prev[routeIndex]!;
         const suffix = Date.now().toString(36);
-        const copy: Route = {
-          ...source,
-          vehicleId: `${source.vehicleId}-copy-${suffix}`,
-          driverName: `${source.driverName} (copy)`,
-          stops: source.stops.map((stop, stopIndex) => ({
-            ...stop,
-            id: `${stop.id}-copy-${suffix}-${stopIndex}`,
-          })),
-        };
+        const copy = duplicateRoute(source, suffix);
         return [
           ...prev.slice(0, routeIndex + 1),
           copy,
@@ -282,10 +315,27 @@ export default function ResultsPage() {
         onClose={() => setExportOpen(false)}
         routes={routes}
       />
+      <SendRoutesModal
+        isOpen={sendRoutesOpen}
+        onClose={() => setSendRoutesOpen(false)}
+        routes={routes}
+        onUpdateDriverPhone={updateDriverPhone}
+        onSendComplete={markRoutesSent}
+      />
       <ExportEditWarningModal
-        isOpen={exportWarningOpen}
-        onClose={() => setExportWarningOpen(false)}
-        onDoneEditing={handleDoneEditingForExport}
+        isOpen={pendingWarningAction !== null}
+        onClose={() => setPendingWarningAction(null)}
+        onDoneEditing={handleDoneEditingForWarning}
+        warningMessage={
+          pendingWarningAction === "send"
+            ? "Unable to send routes while currently editing"
+            : "Unable to export while currently editing"
+        }
+        bodyMessage={
+          pendingWarningAction === "send"
+            ? "Please save your changes before sending routes. This ensures the routes you send match your current view."
+            : "Please save your changes before exporting routes. This ensures the exported data matches your current view."
+        }
       />
       {error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -343,6 +393,7 @@ export default function ResultsPage() {
             onEditModeChange={handleEditModeChange}
             onUpdateStopNote={updateStopNote}
             onExportAllRoutes={handleExportClick}
+            onSendRoutes={handleSendRoutesClick}
             onExportRoute={handleExportSingleRoute}
             onDuplicateRoute={handleDuplicateRoute}
             onDeleteRoute={handleDeleteRoute}
@@ -396,6 +447,7 @@ export default function ResultsPage() {
           isEditMode={isEditMode}
           onEditModeChange={handleEditModeChange}
           onExportClick={handleExportClick}
+          onSendRoutesClick={handleSendRoutesClick}
           onUpdateStopNote={updateStopNote}
           onExportRoute={handleExportSingleRoute}
           onDuplicateRoute={handleDuplicateRoute}

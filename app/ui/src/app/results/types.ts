@@ -38,6 +38,8 @@ export interface Route {
   distanceMi?: number; // total distance for route in miles
   estimatedTimeMinutes?: number; // total estimated time in minutes
   startLocation?: { lat: number; lng: number; address: string }; // depot/origin for this route
+  driverPhoneNumber?: string; // driver's WhatsApp-reachable number, entered via Send Routes modal
+  lastSentAt?: string; // ISO timestamp set after a successful mock WhatsApp send; drives the "Sent" badge
 }
 
 export interface PendingPinMove {
