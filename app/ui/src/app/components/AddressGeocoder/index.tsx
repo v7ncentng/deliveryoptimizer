@@ -1,72 +1,92 @@
 // app/components/AddressGeocoder/index.tsx
-'use client';
-import { useState, useCallback, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import Papa from 'papaparse';
-import type { OptimizedResponse } from '@/app/types/geocoding';
-import { DeliveryFormComponent } from './DeliveryForm';
-import { VehicleFormComponent } from './VehicleForm';
-import { CSVUploader } from './CSVUploader';
-import { ResultsDisplay } from './ResultsDisplay';
-import { ValidationErrors } from './ValidationErrors';
-import { useAddressAutocomplete } from './utils/useAddressAutocomplete';
-import { useGeocodingValidation } from './utils/validateGeocodingForms';
-import { timeToSeconds, secondsToTimeAMPM } from './utils/timeConversion';
-import { geocodeAddress } from './utils/nominatim';
-import { hasAtLeastOneLetter, generateDeliveryDefaults, generateVehicleDefaults } from './utils';
-import type { DeliveryForm, VehicleForm, AddressSuggestion, ActiveAddressField } from './types';
+"use client";
+import { useState, useCallback, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
+import Papa from "papaparse";
+import type { OptimizedResponse } from "@/app/types/geocoding";
+import { DeliveryFormComponent } from "./DeliveryForm";
+import { VehicleFormComponent } from "./VehicleForm";
+import { CSVUploader } from "./CSVUploader";
+import { ResultsDisplay } from "./ResultsDisplay";
+import { ValidationErrors } from "./ValidationErrors";
+import { useAddressAutocomplete } from "./utils/useAddressAutocomplete";
+import { useGeocodingValidation } from "./utils/validateGeocodingForms";
+import { timeToSeconds, secondsToTimeAMPM } from "./utils/timeConversion";
+import { geocodeAddress } from "./utils/nominatim";
+import {
+  hasAtLeastOneLetter,
+  generateDeliveryDefaults,
+  generateVehicleDefaults,
+} from "./utils";
+import type {
+  DeliveryForm,
+  VehicleForm,
+  AddressSuggestion,
+  ActiveAddressField,
+} from "./types";
 
 export default function AddressGeocoder() {
   // State: Deliveries
   const [deliveries, setDeliveries] = useState<DeliveryForm[]>([
-    { _reactId: uuidv4(), ...generateDeliveryDefaults() }
+    { _reactId: uuidv4(), ...generateDeliveryDefaults() },
   ]);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string | null>(null);
 
   // State: Vehicles
   const [vehicles, setVehicles] = useState<VehicleForm[]>([
-    { _reactId: uuidv4(), ...generateVehicleDefaults(0) }
+    { _reactId: uuidv4(), ...generateVehicleDefaults(0) },
   ]);
-  const [activeAddressField, setActiveAddressField] = useState<ActiveAddressField | null>(null);
+  const [activeAddressField, setActiveAddressField] =
+    useState<ActiveAddressField | null>(null);
 
   // State: UI
   const [results, setResults] = useState<OptimizedResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [csvFileName, setCsvFileName] = useState<string>('');
+  const [csvFileName, setCsvFileName] = useState<string>("");
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Hooks: Autocomplete for deliveries
   const deliveryAutocomplete = useAddressAutocomplete();
 
-  // Hooks: Autocomplete for vehicles
-  const vehicleAutocomplete = useAddressAutocomplete();
+  // Hooks: Autocomplete for vehicles (independent state per field)
+  const vehicleStartAC = useAddressAutocomplete();
+  const vehicleEndAC = useAddressAutocomplete();
 
   // Hooks: Validation
   const { validateDeliveries, validateVehicles } = useGeocodingValidation();
 
   // Delivery Handlers
   const handleAddDelivery = () => {
-    setDeliveries([...deliveries, {
-      _reactId: uuidv4(),
-      ...generateDeliveryDefaults()
-    }]);
+    setDeliveries([
+      ...deliveries,
+      {
+        _reactId: uuidv4(),
+        ...generateDeliveryDefaults(),
+      },
+    ]);
   };
 
   const handleRemoveDelivery = (reactId: string) => {
     if (deliveries.length > 1) {
-      setDeliveries(deliveries.filter(d => d._reactId !== reactId));
+      setDeliveries(deliveries.filter((d) => d._reactId !== reactId));
     }
   };
 
-  const handleDeliveryFieldChange = (reactId: string, field: keyof DeliveryForm, value: string) => {
-    setDeliveries(deliveries.map(d =>
-      d._reactId === reactId ? { ...d, [field]: value } : d
-    ));
+  const handleDeliveryFieldChange = (
+    reactId: string,
+    field: keyof DeliveryForm,
+    value: string,
+  ) => {
+    setDeliveries(
+      deliveries.map((d) =>
+        d._reactId === reactId ? { ...d, [field]: value } : d,
+      ),
+    );
   };
 
   const handleDeliveryAddressChange = (reactId: string, value: string) => {
-    handleDeliveryFieldChange(reactId, 'address', value);
+    handleDeliveryFieldChange(reactId, "address", value);
     setActiveDeliveryId(reactId);
     deliveryAutocomplete.debouncedFetch(value);
   };
@@ -77,153 +97,200 @@ export default function AddressGeocoder() {
 
   const handleSelectDeliverySuggestion = (suggestion: AddressSuggestion) => {
     if (activeDeliveryId === null) return;
-    handleDeliveryFieldChange(activeDeliveryId, 'address', suggestion.display_name);
+    handleDeliveryFieldChange(
+      activeDeliveryId,
+      "address",
+      suggestion.display_name,
+    );
     deliveryAutocomplete.clearSuggestions();
     setActiveDeliveryId(null);
   };
 
   // Vehicle Handlers
   const handleAddVehicle = () => {
-    setVehicles([...vehicles, {
-      _reactId: uuidv4(),
-      ...generateVehicleDefaults(vehicles.length),
-    }]);
+    setVehicles([
+      ...vehicles,
+      {
+        _reactId: uuidv4(),
+        ...generateVehicleDefaults(vehicles.length),
+      },
+    ]);
   };
 
   const handleRemoveVehicle = (reactId: string) => {
     if (vehicles.length > 1) {
-      setVehicles(vehicles.filter(v => v._reactId !== reactId));
+      setVehicles(vehicles.filter((v) => v._reactId !== reactId));
     }
   };
 
-  const handleVehicleFieldChange = (reactId: string, field: keyof VehicleForm, value: string) => {
-    setVehicles(vehicles.map(v =>
-      v._reactId === reactId ? { ...v, [field]: value } : v
-    ));
+  const handleVehicleFieldChange = (
+    reactId: string,
+    field: keyof VehicleForm,
+    value: string,
+  ) => {
+    setVehicles(
+      vehicles.map((v) =>
+        v._reactId === reactId ? { ...v, [field]: value } : v,
+      ),
+    );
   };
 
-  const handleVehicleAddressChange = (reactId: string, field: 'start' | 'end', value: string) => {
-    const fieldName = field === 'start' ? 'startAddress' : 'endAddress';
+  const handleVehicleAddressChange = (
+    reactId: string,
+    field: "start" | "end",
+    value: string,
+  ) => {
+    const fieldName = field === "start" ? "startAddress" : "endAddress";
     handleVehicleFieldChange(reactId, fieldName, value);
     setActiveAddressField({ vehicleId: reactId, field });
-    vehicleAutocomplete.debouncedFetch(value);
+    if (field === "start") vehicleStartAC.debouncedFetch(value);
+    else vehicleEndAC.debouncedFetch(value);
   };
 
-  const handleVehicleFocus = (reactId: string, field: 'start' | 'end') => {
+  const handleVehicleFocus = (reactId: string, field: "start" | "end") => {
     setActiveAddressField({ vehicleId: reactId, field });
   };
 
-  const handleSelectVehicleSuggestion = (suggestion: AddressSuggestion) => {
+  const handleSelectStartSuggestion = (suggestion: AddressSuggestion) => {
     if (!activeAddressField) return;
-    const fieldName = activeAddressField.field === 'start' ? 'startAddress' : 'endAddress';
-    handleVehicleFieldChange(activeAddressField.vehicleId, fieldName, suggestion.display_name);
-    vehicleAutocomplete.clearSuggestions();
+    handleVehicleFieldChange(
+      activeAddressField.vehicleId,
+      "startAddress",
+      suggestion.display_name,
+    );
+    vehicleStartAC.clearSuggestions();
+    setActiveAddressField(null);
+  };
+
+  const handleSelectEndSuggestion = (suggestion: AddressSuggestion) => {
+    if (!activeAddressField) return;
+    handleVehicleFieldChange(
+      activeAddressField.vehicleId,
+      "endAddress",
+      suggestion.display_name,
+    );
+    vehicleEndAC.clearSuggestions();
     setActiveAddressField(null);
   };
 
   // CSV Upload Handler
-  const handleCSVUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleCSVUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    setCsvFileName(file.name);
-    setError(null);
-    setValidationErrors([]);
+      setCsvFileName(file.name);
+      setError(null);
+      setValidationErrors([]);
 
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      encoding: 'UTF-8',
-      complete: (results) => {
-        try {
-          const deliveriesData: DeliveryForm[] = [];
-          const vehiclesData: VehicleForm[] = [];
-          const errors: string[] = [];
+      Papa.parse<Record<string, string>>(file, {
+        header: true,
+        skipEmptyLines: true,
+        encoding: "UTF-8",
+        complete: (results) => {
+          try {
+            const deliveriesData: DeliveryForm[] = [];
+            const vehiclesData: VehicleForm[] = [];
+            const errors: string[] = [];
 
-          results.data.forEach((row, rowIndex) => {
-            const rowType = row.type?.toLowerCase();
+            results.data.forEach((row, rowIndex) => {
+              const rowType = row.type?.toLowerCase();
 
-            if (rowType === 'delivery') {
-              const address = row.address?.trim() || '';
-              const deliveryName = `Delivery ${deliveriesData.length + 1}`;
+              if (rowType === "delivery") {
+                const address = row.address?.trim() || "";
+                const deliveryName = `Delivery ${deliveriesData.length + 1}`;
 
-              if (address && hasAtLeastOneLetter(address)) {
-                let timeWindowStart = '';
-                if (row.time_window_start) {
-                  const rawStart = String(row.time_window_start).trim();
-                  if (/^\d+$/.test(rawStart)) {
-                    timeWindowStart = secondsToTimeAMPM(parseInt(rawStart));
-                  } else {
-                    timeWindowStart = rawStart;
+                if (address && hasAtLeastOneLetter(address)) {
+                  let timeWindowStart = "";
+                  if (row.time_window_start) {
+                    const rawStart = String(row.time_window_start).trim();
+                    if (/^\d+$/.test(rawStart)) {
+                      timeWindowStart = secondsToTimeAMPM(parseInt(rawStart));
+                    } else {
+                      timeWindowStart = rawStart;
+                    }
                   }
+
+                  let timeWindowEnd = "";
+                  if (row.time_window_end) {
+                    const rawEnd = String(row.time_window_end).trim();
+                    if (/^\d+$/.test(rawEnd)) {
+                      timeWindowEnd = secondsToTimeAMPM(parseInt(rawEnd));
+                    } else {
+                      timeWindowEnd = rawEnd;
+                    }
+                  }
+
+                  deliveriesData.push({
+                    _reactId: uuidv4(),
+                    address,
+                    bufferTime: row.buffer_time || "300",
+                    demandValue: row.demand_value || "1",
+                    timeWindowStart,
+                    timeWindowEnd,
+                  });
+                } else {
+                  errors.push(
+                    `${deliveryName} (CSV row ${rowIndex + 2}): Address must contain at least one letter`,
+                  );
+                }
+              } else if (rowType === "vehicle") {
+                const startAddress = row.start_address?.trim() || "";
+                const endAddress = row.end_address?.trim() || "";
+                const vehicleName = `Vehicle ${vehiclesData.length + 1}`;
+                const validStartAddress = hasAtLeastOneLetter(startAddress)
+                  ? startAddress
+                  : "";
+                const validEndAddress = hasAtLeastOneLetter(endAddress)
+                  ? endAddress
+                  : "";
+
+                if (!validStartAddress) {
+                  errors.push(
+                    `${vehicleName} (CSV row ${rowIndex + 2}): Start address must contain at least one letter`,
+                  );
+                }
+                if (!validEndAddress) {
+                  errors.push(
+                    `${vehicleName} (CSV row ${rowIndex + 2}): End address must contain at least one letter`,
+                  );
                 }
 
-                let timeWindowEnd = '';
-                if (row.time_window_end) {
-                  const rawEnd = String(row.time_window_end).trim();
-                  if (/^\d+$/.test(rawEnd)) {
-                    timeWindowEnd = secondsToTimeAMPM(parseInt(rawEnd));
-                  } else {
-                    timeWindowEnd = rawEnd;
-                  }
-                }
-
-                deliveriesData.push({
+                vehiclesData.push({
                   _reactId: uuidv4(),
-                  address,
-                  bufferTime: row.buffer_time || '300',
-                  demandValue: row.demand_value || '1',
-                  timeWindowStart,
-                  timeWindowEnd,
+                  id: row.id || `vehicle_${vehiclesData.length + 1}`,
+                  vehicleType: row.vehicle_type || "car",
+                  startAddress: validStartAddress,
+                  endAddress: validEndAddress,
+                  capacity: row.capacity_units || "100",
                 });
-              } else {
-                errors.push(`${deliveryName} (CSV row ${rowIndex + 2}): Address must contain at least one letter`);
               }
-            } else if (rowType === 'vehicle') {
-              const startAddress = row.start_address?.trim() || '';
-              const endAddress = row.end_address?.trim() || '';
-              const vehicleName = `Vehicle ${vehiclesData.length + 1}`;
-              const validStartAddress = hasAtLeastOneLetter(startAddress) ? startAddress : '';
-              const validEndAddress = hasAtLeastOneLetter(endAddress) ? endAddress : '';
+            });
 
-              if (!validStartAddress) {
-                errors.push(`${vehicleName} (CSV row ${rowIndex + 2}): Start address must contain at least one letter`);
-              }
-              if (!validEndAddress) {
-                errors.push(`${vehicleName} (CSV row ${rowIndex + 2}): End address must contain at least one letter`);
-              }
-
-              vehiclesData.push({
-                _reactId: uuidv4(),
-                id: row.id || `vehicle_${vehiclesData.length + 1}`,
-                vehicleType: row.vehicle_type || 'car',
-                startAddress: validStartAddress,
-                endAddress: validEndAddress,
-                capacity: row.capacity_units || '100',
-              });
+            if (deliveriesData.length === 0 && vehiclesData.length === 0) {
+              setError("No valid deliveries or vehicles found in CSV");
+              return;
             }
-          });
 
-          if (deliveriesData.length === 0 && vehiclesData.length === 0) {
-            setError('No valid deliveries or vehicles found in CSV');
-            return;
+            if (deliveriesData.length > 0) setDeliveries(deliveriesData);
+            if (vehiclesData.length > 0) setVehicles(vehiclesData);
+            if (errors.length > 0) setValidationErrors(errors);
+
+            console.log(
+              `Parsed ${deliveriesData.length} deliveries and ${vehiclesData.length} vehicles`,
+            );
+          } catch (err) {
+            setError("Error parsing CSV file");
+            console.error(err);
           }
-
-          if (deliveriesData.length > 0) setDeliveries(deliveriesData);
-          if (vehiclesData.length > 0) setVehicles(vehiclesData);
-          if (errors.length > 0) setValidationErrors(errors);
-
-          console.log(`Parsed ${deliveriesData.length} deliveries and ${vehiclesData.length} vehicles`);
-        } catch (err) {
-          setError('Error parsing CSV file');
-          console.error(err);
-        }
-      },
-      error: (error) => {
-        setError(`CSV parsing error: ${error.message}`);
-      },
-    });
-  }, []);
+        },
+        error: (error) => {
+          setError(`CSV parsing error: ${error.message}`);
+        },
+      });
+    },
+    [],
+  );
 
   // Geocoding Handler
   const handleGeocode = async () => {
@@ -233,8 +300,10 @@ export default function AddressGeocoder() {
     setValidationErrors([]);
 
     try {
-      const { valid: validDeliveries, errors: deliveryErrors } = validateDeliveries(deliveries);
-      const { valid: validVehicles, errors: vehicleErrors } = validateVehicles(vehicles);
+      const { valid: validDeliveries, errors: deliveryErrors } =
+        validateDeliveries(deliveries);
+      const { valid: validVehicles, errors: vehicleErrors } =
+        validateVehicles(vehicles);
       const allErrors = [...deliveryErrors, ...vehicleErrors];
 
       if (allErrors.length > 0) {
@@ -244,13 +313,15 @@ export default function AddressGeocoder() {
       }
 
       if (validDeliveries.length === 0) {
-        setError('Please enter at least one valid delivery address');
+        setError("Please enter at least one valid delivery address");
         setLoading(false);
         return;
       }
 
       if (validVehicles.length === 0) {
-        setError('Please enter at least one valid vehicle with start and end addresses');
+        setError(
+          "Please enter at least one valid vehicle with start and end addresses",
+        );
         setLoading(false);
         return;
       }
@@ -258,20 +329,31 @@ export default function AddressGeocoder() {
       // Geocode all addresses client-side through the shared nominatim utility.
       // This guarantees the 1 req/s clock is shared with autocomplete — no
       // separate server module that could race and trigger 429s.
-      const failedAddresses: Array<{ entryId: string; address: string; field: string }> = [];
+      const failedAddresses: Array<{
+        entryId: string;
+        address: string;
+        field: string;
+      }> = [];
 
       const geocodedDeliveries = await Promise.all(
         validDeliveries.map(async (d, index) => {
           const entryId = `delivery_${index + 1}`;
           const location = await geocodeAddress(d.address);
-          if (!location) failedAddresses.push({ entryId, address: d.address, field: 'address' });
+          if (!location)
+            failedAddresses.push({
+              entryId,
+              address: d.address,
+              field: "address",
+            });
 
-          const startSeconds = d.timeWindowStart && d.timeWindowStart.trim().length > 0
-            ? timeToSeconds(d.timeWindowStart)
-            : undefined;
-          const endSeconds = d.timeWindowEnd && d.timeWindowEnd.trim().length > 0
-            ? timeToSeconds(d.timeWindowEnd)
-            : undefined;
+          const startSeconds =
+            d.timeWindowStart && d.timeWindowStart.trim().length > 0
+              ? timeToSeconds(d.timeWindowStart)
+              : undefined;
+          const endSeconds =
+            d.timeWindowEnd && d.timeWindowEnd.trim().length > 0
+              ? timeToSeconds(d.timeWindowEnd)
+              : undefined;
 
           const timeWindows: number[][] = [];
           if (startSeconds !== undefined && endSeconds !== undefined) {
@@ -283,32 +365,46 @@ export default function AddressGeocoder() {
             address: d.address,
             location: location!,
             bufferTime: parseInt(d.bufferTime) || 300,
-            demand: { type: 'units', value: parseInt(d.demandValue) || 1 },
+            demand: { type: "units", value: parseInt(d.demandValue) || 1 },
             timeWindows,
           };
-        })
+        }),
       );
 
       const geocodedVehicles = await Promise.all(
         validVehicles.map(async (v) => {
           const startLocation = await geocodeAddress(v.startAddress);
           const endLocation = await geocodeAddress(v.endAddress);
-          if (!startLocation) failedAddresses.push({ entryId: v.id, address: v.startAddress, field: 'startAddress' });
-          if (!endLocation) failedAddresses.push({ entryId: v.id, address: v.endAddress, field: 'endAddress' });
+          if (!startLocation)
+            failedAddresses.push({
+              entryId: v.id,
+              address: v.startAddress,
+              field: "startAddress",
+            });
+          if (!endLocation)
+            failedAddresses.push({
+              entryId: v.id,
+              address: v.endAddress,
+              field: "endAddress",
+            });
 
           return {
             id: v.id,
             vehicleType: v.vehicleType,
             startLocation: startLocation!,
             endLocation: endLocation!,
-            capacity: { type: 'units', value: parseInt(v.capacity) || 100 },
+            capacity: { type: "units", value: parseInt(v.capacity) || 100 },
           };
-        })
+        }),
       );
 
       if (failedAddresses.length > 0) {
-        const list = failedAddresses.map(f => `${f.entryId} (${f.address})`).join(', ');
-        throw new Error(`Geocoding failed for ${failedAddresses.length} address(es): ${list}. Please correct them and try again.`);
+        const list = failedAddresses
+          .map((f) => `${f.entryId} (${f.address})`)
+          .join(", ");
+        throw new Error(
+          `Geocoding failed for ${failedAddresses.length} address(es): ${list}. Please correct them and try again.`,
+        );
       }
 
       const data: OptimizedResponse = {
@@ -318,13 +414,14 @@ export default function AddressGeocoder() {
           generatedAt: new Date().toISOString(),
           totalDeliveries: geocodedDeliveries.length,
           totalVehicles: geocodedVehicles.length,
-          successfulGeocoding: geocodedDeliveries.length + geocodedVehicles.length,
+          successfulGeocoding:
+            geocodedDeliveries.length + geocodedVehicles.length,
           failedGeocoding: 0,
         },
       };
       setResults(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      setError(err instanceof Error ? err.message : "Unknown error occurred");
     } finally {
       setLoading(false);
     }
@@ -334,10 +431,10 @@ export default function AddressGeocoder() {
   const downloadJSON = () => {
     if (!results) return;
     const blob = new Blob([JSON.stringify(results, null, 2)], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `delivery_optimization_${Date.now()}.json`;
     document.body.appendChild(a);
@@ -352,16 +449,19 @@ export default function AddressGeocoder() {
   // the effect to re-run on every render (objects are new refs each time).
   const deliveryShowSuggestions = deliveryAutocomplete.showSuggestions;
   const deliveryClearSuggestions = deliveryAutocomplete.clearSuggestions;
-  const vehicleShowSuggestions = vehicleAutocomplete.showSuggestions;
-  const vehicleClearSuggestions = vehicleAutocomplete.clearSuggestions;
+  const vehicleShowSuggestions =
+    vehicleStartAC.showSuggestions || vehicleEndAC.showSuggestions;
+  const vehicleStartClearSuggestions = vehicleStartAC.clearSuggestions;
+  const vehicleEndClearSuggestions = vehicleEndAC.clearSuggestions;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
       if (deliveryShowSuggestions) {
-        const clickedInside = Array.from(document.querySelectorAll('[data-delivery-input]'))
-          .some(el => el.contains(target));
+        const clickedInside = Array.from(
+          document.querySelectorAll("[data-delivery-input]"),
+        ).some((el) => el.contains(target));
         if (!clickedInside) {
           deliveryClearSuggestions();
           setActiveDeliveryId(null);
@@ -369,22 +469,25 @@ export default function AddressGeocoder() {
       }
 
       if (vehicleShowSuggestions) {
-        const clickedInside = Array.from(document.querySelectorAll('[data-vehicle-input]'))
-          .some(el => el.contains(target));
+        const clickedInside = Array.from(
+          document.querySelectorAll("[data-vehicle-input]"),
+        ).some((el) => el.contains(target));
         if (!clickedInside) {
-          vehicleClearSuggestions();
+          vehicleStartClearSuggestions();
+          vehicleEndClearSuggestions();
           setActiveAddressField(null);
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [
     deliveryShowSuggestions,
     deliveryClearSuggestions,
     vehicleShowSuggestions,
-    vehicleClearSuggestions,
+    vehicleStartClearSuggestions,
+    vehicleEndClearSuggestions,
   ]);
 
   return (
@@ -426,7 +529,12 @@ export default function AddressGeocoder() {
                       onFieldChange={handleDeliveryFieldChange}
                       onAddressChange={handleDeliveryAddressChange}
                       onFocus={handleDeliveryFocus}
-                      onKeyDown={(e) => deliveryAutocomplete.handleKeyDown(e, handleSelectDeliverySuggestion)}
+                      onKeyDown={(e) =>
+                        deliveryAutocomplete.handleKeyDown(
+                          e,
+                          handleSelectDeliverySuggestion,
+                        )
+                      }
                       showSuggestions={deliveryAutocomplete.showSuggestions}
                       suggestions={deliveryAutocomplete.suggestions}
                       selectedIndex={deliveryAutocomplete.selectedIndex}
@@ -466,20 +574,31 @@ export default function AddressGeocoder() {
                       onFieldChange={handleVehicleFieldChange}
                       onAddressChange={handleVehicleAddressChange}
                       onFocus={handleVehicleFocus}
-                      onKeyDown={(e) => vehicleAutocomplete.handleKeyDown(e, handleSelectVehicleSuggestion)}
+                      onStartKeyDown={(e) =>
+                        vehicleStartAC.handleKeyDown(
+                          e,
+                          handleSelectStartSuggestion,
+                        )
+                      }
+                      onEndKeyDown={(e) =>
+                        vehicleEndAC.handleKeyDown(e, handleSelectEndSuggestion)
+                      }
                       showStartSuggestions={
-                        vehicleAutocomplete.showSuggestions &&
+                        vehicleStartAC.showSuggestions &&
                         activeAddressField?.vehicleId === vehicle._reactId &&
-                        activeAddressField?.field === 'start'
+                        activeAddressField?.field === "start"
                       }
                       showEndSuggestions={
-                        vehicleAutocomplete.showSuggestions &&
+                        vehicleEndAC.showSuggestions &&
                         activeAddressField?.vehicleId === vehicle._reactId &&
-                        activeAddressField?.field === 'end'
+                        activeAddressField?.field === "end"
                       }
-                      suggestions={vehicleAutocomplete.suggestions}
-                      selectedIndex={vehicleAutocomplete.selectedIndex}
-                      onSelectSuggestion={handleSelectVehicleSuggestion}
+                      startSuggestions={vehicleStartAC.suggestions}
+                      endSuggestions={vehicleEndAC.suggestions}
+                      startSelectedIndex={vehicleStartAC.selectedIndex}
+                      endSelectedIndex={vehicleEndAC.selectedIndex}
+                      onSelectStartSuggestion={handleSelectStartSuggestion}
+                      onSelectEndSuggestion={handleSelectEndSuggestion}
                     />
                   </div>
                 ))}
@@ -500,13 +619,19 @@ export default function AddressGeocoder() {
 
           <button
             onClick={handleGeocode}
-            disabled={loading || deliveries.every(d => !d.address.trim()) || vehicles.every(v => !v.startAddress.trim())}
+            disabled={
+              loading ||
+              deliveries.every((d) => !d.address.trim()) ||
+              vehicles.every((v) => !v.startAddress.trim())
+            }
             className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium text-lg"
           >
-            {loading ? 'Processing...' : '🚀 Generate Optimized Routes'}
+            {loading ? "Processing..." : "🚀 Generate Optimized Routes"}
           </button>
 
-          {results && <ResultsDisplay results={results} onDownload={downloadJSON} />}
+          {results && (
+            <ResultsDisplay results={results} onDownload={downloadJSON} />
+          )}
         </div>
       </div>
     </div>

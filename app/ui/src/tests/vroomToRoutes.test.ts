@@ -3,7 +3,10 @@ import { vroomToRoutes } from "@/app/edit/utils/vroomToRoutes";
 import type { VroomResponse, VroomStep } from "@/app/edit/types/vroomResponse";
 import type { VehicleRow, AddressCard } from "@/app/edit/types/delivery";
 
-function makeVehicle(id: number, overrides: Partial<VehicleRow> = {}): VehicleRow {
+function makeVehicle(
+  id: number,
+  overrides: Partial<VehicleRow> = {},
+): VehicleRow {
   return {
     id,
     locked: true,
@@ -19,13 +22,18 @@ function makeVehicle(id: number, overrides: Partial<VehicleRow> = {}): VehicleRo
   };
 }
 
-function makeAddress(id: number, overrides: Partial<AddressCard> = {}): AddressCard {
+function makeAddress(
+  id: number,
+  overrides: Partial<AddressCard> = {},
+): AddressCard {
   return {
     id,
     locked: true,
     editingExisting: false,
+    recipientName: "",
+    phoneNumber: "",
     recipientAddress: `${id} Test St`,
-    timeBuffer: "",
+    timeBuffer: 0,
     deliveryTimeStart: "",
     deliveryTimeEnd: "",
     deliveryQuantity: 1,
@@ -34,27 +42,44 @@ function makeAddress(id: number, overrides: Partial<AddressCard> = {}): AddressC
   };
 }
 
-function jobStep(jobId: string, arrivalSecs: number): VroomStep {
-  return { type: "job", job_external_id: jobId, location: [-74.006, 40.7128], arrival: arrivalSecs };
+function jobStep(
+  jobId: string,
+  arrivalSecs: number,
+  overrides: Partial<VroomStep> = {},
+): VroomStep {
+  return {
+    type: "job",
+    job_external_id: jobId,
+    location: [-74.006, 40.7128],
+    arrival: arrivalSecs,
+    ...overrides,
+  };
 }
 
 const SINGLE_STOP: VroomResponse = {
-  routes: [{
-    vehicle: 1,
-    vehicle_external_id: "1",
-    steps: [jobStep("1", 32400)],
-    distance: 16093.4,
-    duration: 1800,
-  }],
+  routes: [
+    {
+      vehicle: 1,
+      vehicle_external_id: "1",
+      steps: [jobStep("1", 32400)],
+      distance: 16093.4,
+      duration: 1800,
+    },
+  ],
 };
 
 describe("vroomToRoutes", () => {
   it("empty routes → []", () => {
-    expect(vroomToRoutes({ routes: [] }, [], [])).toEqual([]);
+    expect(vroomToRoutes({ routes: [] }, [], [], "")).toEqual([]);
   });
 
   it("maps vehicleId, driverName, distanceMi, estimatedTimeMinutes", () => {
-    const [route] = vroomToRoutes(SINGLE_STOP, [makeVehicle(1)], [makeAddress(1)]);
+    const [route] = vroomToRoutes(
+      SINGLE_STOP,
+      [makeVehicle(1)],
+      [makeAddress(1)],
+      "",
+    );
     expect(route.vehicleId).toBe("1");
     expect(route.driverName).toBe("Driver 1");
     expect(route.distanceMi).toBe(10.0);
@@ -62,17 +87,22 @@ describe("vroomToRoutes", () => {
   });
 
   it("arrival 32400 → stop time '9:00 AM'", () => {
-    const [route] = vroomToRoutes(SINGLE_STOP, [makeVehicle(1)], [makeAddress(1)]);
+    const [route] = vroomToRoutes(
+      SINGLE_STOP,
+      [makeVehicle(1)],
+      [makeAddress(1)],
+      "",
+    );
     expect(route.stops[0].timeWindow.time).toBe("9:00 AM");
   });
 
   it("unknown job_external_id → address falls back to coordinate string", () => {
-    const [route] = vroomToRoutes(SINGLE_STOP, [makeVehicle(1)], []);
+    const [route] = vroomToRoutes(SINGLE_STOP, [makeVehicle(1)], [], "");
     expect(route.stops[0].address).toMatch(/\d+\.\d+/);
   });
 
   it("unknown vehicle_external_id → fallback driver name", () => {
-    const [route] = vroomToRoutes(SINGLE_STOP, [], [makeAddress(1)]);
+    const [route] = vroomToRoutes(SINGLE_STOP, [], [makeAddress(1)], "");
     expect(route.driverName).toBe("Vehicle 1");
   });
 
@@ -80,7 +110,13 @@ describe("vroomToRoutes", () => {
     const [route] = vroomToRoutes(
       SINGLE_STOP,
       [makeVehicle(1)],
-      [makeAddress(1, { deliveryTimeStart: "9:00 AM", deliveryTimeEnd: "5:00 PM" })]
+      [
+        makeAddress(1, {
+          deliveryTimeStart: "9:00 AM",
+          deliveryTimeEnd: "5:00 PM",
+        }),
+      ],
+      "",
     );
     expect(route.stops[0].timeWindow.kind).toBe("at");
   });
@@ -89,7 +125,8 @@ describe("vroomToRoutes", () => {
     const [route] = vroomToRoutes(
       SINGLE_STOP,
       [makeVehicle(1)],
-      [makeAddress(1, { deliveryTimeStart: "9:00 AM" })]
+      [makeAddress(1, { deliveryTimeStart: "9:00 AM" })],
+      "",
     );
     expect(route.stops[0].timeWindow.kind).toBe("from");
   });
@@ -98,60 +135,191 @@ describe("vroomToRoutes", () => {
     const [route] = vroomToRoutes(
       SINGLE_STOP,
       [makeVehicle(1)],
-      [makeAddress(1, { deliveryTimeEnd: "5:00 PM" })]
+      [makeAddress(1, { deliveryTimeEnd: "5:00 PM" })],
+      "",
     );
     expect(route.stops[0].timeWindow.kind).toBe("by");
   });
 
   it("no time constraint → kind 'by'", () => {
-    const [route] = vroomToRoutes(SINGLE_STOP, [makeVehicle(1)], [makeAddress(1)]);
+    const [route] = vroomToRoutes(
+      SINGLE_STOP,
+      [makeVehicle(1)],
+      [makeAddress(1)],
+      "",
+    );
     expect(route.stops[0].timeWindow.kind).toBe("by");
   });
 
   it("start/end step types are filtered out — only job steps become stops", () => {
     const response: VroomResponse = {
-      routes: [{
-        vehicle: 1,
-        vehicle_external_id: "1",
-        steps: [
-          { type: "start", location: [-74.006, 40.7128], arrival: 0 },
-          jobStep("1", 32400),
-          { type: "end", location: [-74.006, 40.7128], arrival: 36000 },
-        ],
-        distance: 0,
-        duration: 0,
-      }],
+      routes: [
+        {
+          vehicle: 1,
+          vehicle_external_id: "1",
+          steps: [
+            { type: "start", location: [-74.006, 40.7128], arrival: 0 },
+            jobStep("1", 32400),
+            { type: "end", location: [-74.006, 40.7128], arrival: 36000 },
+          ],
+          distance: 0,
+          duration: 0,
+        },
+      ],
     };
-    const [route] = vroomToRoutes(response, [makeVehicle(1)], [makeAddress(1)]);
+    const [route] = vroomToRoutes(
+      response,
+      [makeVehicle(1)],
+      [makeAddress(1)],
+      "",
+    );
     expect(route.stops).toHaveLength(1);
   });
 
   it("sequence numbers are 1-based", () => {
     const response: VroomResponse = {
-      routes: [{
-        vehicle: 1,
-        vehicle_external_id: "1",
-        steps: [jobStep("1", 32400), jobStep("2", 36000)],
-        distance: 0,
-        duration: 0,
-      }],
+      routes: [
+        {
+          vehicle: 1,
+          vehicle_external_id: "1",
+          steps: [jobStep("1", 32400), jobStep("2", 36000)],
+          distance: 0,
+          duration: 0,
+        },
+      ],
     };
-    const [route] = vroomToRoutes(response, [makeVehicle(1)], [makeAddress(1), makeAddress(2)]);
+    const [route] = vroomToRoutes(
+      response,
+      [makeVehicle(1)],
+      [makeAddress(1), makeAddress(2)],
+      "",
+    );
     expect(route.stops[0].sequence).toBe(1);
     expect(route.stops[1].sequence).toBe(2);
   });
 
   it("arrival wraps via % 86400 — 86400 + 32400 still shows 9:00 AM", () => {
     const response: VroomResponse = {
-      routes: [{
-        vehicle: 1,
-        vehicle_external_id: "1",
-        steps: [jobStep("1", 86400 + 32400)],
-        distance: 0,
-        duration: 0,
-      }],
+      routes: [
+        {
+          vehicle: 1,
+          vehicle_external_id: "1",
+          steps: [jobStep("1", 86400 + 32400)],
+          distance: 0,
+          duration: 0,
+        },
+      ],
     };
-    const [route] = vroomToRoutes(response, [makeVehicle(1)], [makeAddress(1)]);
+    const [route] = vroomToRoutes(
+      response,
+      [makeVehicle(1)],
+      [makeAddress(1)],
+      "",
+    );
     expect(route.stops[0].timeWindow.time).toBe("9:00 AM");
+  });
+
+  it("no start step → startLocation is undefined", () => {
+    const [route] = vroomToRoutes(SINGLE_STOP, [makeVehicle(1)], [], "");
+    expect(route.startLocation).toBeUndefined();
+  });
+
+  it("start step + vehicle.startLocation → lat/lng/address from start step and vehicle", () => {
+    const response: VroomResponse = {
+      routes: [
+        {
+          vehicle: 1,
+          vehicle_external_id: "1",
+          steps: [
+            { type: "start", location: [-74.006, 40.7128], arrival: 0 },
+            jobStep("1", 32400),
+          ],
+          distance: 0,
+          duration: 0,
+        },
+      ],
+    };
+    const [route] = vroomToRoutes(
+      response,
+      [makeVehicle(1)],
+      [makeAddress(1)],
+      "Fallback Depot",
+    );
+    expect(route.startLocation?.address).toBe("1 Depot Rd");
+    expect(route.startLocation?.lat).toBe(40.7128);
+    expect(route.startLocation?.lng).toBe(-74.006);
+  });
+
+  it("start step + no vehicle.startLocation → address falls back to depotAddress", () => {
+    const response: VroomResponse = {
+      routes: [
+        {
+          vehicle: 1,
+          vehicle_external_id: "1",
+          steps: [
+            { type: "start", location: [-74.006, 40.7128], arrival: 0 },
+            jobStep("1", 32400),
+          ],
+          distance: 0,
+          duration: 0,
+        },
+      ],
+    };
+    const [route] = vroomToRoutes(
+      response,
+      [makeVehicle(1, { startLocation: "" })],
+      [makeAddress(1)],
+      "1 Fallback Depot",
+    );
+    expect(route.startLocation?.address).toBe("1 Fallback Depot");
+  });
+
+  it("maps recipient name and phone from the address form", () => {
+    const [route] = vroomToRoutes(
+      SINGLE_STOP,
+      [makeVehicle(1)],
+      [
+        makeAddress(1, {
+          recipientName: "Kayla Wong",
+          phoneNumber: "(530) 555-0199",
+        }),
+      ],
+      "",
+    );
+    expect(route.stops[0]).toMatchObject({
+      addresseeName: "Kayla Wong",
+      phoneNumber: "(530) 555-0199",
+    });
+  });
+
+  it("capacityUsed prefers form deliveryQuantity when greater than zero", () => {
+    const [route] = vroomToRoutes(
+      SINGLE_STOP,
+      [makeVehicle(1)],
+      [makeAddress(1, { deliveryQuantity: 4 })],
+      "",
+    );
+    expect(route.stops[0].capacityUsed).toBe(4);
+  });
+
+  it("capacityUsed falls back to VROOM step load when form quantity is zero", () => {
+    const response: VroomResponse = {
+      routes: [
+        {
+          vehicle: 1,
+          vehicle_external_id: "1",
+          steps: [jobStep("1", 32400, { load: [7] })],
+          distance: 0,
+          duration: 0,
+        },
+      ],
+    };
+    const [route] = vroomToRoutes(
+      response,
+      [makeVehicle(1)],
+      [makeAddress(1, { deliveryQuantity: 0 })],
+      "",
+    );
+    expect(route.stops[0].capacityUsed).toBe(7);
   });
 });

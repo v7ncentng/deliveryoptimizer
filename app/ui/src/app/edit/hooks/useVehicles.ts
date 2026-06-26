@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from "react";
-import type { VehicleRow } from "../types/delivery";
+import type { VehicleRow } from "@/app/edit/types/delivery";
 
 function isVehicleValid(v: VehicleRow): boolean {
   return (
@@ -26,39 +26,42 @@ export function useVehicles() {
   // Vacuously true for an empty list so "Add vehicle" is enabled from the start.
   const allVehiclesLocked = vehicles.every((v) => v.locked);
 
-  const updateVehicle = useCallback(<K extends keyof VehicleRow>(
-    id: number,
-    key: K,
-    value: VehicleRow[K]
-  ) => {
-    setVehicles((prev) =>
-      prev.map((v) =>
-        v.id === id
-          ? {
-              ...v,
-              [key]: value,
-              ...(key === "startLocation" ? { cachedLocation: undefined } : {}),
-            }
-          : v
-      )
-    );
-  }, []);
+  const updateVehicle = useCallback(
+    <K extends keyof VehicleRow>(id: number, key: K, value: VehicleRow[K]) => {
+      setVehicles((prev) =>
+        prev.map((v) =>
+          v.id === id
+            ? {
+                ...v,
+                [key]: value,
+                ...(key === "startLocation"
+                  ? { cachedLocation: undefined }
+                  : {}),
+              }
+            : v,
+        ),
+      );
+    },
+    [],
+  );
 
   const addVehicle = useCallback(() => {
     setVehicles((prev) => {
       const active = prev.find((v) => !v.locked);
       const allLocked = prev.length > 0 && prev.every((v) => v.locked);
-  
+
       if (!allLocked && !(active && isVehicleValid(active))) {
         if (active) setTouchedIds((t) => new Set([...t, active.id]));
         return prev;
       }
-  
+
       setTouchedIds(new Set());
       const newId = prev.reduce((max, v) => Math.max(max, v.id), 0) + 1;
-  
+
       return [
-        ...prev.map((v) => (v.locked ? v : { ...v, locked: true, editingExisting: false })),
+        ...prev.map((v) =>
+          v.locked ? v : { ...v, locked: true, editingExisting: false },
+        ),
         {
           id: newId,
           locked: false,
@@ -77,7 +80,17 @@ export function useVehicles() {
   }, []);
 
   const addVehicleWithDetails = useCallback(
-    (details: Pick<VehicleRow, "name" | "type" | "capacity" | "capacityUnit" | "available" | "departureTime">) => {
+    (
+      details: Pick<
+        VehicleRow,
+        | "name"
+        | "type"
+        | "capacity"
+        | "capacityUnit"
+        | "available"
+        | "departureTime"
+      >,
+    ) => {
       setVehicles((prev) => {
         const newId = prev.reduce((max, v) => Math.max(max, v.id), 0) + 1;
         return [
@@ -99,7 +112,7 @@ export function useVehicles() {
       });
       setTouchedIds(new Set());
     },
-    []
+    [],
   );
 
   const deleteVehicle = useCallback((id: number) => {
@@ -113,40 +126,6 @@ export function useVehicles() {
     });
   }, []);
 
-  // Edit mode for a locked row: clear any stale validation state for the row.
-  const unlockVehicle = useCallback((id: number) => {
-    setVehicles((prev) =>
-      prev.map((v) => (v.id === id ? { ...v, locked: false, editingExisting: true } : v))
-    );
-    setTouchedIds((t) => {
-      const next = new Set(t);
-      next.delete(id);
-      return next;
-    });
-  }, []);
-
-  // Validate required fields; on failure mark only this row, on success lock it.
-  const confirmVehicle = useCallback((id: number) => {
-    setVehicles((prev) => {
-      const v = prev.find((x) => x.id === id);
-      if (!v) return prev;
-  
-      if (!isVehicleValid(v)) {
-        setTouchedIds((t) => new Set([...t, id]));
-        return prev;
-      }
-  
-      setTouchedIds((t) => {
-        const next = new Set(t);
-        next.delete(id);
-        return next;
-      });
-      return prev.map((x) =>
-        x.id === id ? { ...x, locked: true, editingExisting: false } : x
-      );
-    });
-  }, []);
-
   const markAllAvailable = useCallback(() => {
     setVehicles((prev) => prev.map((v) => ({ ...v, available: true })));
   }, []);
@@ -157,13 +136,44 @@ export function useVehicles() {
     setTouchedIds(new Set());
   }, []);
 
-  const cacheVehicleLocation = useCallback((id: number, lat: number, lng: number, state?: string | null) => {
-    setVehicles((prev) =>
-      prev.map((vehicle) =>
-        vehicle.id === id ? { ...vehicle, cachedLocation: { lat, lng, state } } : vehicle
-      )
-    );
-  }, []);
+  const cacheVehicleLocation = useCallback(
+    (id: number, lat: number, lng: number, state?: string | null) => {
+      setVehicles((prev) =>
+        prev.map((vehicle) =>
+          vehicle.id === id
+            ? { ...vehicle, cachedLocation: { lat, lng, state } }
+            : vehicle,
+        ),
+      );
+    },
+    [],
+  );
+
+  const setVehiclesStartLocation = useCallback(
+    (
+      ids: number[],
+      startLocation: string,
+      location: { lat: number; lng: number; state?: string | null },
+    ) => {
+      const idSet = new Set(ids);
+      setVehicles((prev) =>
+        prev.map((vehicle) =>
+          idSet.has(vehicle.id)
+            ? {
+                ...vehicle,
+                startLocation,
+                cachedLocation: {
+                  lat: location.lat,
+                  lng: location.lng,
+                  state: location.state ?? null,
+                },
+              }
+            : vehicle,
+        ),
+      );
+    },
+    [],
+  );
 
   return {
     vehicles,
@@ -171,13 +181,12 @@ export function useVehicles() {
     addVehicle,
     addVehicleWithDetails,
     deleteVehicle,
-    unlockVehicle,
-    confirmVehicle,
     markAllAvailable,
     importVehicles,
     touchedIds,
     activeVehicleIsValid,
     allVehiclesLocked,
     cacheVehicleLocation,
+    setVehiclesStartLocation,
   };
 }

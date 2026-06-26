@@ -1,5 +1,6 @@
 find_package(GTest CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(Drogon CONFIG REQUIRED)
 include(GoogleTest)
 
 set(
@@ -27,6 +28,7 @@ target_sources(
   deliveryoptimizer_tests
   PRIVATE
     "${CMAKE_SOURCE_DIR}/app/api/src/observability.cpp"
+    "${CMAKE_SOURCE_DIR}/app/api/src/forecast_optimizer.cpp"
     "${CMAKE_SOURCE_DIR}/app/api/src/optimize_request.cpp"
     "${CMAKE_SOURCE_DIR}/app/api/src/solve_admission.cpp"
     "${CMAKE_SOURCE_DIR}/app/api/src/solve_coordinator.cpp"
@@ -44,6 +46,7 @@ target_link_libraries(
   deliveryoptimizer_tests
   PRIVATE
     deliveryoptimizer::adapters
+    Drogon::Drogon
     GTest::gtest_main
     JsonCpp::JsonCpp
 )
@@ -307,6 +310,25 @@ deliveryoptimizer_add_local_http_test(
 deliveryoptimizer_set_local_http_test_port(
   DeliveryOptimizerApiContractTest.HealthReportsDependencyReadiness
   26000
+)
+
+add_test(
+  NAME DeliveryOptimizerApiContractTest.HealthCoalescesColdOsrmProbe
+  COMMAND "${BASH_PROGRAM}"
+          "${CMAKE_CURRENT_SOURCE_DIR}/integration/http_server/health_coalesces_cold_osrm_probe_test.sh"
+          "$<TARGET_FILE:deliveryoptimizer_api>" "${PYTHON3_PROGRAM}" "${CURL_PROGRAM}"
+)
+set_tests_properties(
+  DeliveryOptimizerApiContractTest.HealthCoalescesColdOsrmProbe
+  PROPERTIES
+    TIMEOUT 30
+    LABELS "${DELIVERYOPTIMIZER_LOCAL_API_REGRESSION_LABELS}"
+)
+deliveryoptimizer_resolve_local_http_test_port(health_coalesce_test_port 36500)
+deliveryoptimizer_resolve_local_http_test_port(health_coalesce_stub_port 53500)
+deliveryoptimizer_set_local_http_test_environment(
+  DeliveryOptimizerApiContractTest.HealthCoalescesColdOsrmProbe
+  "DELIVERYOPTIMIZER_TEST_PORT=${health_coalesce_test_port};DELIVERYOPTIMIZER_OSRM_STUB_PORT=${health_coalesce_stub_port}"
 )
 
 deliveryoptimizer_add_local_http_test(

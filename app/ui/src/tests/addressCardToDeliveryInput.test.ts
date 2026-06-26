@@ -13,8 +13,10 @@ function makeAddress(overrides: Partial<AddressCard> = {}): AddressCard {
     id: 1,
     locked: true,
     editingExisting: false,
+    recipientName: "",
+    phoneNumber: "",
     recipientAddress: "123 Main St",
-    timeBuffer: "",
+    timeBuffer: 0,
     deliveryTimeStart: "",
     deliveryTimeEnd: "",
     deliveryQuantity: 3,
@@ -25,14 +27,16 @@ function makeAddress(overrides: Partial<AddressCard> = {}): AddressCard {
 
 describe("addressCardToDeliveryInput", () => {
   it("no time constraint → no timeWindows", () => {
-    expect(addressCardToDeliveryInput(makeAddress(), LOC, "units").timeWindows).toBeUndefined();
+    expect(
+      addressCardToDeliveryInput(makeAddress(), LOC, "units").timeWindows,
+    ).toBeUndefined();
   });
 
   it("start + end → [[startSecs, endSecs]]", () => {
     const result = addressCardToDeliveryInput(
       makeAddress({ deliveryTimeStart: "9:00 AM", deliveryTimeEnd: "5:00 PM" }),
       LOC,
-      "units"
+      "units",
     );
     expect(result.timeWindows).toEqual([[32400, 61200]]);
   });
@@ -41,7 +45,7 @@ describe("addressCardToDeliveryInput", () => {
     const result = addressCardToDeliveryInput(
       makeAddress({ deliveryTimeStart: "9:00 AM" }),
       LOC,
-      "units"
+      "units",
     );
     expect(result.timeWindows).toEqual([[32400, 86400]]);
   });
@@ -50,39 +54,71 @@ describe("addressCardToDeliveryInput", () => {
     const result = addressCardToDeliveryInput(
       makeAddress({ deliveryTimeEnd: "5:00 PM" }),
       LOC,
-      "units"
+      "units",
     );
     expect(result.timeWindows).toEqual([[0, 61200]]);
   });
 
-  it('"5 min" buffer → bufferTime 300', () => {
+  it("5 minute service buffer → bufferTime 300 seconds", () => {
     expect(
-      addressCardToDeliveryInput(makeAddress({ timeBuffer: "5 min" }), LOC, "units").bufferTime
+      addressCardToDeliveryInput(makeAddress({ timeBuffer: 5 }), LOC, "units")
+        .bufferTime,
     ).toBe(300);
   });
 
   it("empty buffer → bufferTime 0", () => {
-    expect(addressCardToDeliveryInput(makeAddress(), LOC, "units").bufferTime).toBe(0);
+    expect(
+      addressCardToDeliveryInput(makeAddress(), LOC, "units").bufferTime,
+    ).toBe(0);
   });
 
   it("demand type and value passed through", () => {
     expect(
-      addressCardToDeliveryInput(makeAddress({ deliveryQuantity: 7 }), LOC, "lbs").demand
+      addressCardToDeliveryInput(
+        makeAddress({ deliveryQuantity: 7 }),
+        LOC,
+        "lbs",
+      ).demand,
     ).toEqual({ type: "lbs", value: 7 });
   });
 
   it("location passed through", () => {
-    expect(addressCardToDeliveryInput(makeAddress(), LOC, "units").location).toEqual(LOC);
+    expect(
+      addressCardToDeliveryInput(makeAddress(), LOC, "units").location,
+    ).toEqual(LOC);
   });
 
   it("notes are preserved when present", () => {
     expect(
-      addressCardToDeliveryInput(makeAddress({ notes: "Leave at side door" }), LOC, "units").notes
+      addressCardToDeliveryInput(
+        makeAddress({ notes: "Leave at side door" }),
+        LOC,
+        "units",
+      ).notes,
     ).toBe("Leave at side door");
   });
 
   it("blank notes are omitted", () => {
-    expect(addressCardToDeliveryInput(makeAddress({ notes: "   " }), LOC, "units").notes).toBeUndefined();
+    expect(
+      addressCardToDeliveryInput(makeAddress({ notes: "   " }), LOC, "units")
+        .notes,
+    ).toBeUndefined();
+  });
+
+  it("recipient name and phone forwarded when present", () => {
+    expect(
+      addressCardToDeliveryInput(
+        makeAddress({
+          recipientName: "Kayla Wong",
+          phoneNumber: "(530) 555-0199",
+        }),
+        LOC,
+        "units",
+      ),
+    ).toMatchObject({
+      recipientName: "Kayla Wong",
+      phoneNumber: "(530) 555-0199",
+    });
   });
 });
 
@@ -102,8 +138,8 @@ describe("vehicleRowToVehicleInput", () => {
           available: true,
           departureTime: "9:00 AM",
         },
-        LOC
-      ).driverName
+        LOC,
+      ).driverName,
     ).toBe("Driver 1");
   });
 });

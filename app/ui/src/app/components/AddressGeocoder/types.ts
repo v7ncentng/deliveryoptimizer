@@ -5,6 +5,7 @@ export interface AddressSuggestion {
   lat: string;
   lon: string;
   place_id: number;
+  address?: Record<string, string>;
 }
 
 export interface VehicleForm {
@@ -27,5 +28,5 @@ export interface DeliveryForm {
 
 export interface ActiveAddressField {
   vehicleId: string;
-  field: 'start' | 'end';
+  field: "start" | "end";
 }
