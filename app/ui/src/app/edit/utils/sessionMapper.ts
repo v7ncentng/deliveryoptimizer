@@ -1,9 +1,13 @@
 import { geocodeAddress } from "@/app/components/AddressGeocoder/utils/nominatim";
-import { secondsToTimeAMPM } from "@/app/components/AddressGeocoder/utils/timeConversion";
+import {
+  secondsToTimeAMPM,
+  timeToSeconds,
+} from "@/app/components/AddressGeocoder/utils/timeConversion";
 import { bufferSecondsToMinutes } from "@/app/edit/utils/csvParserUtils";
 import type { DeliveryInput } from "@/lib/types/delivery.types";
 import type { OptimizeRequest } from "@/lib/types/optimize.types";
 import type { VehicleInput } from "@/lib/types/vehicle.types";
+import type { SessionSaveData } from "@/lib/validation/session.schema";
 
 import {
   addressCardToDeliveryInput,
@@ -24,6 +28,55 @@ export async function mapEditStateToOptimizeRequest(
   vehicles: VehicleRow[],
   addresses: AddressCard[],
 ): Promise<OptimizeRequest> {
+  const { lockedVehicles, demandType } = validateExportableEditState(
+    vehicles,
+    addresses,
+  );
+  const vehicleInputs: VehicleInput[] = [];
+
+  for (const vehicle of lockedVehicles) {
+    const location =
+      vehicle.cachedLocation ?? (await geocodeAddress(vehicle.startLocation));
+
+    if (!location) {
+      throw new Error(
+        `Could not geocode vehicle start location "${vehicle.startLocation}".`,
+      );
+    }
+
+    vehicleInputs.push(vehicleRowToVehicleInput(vehicle, location));
+  }
+
+  const deliveryInputs = await mapAddressesToDeliveryInputs(
+    addresses,
+    demandType,
+  );
+
+  return {
+    vehicles: vehicleInputs,
+    deliveries: deliveryInputs,
+  };
+}
+
+export async function mapEditStateToSessionSave(
+  vehicles: VehicleRow[],
+  addresses: AddressCard[],
+): Promise<SessionSaveData> {
+  const { lockedVehicles, demandType } = validateExportableEditState(
+    vehicles,
+    addresses,
+  );
+
+  return {
+    vehicles: lockedVehicles.map(vehicleRowToSessionVehicleInput),
+    deliveries: await mapAddressesToDeliveryInputs(addresses, demandType),
+  };
+}
+
+function validateExportableEditState(
+  vehicles: VehicleRow[],
+  addresses: AddressCard[],
+): { lockedVehicles: LockedVehicleRow[]; demandType: CapacityUnit } {
   const unlockedVehicle = vehicles.find((vehicle) => !vehicle.locked);
   const unlockedAddress = addresses.find((address) => !address.locked);
 
@@ -58,21 +111,14 @@ export async function mapEditStateToOptimizeRequest(
   }
 
   const demandType = units[0] as CapacityUnit;
-  const vehicleInputs: VehicleInput[] = [];
 
-  for (const vehicle of lockedVehicles) {
-    const location =
-      vehicle.cachedLocation ?? (await geocodeAddress(vehicle.startLocation));
+  return { lockedVehicles, demandType };
+}
 
-    if (!location) {
-      throw new Error(
-        `Could not geocode vehicle start location "${vehicle.startLocation}".`,
-      );
-    }
-
-    vehicleInputs.push(vehicleRowToVehicleInput(vehicle, location));
-  }
-
+async function mapAddressesToDeliveryInputs(
+  addresses: AddressCard[],
+  demandType: CapacityUnit,
+): Promise<DeliveryInput[]> {
   const deliveryInputs: DeliveryInput[] = [];
 
   for (const address of addresses) {
@@ -91,13 +137,33 @@ export async function mapEditStateToOptimizeRequest(
     );
   }
 
+  return deliveryInputs;
+}
+
+function vehicleRowToSessionVehicleInput(
+  vehicle: LockedVehicleRow,
+): SessionSaveData["vehicles"][number] {
+  const departureSeconds = vehicle.departureTime
+    ? timeToSeconds(vehicle.departureTime)
+    : undefined;
+
   return {
-    vehicles: vehicleInputs,
-    deliveries: deliveryInputs,
+    id: vehicle.id,
+    vehicleType: vehicle.type,
+    driverName: vehicle.name || undefined,
+    ...(vehicle.cachedLocation && { startLocation: vehicle.cachedLocation }),
+    capacity: {
+      type: vehicle.capacityUnit,
+      value: vehicle.capacity,
+    },
+    ...(departureSeconds !== undefined && {
+      departureTime: departureSeconds,
+      returnTime: 86400,
+    }),
   };
 }
 
-export function mapOptimizeRequestToEditState(request: OptimizeRequest): {
+export function mapOptimizeRequestToEditState(request: SessionSaveData): {
   vehicles: VehicleRow[];
   addresses: AddressCard[];
 } {
@@ -115,21 +181,26 @@ export function mapOptimizeRequestToEditState(request: OptimizeRequest): {
   };
 }
 
-function mapVehicleInputToRow(vehicle: VehicleInput): VehicleRow {
+function mapVehicleInputToRow(
+  vehicle: SessionSaveData["vehicles"][number],
+): VehicleRow {
+  const startLocation = vehicle.startLocation
+    ? formatLocation(vehicle.startLocation.lat, vehicle.startLocation.lng)
+    : "";
+
   return {
     id: vehicle.id,
     locked: true,
     editingExisting: false,
     name: vehicle.driverName ?? "",
-    startLocation: formatLocation(
-      vehicle.startLocation.lat,
-      vehicle.startLocation.lng,
-    ),
-    cachedLocation: {
-      lat: vehicle.startLocation.lat,
-      lng: vehicle.startLocation.lng,
-      state: null,
-    },
+    startLocation,
+    ...(vehicle.startLocation && {
+      cachedLocation: {
+        lat: vehicle.startLocation.lat,
+        lng: vehicle.startLocation.lng,
+        state: null,
+      },
+    }),
     type: vehicle.vehicleType,
     capacityUnit: vehicle.capacity.type,
     capacity: vehicle.capacity.value,

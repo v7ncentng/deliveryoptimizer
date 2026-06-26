@@ -4,8 +4,8 @@ export function transformSessionToDriverRoute(
   input: OptimizeRequestLike,
 ): DriverRoute {
   // The driver PWA only needs the ordered stops and the first assigned driver.
-  const deliveries = input.deliveries || [];
-  const firstVehicle = input.vehicles?.[0];
+  const deliveries = input.deliveries;
+  const firstVehicle = input.vehicles[0];
 
   const stops: DeliveryStop[] = deliveries.map((delivery, index) => {
     return {

@@ -1,44 +1,12 @@
 import { ZodError, z } from "zod";
 
 import type { DriverRoute, OptimizeRequestLike } from "./types";
+import {
+  migrateSessionSaveFile,
+  sessionSaveDataSchema,
+} from "@/lib/validation/session.schema";
 
 const MAX_SESSION_FILE_BYTES = 1_000_000;
-
-const locationSchema = z.object({
-  lat: z.number(),
-  lng: z.number(),
-});
-
-const demandSchema = z.object({
-  value: z.number().optional(),
-});
-
-const deliverySchema = z.object({
-  id: z.number(),
-  recipientName: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  address: z.string().optional(),
-  notes: z.string().optional(),
-  location: locationSchema.optional(),
-  demand: demandSchema.optional(),
-});
-
-const vehicleSchema = z.object({
-  id: z.number(),
-  driverName: z.string().optional(),
-  vehicleType: z.string().optional(),
-});
-
-const optimizeRequestSchema = z.object({
-  deliveries: z.array(deliverySchema),
-  vehicles: z.array(vehicleSchema),
-});
-
-const sessionSaveV1Schema = z.object({
-  version: z.literal(1),
-  savedAt: z.string().datetime(),
-  data: optimizeRequestSchema,
-});
 
 const persistedStopSchema = z.object({
   id: z.string(),
@@ -67,7 +35,6 @@ const persistedRouteStateSchema = z.object({
   route: persistedRouteSchema,
 });
 
-type SessionSaveFile = z.infer<typeof sessionSaveV1Schema>;
 type PersistedRouteState = z.infer<typeof persistedRouteStateSchema>;
 
 // Guard the browser import path before we spend time parsing a file.
@@ -104,12 +71,11 @@ export function loadSessionFromText(text: string): OptimizeRequestLike {
 
   try {
     // Preferred route-manager save file shape.
-    return parseSessionSaveFile(parsed).data;
+    return migrateSessionSaveFile(parsed).data;
   } catch (error) {
     try {
-      // Also accept the raw optimize request shape for test fixtures and
-      // simple hand-authored JSON files.
-      return optimizeRequestSchema.parse(parsed);
+      // Also accept the same data shape without the version/savedAt envelope.
+      return sessionSaveDataSchema.parse(parsed);
     } catch {
       throw new Error(
         formatValidationError(error) ?? "Invalid save file format.",
@@ -131,10 +97,6 @@ export function createPersistedRouteState(
 
 export function parsePersistedRouteState(input: unknown): PersistedRouteState {
   return persistedRouteStateSchema.parse(input);
-}
-
-function parseSessionSaveFile(input: unknown): SessionSaveFile {
-  return sessionSaveV1Schema.parse(input);
 }
 
 function formatValidationError(error: unknown): string | null {

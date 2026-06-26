@@ -1,13 +1,15 @@
 import { ZodError } from "zod";
 
-import type { OptimizeRequest } from "@/lib/types/optimize.types";
-import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
+import {
+  migrateSessionSaveFile,
+  type SessionSaveData,
+} from "@/lib/validation/session.schema";
 
 const MAX_SESSION_FILE_BYTES = 1_000_000;
 
 export async function loadSessionFromFile(
   file: File,
-): Promise<OptimizeRequest> {
+): Promise<SessionSaveData> {
   const isJson =
     file.type === "application/json" ||
     file.name.toLowerCase().endsWith(".json");
