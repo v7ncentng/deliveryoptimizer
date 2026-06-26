@@ -32,3 +32,10 @@ npm run dev
 npm --prefix app/ui run lint
 npm --prefix app/ui run build
 ```
+
+## Feedback endpoint operations
+
+The feedback API's IP rate limit and daily accepted counter are process-local.
+On multi-instance App Hosting / Cloud Run deployments they are best-effort per
+instance; keep reCAPTCHA configured, and add an external counter if stricter
+cross-instance abuse protection is required.

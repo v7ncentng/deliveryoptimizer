@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import ServiceWorkerRegistration from "@/app/components/ServiceWorkerRegistration";
 import "./globals.css";
+import FeedbackLauncher from "./components/FeedbackLauncher";
 
 export const metadata: Metadata = {
   title: {
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ServiceWorkerRegistration />
         {children}
+        <FeedbackLauncher />
       </body>
     </html>
   );
