@@ -3,7 +3,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useRef, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
 import { formatSize } from "@/app/utils/routeUtils";
@@ -53,25 +53,15 @@ export default function UploadRoutePage() {
     if (f) handleFile(f);
   };
 
-  const handleContinue = useCallback(async () => {
-    if (!file || isProcessing) return;
-    setIsProcessing(true);
-    setError(null);
-
-    try {
-      const text = await file.text();
-      sessionStorage.setItem(
-        "routeFile",
-        JSON.stringify({ name: file.name, content: text })
-      );
-      router.push("/driver-view");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Something went wrong. Please try again."
-      );
-      setIsProcessing(false);
-    }
-  }, [file, isProcessing, router]);
+  const handleContinue = async () => {
+    if (!file) return;
+    const text = await file.text();
+    sessionStorage.setItem(
+      "routeFile",
+      JSON.stringify({ name: file.name, content: text }),
+    );
+    router.push("/driver-view");
+  };
 
   return (
     <>
@@ -92,7 +82,8 @@ export default function UploadRoutePage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 48px 24px;
+          width: 100%;
+          padding: clamp(28px, 8vw, 48px) clamp(16px, 5vw, 24px);
         }
 
         .ur-title {
@@ -117,7 +108,8 @@ export default function UploadRoutePage() {
           max-width: 580px;
           border: 1.5px dashed #ccc;
           border-radius: 12px;
-          padding: 52px 24px;
+          min-height: 184px;
+          padding: clamp(32px, 10vw, 52px) clamp(18px, 6vw, 24px);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -161,6 +153,7 @@ export default function UploadRoutePage() {
           align-items: center;
           gap: 10px;
           margin-bottom: 24px;
+          min-width: 0;
         }
 
         .ur-file-name {
@@ -168,6 +161,10 @@ export default function UploadRoutePage() {
           font-weight: 500;
           color: #111;
           flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .ur-file-size { font-size: 12px; color: #666; }
@@ -228,36 +225,18 @@ export default function UploadRoutePage() {
           cursor: not-allowed;
         }
 
-        .ur-error {
-          width: 100%;
-          max-width: 580px;
-          font-size: 13px;
-          color: #c0392b;
-          margin-bottom: 12px;
-          text-align: center;
-        }
-
-        @keyframes ur-spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .ur-spinner {
-          width: 32px;
-          height: 32px;
-          border: 3px solid #e0e0e0;
-          border-top-color: #4a8c7a;
-          border-radius: 50%;
-          animation: ur-spin 0.8s linear infinite;
+        .upload-continue-btn:not(:disabled):hover {
+          background: #3d7a6a;
         }
       `}</style>
 
       <div className="ur-root">
         <ShellNavbar />
 
-        <div className="ur-content">
-          <h2 className="ur-title">Upload your route</h2>
-          <p className="ur-subtitle">
-            Upload the route file shared by your Route Manager.
+        <div className="upload-content">
+          <h2 className="upload-title">Upload your route</h2>
+          <p className="upload-subtitle">
+            Upload your route to begin your deliveries!
           </p>
 
           {/* Drop zone — shows spinner while file is being read */}
@@ -269,23 +248,35 @@ export default function UploadRoutePage() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            {isProcessing ? (
-              <div className="ur-spinner" />
-            ) : (
-              <>
-                <div className="ur-dropzone-icon">
-                  <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                    <rect x="1" y="1" width="22" height="34" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                    <path d="M7 10h10M7 15h10M7 20h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M15 26v-7M15 19l-3 3M15 19l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <p className="ur-dropzone-text">
-                  Drag and drop .json or .csv files here, or
-                </p>
-                <p className="ur-dropzone-browse">Browse files</p>
-              </>
-            )}
+            <div className="upload-dropzone-icon">
+              <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
+                <path
+                  d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M18 2v12h12"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M16 22v-6M13 19l3-3 3 3"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <p className="upload-dropzone-text">
+              Drag and drop .json files here, or
+            </p>
+            <p className="upload-dropzone-browse">Browse files</p>
             <input
               ref={inputRef}
               type="file"
@@ -304,8 +295,7 @@ export default function UploadRoutePage() {
               <span className="ur-file-name">{file.name}</span>
               <span className="ur-file-size">{formatSize(file.size)}</span>
               <button
-                className="ur-file-remove"
-                aria-label="Remove file"
+                className="upload-file-remove"
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);

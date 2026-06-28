@@ -7,12 +7,13 @@ import type {
   CapacityUnit,
 } from "@/app/edit/types/delivery";
 import { useFocusTrap } from "@/app/edit/hooks/useFocusTrap";
-import OverlayFieldError from "@/app/edit/components/shared/OverlayFieldError";
+import FieldError from "@/app/edit/components/shared/FieldError";
 import {
   OVERLAY_BACKDROP,
   OVERLAY_BODY,
   OVERLAY_CANCEL_BTN,
   OVERLAY_CLOSE_BTN,
+  OVERLAY_DEPARTURE_ROW,
   OVERLAY_DEPARTURE_WRAPPER,
   OVERLAY_DEPARTURE_WRAPPER_ERROR,
   OVERLAY_TIME_COLON,
@@ -36,12 +37,11 @@ import {
   OVERLAY_SELECT_ICON,
   OVERLAY_SELECT_WRAPPER,
   OVERLAY_SELECT_WRAPPER_ERROR,
-  OVERLAY_STATUS_BADGE_AVAILABLE,
-  OVERLAY_STATUS_BADGE_TEXT_AVAILABLE,
-  OVERLAY_STATUS_BADGE_TEXT_IN_USE,
-  OVERLAY_STATUS_BADGE_IN_USE,
-  OVERLAY_STATUS_HINT,
   OVERLAY_STATUS_ROW,
+  STATUS_TOGGLE_WRAPPER,
+  STATUS_TOGGLE_BTN_ACTIVE,
+  STATUS_TOGGLE_BTN_INACTIVE,
+  STATUS_TOGGLE_TEXT,
   OVERLAY_SCROLL_BODY,
   OVERLAY_TIME_SEGMENTS,
   OVERLAY_TITLE,
@@ -247,7 +247,7 @@ export default function VehicleDetailsOverlay({
                   aria-required="true"
                   aria-invalid={nameError}
                 />
-                {nameError && <OverlayFieldError message="Enter a name" />}
+                {nameError && <FieldError message="Enter a name" />}
               </div>
 
               <div className={OVERLAY_FIELD}>
@@ -292,9 +292,7 @@ export default function VehicleDetailsOverlay({
                     <option value="bicycle">Bicycle</option>
                   </select>
                 </div>
-                {typeError && (
-                  <OverlayFieldError message="Enter a vehicle type" />
-                )}
+                {typeError && <FieldError message="Enter a vehicle type" />}
               </div>
             </div>
 
@@ -324,9 +322,7 @@ export default function VehicleDetailsOverlay({
                   aria-required="true"
                   aria-invalid={capacityError}
                 />
-                {capacityError && (
-                  <OverlayFieldError message="Enter capacity > 0" />
-                )}
+                {capacityError && <FieldError message="Enter capacity > 0" />}
               </div>
 
               <div className={OVERLAY_FIELD}>
@@ -374,7 +370,7 @@ export default function VehicleDetailsOverlay({
                     <option value="cubic_feet">Cubic Feet</option>
                   </select>
                 </div>
-                {unitError && <OverlayFieldError message="Enter a unit type" />}
+                {unitError && <FieldError message="Enter a unit type" />}
               </div>
             </div>
 
@@ -383,28 +379,36 @@ export default function VehicleDetailsOverlay({
               <div className={OVERLAY_FIELD}>
                 <span className={OVERLAY_LABEL}>Status</span>
                 <div className={OVERLAY_STATUS_ROW}>
-                  <button
-                    type="button"
-                    onClick={() => setAvailable((prev) => !prev)}
-                    className={
-                      available
-                        ? OVERLAY_STATUS_BADGE_AVAILABLE
-                        : OVERLAY_STATUS_BADGE_IN_USE
-                    }
-                    aria-pressed={available}
-                    aria-label="Toggle availability"
+                  <div
+                    className={STATUS_TOGGLE_WRAPPER}
+                    role="group"
+                    aria-label="Vehicle availability"
                   >
-                    <span
+                    <button
+                      type="button"
+                      onClick={() => setAvailable(true)}
+                      aria-pressed={available}
                       className={
                         available
-                          ? OVERLAY_STATUS_BADGE_TEXT_AVAILABLE
-                          : OVERLAY_STATUS_BADGE_TEXT_IN_USE
+                          ? STATUS_TOGGLE_BTN_ACTIVE
+                          : STATUS_TOGGLE_BTN_INACTIVE
                       }
                     >
-                      {available ? "Available" : "In use"}
-                    </span>
-                  </button>
-                  <p className={OVERLAY_STATUS_HINT}>Tap to toggle</p>
+                      <span className={STATUS_TOGGLE_TEXT}>Available</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAvailable(false)}
+                      aria-pressed={!available}
+                      className={
+                        !available
+                          ? STATUS_TOGGLE_BTN_ACTIVE
+                          : STATUS_TOGGLE_BTN_INACTIVE
+                      }
+                    >
+                      <span className={STATUS_TOGGLE_TEXT}>In use</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -418,54 +422,56 @@ export default function VehicleDetailsOverlay({
                     *
                   </span>
                 </label>
-                <div
-                  className={
-                    departureError
-                      ? OVERLAY_DEPARTURE_WRAPPER_ERROR
-                      : OVERLAY_DEPARTURE_WRAPPER
-                  }
-                >
-                  <div className={OVERLAY_TIME_SEGMENTS}>
-                    <input
-                      ref={hoursRef}
-                      id="overlay-departure-time"
-                      value={hours}
-                      onChange={(e) => {
-                        const val = e.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 2);
-                        setHours(val);
-                        if (val.length === 2) minutesRef.current?.focus();
-                      }}
-                      placeholder="HH"
-                      maxLength={2}
-                      inputMode="numeric"
-                      className={OVERLAY_TIME_SEGMENT_INPUT}
-                      aria-required="true"
-                      aria-label="Departure hours"
-                      aria-invalid={departureError}
-                    />
-                    <span className={OVERLAY_TIME_COLON}>:</span>
-                    <input
-                      ref={minutesRef}
-                      value={minutes}
-                      onChange={(e) => {
-                        const val = e.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 2);
-                        setMinutes(val);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Backspace" && minutes === "")
-                          hoursRef.current?.focus();
-                      }}
-                      placeholder="MM"
-                      maxLength={2}
-                      inputMode="numeric"
-                      className={OVERLAY_TIME_SEGMENT_INPUT}
-                      aria-label="Departure minutes"
-                      aria-invalid={departureError}
-                    />
+                <div className={OVERLAY_DEPARTURE_ROW}>
+                  <div
+                    className={
+                      departureError
+                        ? OVERLAY_DEPARTURE_WRAPPER_ERROR
+                        : OVERLAY_DEPARTURE_WRAPPER
+                    }
+                  >
+                    <div className={OVERLAY_TIME_SEGMENTS}>
+                      <input
+                        ref={hoursRef}
+                        id="overlay-departure-time"
+                        value={hours}
+                        onChange={(e) => {
+                          const val = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 2);
+                          setHours(val);
+                          if (val.length === 2) minutesRef.current?.focus();
+                        }}
+                        placeholder="HH"
+                        maxLength={2}
+                        inputMode="numeric"
+                        className={OVERLAY_TIME_SEGMENT_INPUT}
+                        aria-required="true"
+                        aria-label="Departure hours"
+                        aria-invalid={departureError}
+                      />
+                      <span className={OVERLAY_TIME_COLON}>:</span>
+                      <input
+                        ref={minutesRef}
+                        value={minutes}
+                        onChange={(e) => {
+                          const val = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 2);
+                          setMinutes(val);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Backspace" && minutes === "")
+                            hoursRef.current?.focus();
+                        }}
+                        placeholder="MM"
+                        maxLength={2}
+                        inputMode="numeric"
+                        className={OVERLAY_TIME_SEGMENT_INPUT}
+                        aria-label="Departure minutes"
+                        aria-invalid={departureError}
+                      />
+                    </div>
                   </div>
                   <div
                     className={OVERLAY_MERIDIEM_WRAPPER}
@@ -498,9 +504,7 @@ export default function VehicleDetailsOverlay({
                     </button>
                   </div>
                 </div>
-                {departureError && (
-                  <OverlayFieldError message="Enter a valid time" />
-                )}
+                {departureError && <FieldError message="Enter a valid time" />}
               </div>
             </div>
           </div>
@@ -520,7 +524,7 @@ export default function VehicleDetailsOverlay({
             onClick={handleSave}
             className={`${OVERLAY_PRIMARY_BTN} ${styles.primaryBtnOverlay}`}
           >
-            Done
+            Confirm
           </button>
         </div>
       </div>

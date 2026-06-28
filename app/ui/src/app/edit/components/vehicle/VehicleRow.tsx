@@ -12,15 +12,12 @@ import type {
   VehicleType,
 } from "@/app/edit/types/delivery";
 import { capitalize } from "@/app/edit/utils/deliveryHelpers";
+import StatusToggle from "@/app/edit/components/vehicle/StatusToggle";
 import {
   VEHICLE_ROW_CELL,
   VEHICLE_ROW_ACTIONS,
   VEHICLE_ROW_DESKTOP,
-  VEHICLE_ROW_STATUS_BADGE_AVAILABLE,
-  VEHICLE_ROW_STATUS_BADGE_IN_USE,
   VEHICLE_ROW_STATUS_CELL,
-  VEHICLE_ROW_STATUS_TEXT_AVAILABLE,
-  VEHICLE_ROW_STATUS_TEXT_IN_USE,
   VEHICLE_MOBILE_LOCKED_CARD_V2,
   VEHICLE_MOBILE_LOCKED_HEADER,
   VEHICLE_MOBILE_LOCKED_INFO,
@@ -59,13 +56,6 @@ export default function VehicleRow({
   deleteVehicle,
   onEditVehicle,
 }: VehicleRowProps) {
-  const statusBadge = v.available
-    ? VEHICLE_ROW_STATUS_BADGE_AVAILABLE
-    : VEHICLE_ROW_STATUS_BADGE_IN_USE;
-  const statusText = v.available
-    ? VEHICLE_ROW_STATUS_TEXT_AVAILABLE
-    : VEHICLE_ROW_STATUS_TEXT_IN_USE;
-
   if (layout === "mobile") {
     return (
       <div className={VEHICLE_MOBILE_LOCKED_CARD_V2}>
@@ -87,16 +77,11 @@ export default function VehicleRow({
           </div>
         </div>
         <div className={VEHICLE_MOBILE_LOCKED_STATUS_ROW}>
-          <button
-            type="button"
-            onClick={() => updateVehicle(v.id, "available", !v.available)}
-            aria-label={v.available ? "Mark as in use" : "Mark as available"}
-            className={statusBadge}
-          >
-            <span className={statusText}>
-              {v.available ? "Available" : "In use"}
-            </span>
-          </button>
+          <StatusToggle
+            vehicleId={v.id}
+            available={v.available}
+            onUpdate={updateVehicle}
+          />
           <span className={VEHICLE_MOBILE_LOCKED_DEPARTURE}>
             {(v.departureTime || "--:--") + " departure time"}
           </span>
@@ -115,16 +100,11 @@ export default function VehicleRow({
       </span>
       <span className={VEHICLE_ROW_CELL}>{formatCapacity(v)}</span>
       <span className={VEHICLE_ROW_STATUS_CELL}>
-        <button
-          type="button"
-          onClick={() => updateVehicle(v.id, "available", !v.available)}
-          aria-label={v.available ? "Mark as in use" : "Mark as available"}
-          className={statusBadge}
-        >
-          <span className={statusText}>
-            {v.available ? "Available" : "In use"}
-          </span>
-        </button>
+        <StatusToggle
+          vehicleId={v.id}
+          available={v.available}
+          onUpdate={updateVehicle}
+        />
       </span>
       <span className={VEHICLE_ROW_CELL}>{v.departureTime}</span>
       <div className={VEHICLE_ROW_ACTIONS}>

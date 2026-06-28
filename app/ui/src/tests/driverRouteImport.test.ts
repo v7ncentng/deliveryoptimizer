@@ -1,0 +1,141 @@
+import { describe, expect, it } from "vitest";
+
+import { loadSessionFromText } from "@/lib/driver-route/importSession";
+import { transformSessionToDriverRoute } from "@/lib/driver-route/transformSession";
+import { buildSessionSave } from "@/lib/session/exportSession";
+
+describe("driver route import", () => {
+  it("loads a saved route-manager session into the driver_assist route shape", () => {
+    const session = loadSessionFromText(
+      JSON.stringify(
+        buildSessionSave(
+          {
+            deliveries: [
+              {
+                id: 42,
+                recipientName: "Recipient 1",
+                phoneNumber: "555-555-0100",
+                address: "12 Compiler Way",
+                notes: "Leave near side door",
+                location: { lat: 37.1, lng: -122.2 },
+                demand: { type: "units", value: 3 },
+              },
+            ],
+            vehicles: [
+              {
+                id: 7,
+                driverName: "driver1",
+                vehicleType: "car",
+                capacity: { type: "units", value: 10 },
+              },
+            ],
+          },
+          new Date("2026-05-16T12:00:00.000Z"),
+        ),
+      ),
+    );
+
+    expect(transformSessionToDriverRoute(session)).toEqual({
+      driverName: "driver1",
+      routeLabel: "Route 7 - 1 stops",
+      stops: [
+        {
+          id: "42",
+          stopNumber: 1,
+          address: "12 Compiler Way",
+          customerName: "Recipient 1",
+          phoneNumber: "555-555-0100",
+          packageCount: 3,
+          notes: "Leave near side door",
+          status: "pending",
+          lat: 37.1,
+          lng: -122.2,
+          completedAt: undefined,
+          failureReason: undefined,
+        },
+      ],
+    });
+  });
+
+  it("loads the same saved session shape when vehicle start location is absent", () => {
+    const session = loadSessionFromText(
+      JSON.stringify(
+        buildSessionSave(
+          {
+            deliveries: [
+              {
+                id: 11,
+                recipientName: "Recipient 3",
+                address: "500 Save St",
+                location: { lat: 34.1, lng: -118.2 },
+                demand: { type: "units", value: 2 },
+              },
+            ],
+            vehicles: [
+              {
+                id: 3,
+                driverName: "driver3",
+                vehicleType: "truck",
+                capacity: { type: "units", value: 20 },
+              },
+            ],
+          },
+          new Date("2026-05-16T12:00:00.000Z"),
+        ),
+      ),
+    );
+
+    expect(transformSessionToDriverRoute(session)).toMatchObject({
+      driverName: "driver3",
+      routeLabel: "Route 3 - 1 stops",
+      stops: [
+        {
+          id: "11",
+          customerName: "Recipient 3",
+          address: "500 Save St",
+          packageCount: 2,
+        },
+      ],
+    });
+  });
+
+  it("rejects files that do not match the saved session contract", () => {
+    expect(() => loadSessionFromText(JSON.stringify({ version: 1 }))).toThrow(
+      'Invalid save file format at "savedAt".',
+    );
+  });
+
+  it("also accepts the same session data shape without the save envelope", () => {
+    const session = loadSessionFromText(
+      JSON.stringify({
+        deliveries: [
+          {
+            id: 9,
+            recipientName: "Recipient 2",
+            address: "620 G St, Davis, CA 95616",
+            location: { lat: 38.5464, lng: -121.7446 },
+            demand: { type: "units", value: 1 },
+          },
+        ],
+        vehicles: [
+          {
+            id: 2,
+            driverName: "driver2",
+            vehicleType: "car",
+            capacity: { type: "units", value: 10 },
+          },
+        ],
+      }),
+    );
+
+    expect(transformSessionToDriverRoute(session)).toMatchObject({
+      driverName: "driver2",
+      stops: [
+        {
+          customerName: "Recipient 2",
+          address: "620 G St, Davis, CA 95616",
+        },
+      ],
+    });
+  });
+});

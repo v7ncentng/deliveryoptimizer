@@ -15,3 +15,30 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: FEEDBACK_ENABLED
+    value: "1"
+  - variable: FEEDBACK_GITHUB_REPO
+    secret: FEEDBACK_GITHUB_REPO
+  - variable: FEEDBACK_GITHUB_APP_ID
+    secret: FEEDBACK_GITHUB_APP_ID
+  - variable: FEEDBACK_GITHUB_INSTALLATION_ID
+    secret: FEEDBACK_GITHUB_INSTALLATION_ID
+  - variable: FEEDBACK_GITHUB_PRIVATE_KEY
+    secret: FEEDBACK_GITHUB_PRIVATE_KEY
+  - variable: FEEDBACK_SCREENSHOT_BUCKET
+    secret: FEEDBACK_SCREENSHOT_BUCKET
+  - variable: NEXT_PUBLIC_FEEDBACK_RECAPTCHA_SITE_KEY
+    secret: FEEDBACK_RECAPTCHA_SITE_KEY
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: FEEDBACK_RECAPTCHA_SECRET
+    secret: FEEDBACK_RECAPTCHA_SECRET
+  - variable: FEEDBACK_RECAPTCHA_MIN_SCORE
+    value: "0.5"
+  - variable: FEEDBACK_RATE_LIMIT_WINDOW_MS
+    value: "600000"
+  - variable: FEEDBACK_RATE_LIMIT_MAX
+    value: "5"
+  - variable: FEEDBACK_DAILY_SHUTDOWN_THRESHOLD
+    value: "100"

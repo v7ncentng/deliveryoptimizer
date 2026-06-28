@@ -13,7 +13,10 @@ import {
   vehicleRowToVehicleInput,
 } from "@/app/edit/utils/optimizeMapper";
 import { SUPPORTED_STATES } from "@/app/edit/constants/supportedRegions";
+import { hasCachedLocationWithState } from "@/app/edit/utils/deliveryHelpers";
+import { setOptimizeResults } from "@/app/edit/utils/hasOptimizeResults";
 import { vroomToRoutes } from "@/app/edit/utils/vroomToRoutes";
+import { saveEditPageDraft } from "@/lib/session/editPageDraft";
 import type {
   AddressCard,
   CapacityUnit,
@@ -84,11 +87,10 @@ function sleep(ms: number): Promise<void> {
 export function useOptimize(
   vehicles: VehicleRow[],
   addresses: AddressCard[],
-  cacheVehicleLocation: (
-    id: number,
-    lat: number,
-    lng: number,
-    state?: string | null,
+  setVehiclesStartLocation: (
+    ids: number[],
+    startLocation: string,
+    location: { lat: number; lng: number; state?: string | null },
   ) => void,
   cacheAddressLocation: (
     id: number,
@@ -197,14 +199,27 @@ export function useOptimize(
           );
           return;
         }
-        for (const v of availableVehicles) {
-          cacheVehicleLocation(
-            v.id,
-            depotLoc.lat,
-            depotLoc.lng,
-            depotLoc.state,
-          );
-        }
+        const depotVehicleIds = availableVehicles.map((v) => v.id);
+        setVehiclesStartLocation(
+          depotVehicleIds,
+          trimmedDepotAddress,
+          depotLoc,
+        );
+        const depotVehicleIdSet = new Set(depotVehicleIds);
+        const vehiclesWithDepotLocation = vehicles.map((vehicle) =>
+          depotVehicleIdSet.has(vehicle.id)
+            ? {
+                ...vehicle,
+                startLocation: trimmedDepotAddress,
+                cachedLocation: {
+                  lat: depotLoc.lat,
+                  lng: depotLoc.lng,
+                  state: depotLoc.state ?? null,
+                },
+              }
+            : vehicle,
+        );
+        saveEditPageDraft(vehiclesWithDepotLocation, addresses);
         const vehicleLocations: Map<
           number,
           { lat: number; lng: number; state: string | null }
@@ -216,11 +231,11 @@ export function useOptimize(
         > = new Map();
         const failedAddresses: { id: number; address: string }[] = [];
         for (const a of addresses) {
-          const loc = a.cachedLocation
+          const loc = hasCachedLocationWithState(a)
             ? {
-                lat: a.cachedLocation.lat,
-                lng: a.cachedLocation.lng,
-                state: a.cachedLocation.state ?? null,
+                lat: a.cachedLocation!.lat,
+                lng: a.cachedLocation!.lng,
+                state: a.cachedLocation!.state!,
               }
             : await geocodeAddress(a.recipientAddress);
           if (!loc) {
@@ -361,8 +376,9 @@ export function useOptimize(
               resultBody as VroomResponse,
               lockedVehicles,
               addresses,
+              trimmedDepotAddress || "",
             );
-            sessionStorage.setItem("optimizeResults", JSON.stringify(routes));
+            setOptimizeResults(routes);
             router.push("/results");
             return;
           }
@@ -393,7 +409,13 @@ export function useOptimize(
         setIsOptimizing(false);
       }
     },
-    [vehicles, addresses, router, cacheVehicleLocation, cacheAddressLocation],
+    [
+      vehicles,
+      addresses,
+      router,
+      setVehiclesStartLocation,
+      cacheAddressLocation,
+    ],
   );
 
   const clearOptimizeError = useCallback(() => {

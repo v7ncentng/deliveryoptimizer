@@ -7,6 +7,10 @@ import AddressOverlay, {
 import { TIME_OPTIONS } from "@/app/edit/constants/timeOptions";
 import type { AddressCard as AddressCardType } from "@/app/edit/types/delivery";
 import {
+  hasRecipientContact,
+  recipientSummary,
+} from "@/app/edit/utils/recipientSummary";
+import {
   ADDRESS_ROW_EDIT_ROOT,
   ADDRESS_ROW_DESKTOP_WRAPPER,
   ADDRESS_ROW_EDIT_LEFT,
@@ -15,11 +19,11 @@ import {
   ADDRESS_ROW_NAME_ROW,
   ADDRESS_ROW_FIELD_INPUT_FILL,
   ADDRESS_ROW_ADDR_WRAP,
-  ADDRESS_ROW_ADDR_WRAP_ERROR,
   ADDRESS_ROW_ADDR_GRADIENT,
   ADDRESS_ROW_ADDR_TRIGGER_TEXT,
   ADDRESS_ROW_ADDR_TRIGGER_PLACEHOLDER,
   ADDRESS_ROW_STEPPER_CONTAINER_NARROW,
+  ADDRESS_ROW_STEPPER_CONTAINER_NARROW_ERROR,
   ADDRESS_ROW_STEPPER_INPUT,
   ADDRESS_ROW_STEPPER_CONTROLS,
   ADDRESS_ROW_STEPPER_BUTTON,
@@ -70,18 +74,13 @@ import {
   MOBILE_ADDR_EXPANDED_PANEL,
   MOBILE_ADDR_LOCKED_NOTES_CLAMP,
 } from "@/app/edit/formStyles.v2";
+import FieldError from "@/app/edit/components/shared/FieldError";
 import {
   EditIconButton,
   ConfirmIconButton,
   DeleteIconButton,
 } from "@/app/edit/components/shared/RowIconButtons";
-
-function formatPhoneNumber(raw: string): string {
-  const digits = raw.replace(/\D/g, "").slice(0, 10);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-}
+import { formatUsPhoneNumber } from "@/lib/utils/phone";
 
 function parseRecipientAddress(addr: string): Partial<LocationAddress> {
   const parts = addr.split(", ");
@@ -117,6 +116,7 @@ function StepperInput({
   min = 0,
   max,
   ariaLabel,
+  invalid = false,
   onIncrement,
   onDecrement,
   onChange,
@@ -125,12 +125,19 @@ function StepperInput({
   min?: number;
   max?: number;
   ariaLabel: string;
+  invalid?: boolean;
   onIncrement: () => void;
   onDecrement: () => void;
   onChange: (v: number) => void;
 }) {
   return (
-    <div className={ADDRESS_ROW_STEPPER_CONTAINER_NARROW}>
+    <div
+      className={
+        invalid
+          ? ADDRESS_ROW_STEPPER_CONTAINER_NARROW_ERROR
+          : ADDRESS_ROW_STEPPER_CONTAINER_NARROW
+      }
+    >
       <input
         type="number"
         min={min}
@@ -145,6 +152,7 @@ function StepperInput({
           );
         }}
         aria-label={ariaLabel}
+        aria-invalid={invalid ? true : undefined}
         className={ADDRESS_ROW_STEPPER_INPUT}
       />
       <div className={ADDRESS_ROW_STEPPER_CONTROLS}>
@@ -204,8 +212,23 @@ function AutoResizeNotesTextarea({
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    const fitHeight = () => {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    fitHeight();
+
+    const mq = window.matchMedia("(min-width: 1024px)");
+    mq.addEventListener("change", fitHeight);
+
+    const ro = new ResizeObserver(fitHeight);
+    ro.observe(textarea);
+
+    return () => {
+      mq.removeEventListener("change", fitHeight);
+      ro.disconnect();
+    };
   }, [value]);
 
   return (
@@ -239,8 +262,8 @@ export default function AddressCard({
   const startIdx = TIME_OPTIONS.indexOf(a.deliveryTimeStart);
   const endIdx = TIME_OPTIONS.indexOf(a.deliveryTimeEnd);
 
-  const addrInvalid =
-    geocodeFailed || (addressTouched && !a.recipientAddress.trim());
+  const addressMissing = addressTouched && !a.recipientAddress.trim();
+  const qtyInvalid = addressTouched && a.deliveryQuantity <= 0;
 
   const panelId = `addr-panel-${a.id}`;
 
@@ -257,15 +280,13 @@ export default function AddressCard({
                 <>
                   {/* Recipient column — locked */}
                   <div className={ADDRESS_ROW_LOCKED_RECIPIENT_COL}>
-                    {(a.recipientName || a.phoneNumber) && (
+                    {hasRecipientContact(a) && (
                       <button
                         type="button"
                         onClick={() => unlockAddress(a.id)}
                         className={`${ADDRESS_ROW_LOCKED_PLAIN_TEXT} ${ADDRESS_ROW_LOCKED_FIELD_BTN}`}
                       >
-                        {[a.recipientName, a.phoneNumber]
-                          .filter(Boolean)
-                          .join(", ")}
+                        {recipientSummary(a)}
                       </button>
                     )}
                     <button
@@ -341,7 +362,7 @@ export default function AddressCard({
                           updateAddress(
                             a.id,
                             "phoneNumber",
-                            formatPhoneNumber(e.target.value),
+                            formatUsPhoneNumber(e.target.value),
                           )
                         }
                         placeholder="123-456-7890"
@@ -355,11 +376,7 @@ export default function AddressCard({
                     <button
                       type="button"
                       onClick={() => setOverlayOpen(true)}
-                      className={
-                        addrInvalid
-                          ? ADDRESS_ROW_ADDR_WRAP_ERROR
-                          : ADDRESS_ROW_ADDR_WRAP
-                      }
+                      className={ADDRESS_ROW_ADDR_WRAP}
                       aria-label="Edit recipient address"
                     >
                       <span className={ADDRESS_ROW_ADDR_TRIGGER_TEXT}>
@@ -380,6 +397,9 @@ export default function AddressCard({
                         </svg>
                       </div>
                     </button>
+                    {addressMissing && (
+                      <FieldError message="No Address Entered" />
+                    )}
                   </div>
 
                   {/* Quantity — edit */}
@@ -388,6 +408,7 @@ export default function AddressCard({
                     min={1}
                     max={1_000_000}
                     ariaLabel="Delivery quantity"
+                    invalid={qtyInvalid}
                     onChange={(v) => updateAddress(a.id, "deliveryQuantity", v)}
                     onIncrement={() =>
                       updateAddress(
@@ -553,11 +574,9 @@ export default function AddressCard({
             <div className={MOBILE_ADDR_SUMMARY_SECTION}>
               <span className={MOBILE_ADDR_EDIT_SECTION_LABEL}>Recipient</span>
               <div className={MOBILE_ADDR_LOCKED_RECIPIENT_LINES}>
-                {(a.recipientName || a.phoneNumber) && (
+                {hasRecipientContact(a) && (
                   <span className={MOBILE_ADDR_LOCKED_VALUE}>
-                    {[a.recipientName, a.phoneNumber]
-                      .filter(Boolean)
-                      .join(", ")}
+                    {recipientSummary(a)}
                   </span>
                 )}
                 <span
@@ -616,11 +635,9 @@ export default function AddressCard({
                     className={MOBILE_ADDR_LOCKED_FIELD_BTN}
                   >
                     <div className={MOBILE_ADDR_LOCKED_RECIPIENT_LINES}>
-                      {(a.recipientName || a.phoneNumber) && (
+                      {hasRecipientContact(a) && (
                         <span className={MOBILE_ADDR_LOCKED_VALUE}>
-                          {[a.recipientName, a.phoneNumber]
-                            .filter(Boolean)
-                            .join(", ")}
+                          {recipientSummary(a)}
                         </span>
                       )}
                       <span
@@ -749,7 +766,7 @@ export default function AddressCard({
                         updateAddress(
                           a.id,
                           "phoneNumber",
-                          formatPhoneNumber(e.target.value),
+                          formatUsPhoneNumber(e.target.value),
                         )
                       }
                       placeholder="123-456-7890"
@@ -763,11 +780,7 @@ export default function AddressCard({
                   <button
                     type="button"
                     onClick={() => setOverlayOpen(true)}
-                    className={
-                      addrInvalid
-                        ? ADDRESS_ROW_ADDR_WRAP_ERROR
-                        : ADDRESS_ROW_ADDR_WRAP
-                    }
+                    className={ADDRESS_ROW_ADDR_WRAP}
                     aria-label="Edit recipient address"
                   >
                     <span className={ADDRESS_ROW_ADDR_TRIGGER_TEXT}>
@@ -786,6 +799,9 @@ export default function AddressCard({
                       </svg>
                     </div>
                   </button>
+                  {addressMissing && (
+                    <FieldError message="No Address Entered" />
+                  )}
                 </div>
 
                 {/* Delivery Info */}
@@ -799,6 +815,7 @@ export default function AddressCard({
                       min={1}
                       max={1_000_000}
                       ariaLabel="Delivery quantity"
+                      invalid={qtyInvalid}
                       onChange={(v) =>
                         updateAddress(a.id, "deliveryQuantity", v)
                       }

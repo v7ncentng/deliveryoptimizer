@@ -3,6 +3,7 @@
 "use client";
 
 import {
+  default as React,
   useCallback,
   useEffect,
   useMemo,
@@ -16,10 +17,55 @@ import {
   Marker,
   useGoogleMap,
 } from "@react-google-maps/api";
-import type { PendingPinMove, Route } from "../types";
+import type { HoveredStopInfo, PendingPinMove, Route, Stop } from "../types";
 import { routeColorHex } from "../utils/routeColors";
+import MapStopHoverOverlay from "./MapStopHoverOverlay";
+
+declare const process: {
+  env: Record<string, string | undefined>;
+};
 
 const DAVIS_CENTER = { lat: 38.5449, lng: -121.7405 };
+const MARKER_ICON_WIDTH = 28;
+const MARKER_ICON_HEIGHT = 40;
+const STOP_MARKER_ANCHOR = {
+  x: MARKER_ICON_WIDTH / 2,
+  y: MARKER_ICON_HEIGHT,
+} as const;
+
+function createStopMarkerIcon(iconUrl: string): google.maps.Icon | undefined {
+  if (typeof google === "undefined") return undefined;
+  return {
+    url: iconUrl,
+    scaledSize: new google.maps.Size(MARKER_ICON_WIDTH, MARKER_ICON_HEIGHT),
+    anchor: new google.maps.Point(STOP_MARKER_ANCHOR.x, STOP_MARKER_ANCHOR.y),
+  };
+}
+
+// fillColor is always a route palette hex from routeColorHex, never user input.
+function markerSvgDataUrl(fillColor: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${MARKER_ICON_WIDTH}" height="${MARKER_ICON_HEIGHT}" viewBox="0 0 28 40"><path d="M14 1C7.373 1 2 6.373 2 13c0 9.246 12 24 12 24s12-14.754 12-24C26 6.373 20.627 1 14 1z" fill="${fillColor}" stroke="#ffffff" stroke-width="2"/><circle cx="14" cy="13" r="4.25" fill="#ffffff"/></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function createRoutePinElement(fillColor: string): HTMLElement {
+  const wrapper = document.createElement("div");
+  wrapper.style.width = `${MARKER_ICON_WIDTH}px`;
+  wrapper.style.height = `${MARKER_ICON_HEIGHT}px`;
+  // AdvancedMarkerElement anchors at bottom-center by default; do not apply an
+  // extra translate or the pin tip drifts by a fixed pixel offset when zooming.
+  wrapper.style.filter = "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))";
+
+  const img = document.createElement("img");
+  img.src = markerSvgDataUrl(fillColor);
+  img.width = MARKER_ICON_WIDTH;
+  img.height = MARKER_ICON_HEIGHT;
+  img.style.display = "block";
+  img.draggable = false;
+  img.alt = "";
+  wrapper.appendChild(img);
+  return wrapper;
+}
 
 function routePolylineOptions(
   strokeColor: string,
@@ -57,7 +103,7 @@ function buildRoutePath(
   pendingPinMove: PendingPinMove | null,
 ): google.maps.LatLngLiteral[] {
   const sorted = [...route.stops].sort((a, b) => a.sequence - b.sequence);
-  return sorted.map((s) => {
+  const deliveryPoints = sorted.map((s) => {
     if (
       pendingPinMove?.vehicleId === route.vehicleId &&
       pendingPinMove.stopId === s.id
@@ -66,6 +112,13 @@ function buildRoutePath(
     }
     return { lat: s.lat, lng: s.lng };
   });
+  if (route.startLocation) {
+    return [
+      { lat: route.startLocation.lat, lng: route.startLocation.lng },
+      ...deliveryPoints,
+    ];
+  }
+  return deliveryPoints;
 }
 
 function RoutePolylinesOverlay({
@@ -268,11 +321,56 @@ type AdvancedMarkersProps = {
     lat: number,
     lng: number,
   ) => void;
+  onStopHover: (info: HoveredStopInfo) => void;
+  onStopHoverEnd: () => void;
 };
 
 function stopKey(vehicleId: string, stopId: string): string {
   return `${vehicleId}:${stopId}`;
 }
+
+function hoverInfoForStop(
+  routeIndex: number,
+  route: Route,
+  stop: Stop,
+  pendingPinMove: PendingPinMove | null,
+): HoveredStopInfo {
+  const atPending =
+    pendingPinMove != null &&
+    pendingPinMove.vehicleId === route.vehicleId &&
+    pendingPinMove.stopId === stop.id;
+  return {
+    routeIndex,
+    stop,
+    lat: atPending ? pendingPinMove.lat : stop.lat,
+    lng: atPending ? pendingPinMove.lng : stop.lng,
+  };
+}
+
+function bindAdvancedMarkerHover(
+  marker: google.maps.marker.AdvancedMarkerElement,
+  info: HoveredStopInfo,
+  onStopHover: (info: HoveredStopInfo) => void,
+  onStopHoverEnd: () => void,
+): () => void {
+  const show = () => onStopHover(info);
+  const hide = () => onStopHoverEnd();
+  const overListener = marker.addListener("mouseover", show);
+  const outListener = marker.addListener("mouseout", hide);
+  const el = marker.element;
+  el?.addEventListener("mouseenter", show);
+  el?.addEventListener("mouseleave", hide);
+  return () => {
+    google.maps.event.removeListener(overListener);
+    google.maps.event.removeListener(outListener);
+    el?.removeEventListener("mouseenter", show);
+    el?.removeEventListener("mouseleave", hide);
+  };
+}
+
+const DEPOT_MARKER_SVG = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><defs><filter id="sh" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.4)"/></filter></defs><circle cx="14" cy="14" r="12" fill="#374151" stroke="#fff" stroke-width="2" filter="url(#sh)"/><text x="14" y="18.5" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="sans-serif">S</text></svg>`,
+)}`;
 
 function AdvancedMarkers({
   map,
@@ -280,12 +378,22 @@ function AdvancedMarkers({
   isEditMode,
   pendingPinMove,
   onPendingPinMove,
+  onStopHover,
+  onStopHoverEnd,
 }: AdvancedMarkersProps) {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const markerByStopKeyRef = useRef<
     Record<string, google.maps.marker.AdvancedMarkerElement>
   >({});
+  const hoverCleanupRef = useRef<(() => void)[]>([]);
   const pendingPinMoveRef = useRef(pendingPinMove);
+  const onStopHoverRef = useRef(onStopHover);
+  const onStopHoverEndRef = useRef(onStopHoverEnd);
+
+  useEffect(() => {
+    onStopHoverRef.current = onStopHover;
+    onStopHoverEndRef.current = onStopHoverEnd;
+  }, [onStopHover, onStopHoverEnd]);
 
   useEffect(() => {
     pendingPinMoveRef.current = pendingPinMove;
@@ -307,7 +415,27 @@ function AdvancedMarkers({
 
         if (cancelled) return;
 
-        routes.forEach((route) => {
+        routes.forEach((route, routeIndex) => {
+          const accentColor = routeColorHex(routeIndex);
+          // Depot marker — distinct non-draggable pin labeled "S"
+          if (route.startLocation) {
+            const depotEl = document.createElement("img");
+            depotEl.src = DEPOT_MARKER_SVG;
+            depotEl.width = 28;
+            depotEl.height = 28;
+            depotEl.alt = "";
+            const depotMarker = new AdvancedMarkerElement({
+              map,
+              position: {
+                lat: route.startLocation.lat,
+                lng: route.startLocation.lng,
+              },
+              content: depotEl,
+              gmpDraggable: false,
+            });
+            markers.push(depotMarker);
+          }
+
           const sorted = [...route.stops].sort(
             (a, b) => a.sequence - b.sequence,
           );
@@ -317,8 +445,8 @@ function AdvancedMarkers({
             const m = new AdvancedMarkerElement({
               map,
               position,
-              title: stop.address,
               gmpDraggable: isEditMode,
+              content: createRoutePinElement(accentColor),
             });
 
             m.addListener("dragend", () => {
@@ -326,6 +454,22 @@ function AdvancedMarkers({
               if (!ll) return;
               onPendingPinMove(route.vehicleId, stop.id, ll.lat, ll.lng);
             });
+            m.addListener("dragstart", () => {
+              onStopHoverEndRef.current();
+            });
+
+            const hoverCleanup = bindAdvancedMarkerHover(
+              m,
+              hoverInfoForStop(
+                routeIndex,
+                route,
+                stop,
+                pendingPinMoveRef.current,
+              ),
+              (info) => onStopHoverRef.current(info),
+              () => onStopHoverEndRef.current(),
+            );
+            hoverCleanupRef.current.push(hoverCleanup);
 
             markers.push(m);
             markerByStopKeyRef.current[stopKey(route.vehicleId, stop.id)] = m;
@@ -333,6 +477,8 @@ function AdvancedMarkers({
         });
 
         if (cancelled) {
+          hoverCleanupRef.current.forEach((cleanup) => cleanup());
+          hoverCleanupRef.current = [];
           markers.forEach((m) => {
             google.maps.event.clearInstanceListeners(m);
             m.map = null;
@@ -354,6 +500,8 @@ function AdvancedMarkers({
 
     return () => {
       cancelled = true;
+      hoverCleanupRef.current.forEach((cleanup) => cleanup());
+      hoverCleanupRef.current = [];
       markersRef.current.forEach((m) => {
         google.maps.event.clearInstanceListeners(m);
         m.map = null;
@@ -395,6 +543,33 @@ export default function MapComponent({
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
   const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || undefined;
   const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [hoveredStop, setHoveredStop] = useState<HoveredStopInfo | null>(null);
+
+  const handleStopHover = useCallback((info: HoveredStopInfo) => {
+    setHoveredStop(info);
+  }, []);
+
+  const handleStopHoverEnd = useCallback(() => {
+    setHoveredStop(null);
+  }, []);
+
+  const displayedHoveredStop = useMemo((): HoveredStopInfo | null => {
+    if (!hoveredStop) return null;
+    if (!pendingPinMove) return hoveredStop;
+    const route = routes[hoveredStop.routeIndex];
+    if (
+      !route ||
+      pendingPinMove.vehicleId !== route.vehicleId ||
+      pendingPinMove.stopId !== hoveredStop.stop.id
+    ) {
+      return hoveredStop;
+    }
+    return {
+      ...hoveredStop,
+      lat: pendingPinMove.lat,
+      lng: pendingPinMove.lng,
+    };
+  }, [hoveredStop, pendingPinMove, routes]);
 
   const onMapLoad = useCallback(
     (mapInstance: google.maps.Map) => {
@@ -403,6 +578,12 @@ export default function MapComponent({
       const bounds = new google.maps.LatLngBounds();
       routes.forEach((route) => {
         route.stops.forEach((s) => bounds.extend({ lat: s.lat, lng: s.lng }));
+        if (route.startLocation) {
+          bounds.extend({
+            lat: route.startLocation.lat,
+            lng: route.startLocation.lng,
+          });
+        }
       });
       mapInstance.fitBounds(bounds, 48);
     },
@@ -437,7 +618,7 @@ export default function MapComponent({
   }
 
   return (
-    <div className="w-full h-full rounded-lg">
+    <div className="relative h-full w-full rounded-lg">
       <LoadScriptNext
         googleMapsApiKey={apiKey}
         mapIds={mapId ? [mapId] : undefined}
@@ -456,6 +637,7 @@ export default function MapComponent({
             pendingPinMove={pendingPinMove}
             onRouteDistanceUpdate={onRouteDistanceUpdate}
           />
+          <MapStopHoverOverlay hovered={displayedHoveredStop} />
           {mapId && (
             <AdvancedMarkers
               map={map}
@@ -463,15 +645,39 @@ export default function MapComponent({
               isEditMode={isEditMode}
               pendingPinMove={pendingPinMove}
               onPendingPinMove={onPendingPinMove}
+              onStopHover={handleStopHover}
+              onStopHoverEnd={handleStopHoverEnd}
             />
           )}
           {!mapId &&
-            routes.map((route) => {
+            routes.map((route, routeIndex) => {
+              const accentColor = routeColorHex(routeIndex);
+              const iconUrl = markerSvgDataUrl(accentColor);
+              const stopIcon = createStopMarkerIcon(iconUrl);
               const sorted = [...route.stops].sort(
                 (a, b) => a.sequence - b.sequence,
               );
               return (
                 <Fragment key={route.vehicleId}>
+                  {route.startLocation && (
+                    <Marker
+                      key={`depot-${route.vehicleId}`}
+                      position={{
+                        lat: route.startLocation.lat,
+                        lng: route.startLocation.lng,
+                      }}
+                      draggable={false}
+                      icon={
+                        typeof google !== "undefined"
+                          ? {
+                              url: DEPOT_MARKER_SVG,
+                              scaledSize: new google.maps.Size(28, 28),
+                              anchor: new google.maps.Point(14, 14),
+                            }
+                          : undefined
+                      }
+                    />
+                  )}
                   {sorted.map((stop) => {
                     const atPending =
                       pendingPinMove != null &&
@@ -484,8 +690,17 @@ export default function MapComponent({
                       <Marker
                         key={stop.id}
                         position={position}
-                        title={stop.address}
+                        icon={stopIcon}
                         draggable={isEditMode}
+                        onMouseOver={() =>
+                          handleStopHover({
+                            routeIndex,
+                            stop,
+                            lat: position.lat,
+                            lng: position.lng,
+                          })
+                        }
+                        onMouseOut={handleStopHoverEnd}
                         onDragEnd={(e) => {
                           const latLng = e.latLng;
                           if (!latLng) return;
