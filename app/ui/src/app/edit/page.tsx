@@ -84,10 +84,6 @@ export default function Page() {
     addressState.cacheAddressLocation,
   );
 
-  const { handleCSVUpload, csvError, clearCsvError } = useCSVUpload({
-    importAddresses: addressState.importAddresses,
-  });
-
   // In-page modal for CSV/JSON imports triggered from AddressSection
   const {
     csvData,
@@ -106,10 +102,6 @@ export default function Page() {
   useEffect(() => {
     if (isImportModalOpen || parseError) setIsUploadOverlayOpen(false);
   }, [isImportModalOpen, parseError]);
-
-  // In-page modal for CSV/JSON imports triggered from AddressSection
-  const { csvData, isImportModalOpen, parseError, closeImportModal } =
-    useCSVImport();
 
   useEffect(() => {
     let cancelled = false;
