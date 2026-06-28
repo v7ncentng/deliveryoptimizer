@@ -136,7 +136,8 @@ export default function Page() {
           const cards = JSON.parse(storedImportedCards) as AddressCard[];
           if (!cancelled) importAddresses(reindexAddresses(cards));
         } catch {
-          if (!cancelled) setSessionError("Failed to import the selected entries.");
+          if (!cancelled)
+            setSessionError("Failed to import the selected entries.");
         }
         return;
       }

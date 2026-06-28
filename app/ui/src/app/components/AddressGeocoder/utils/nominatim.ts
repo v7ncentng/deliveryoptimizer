@@ -59,10 +59,13 @@ export async function geocodeAddress(
   };
 }
 
-/** Autocomplete — returns up to `limit` suggestions. */
+// California bounding box: west, north, east, south (lon_min, lat_max, lon_max, lat_min)
+const CA_VIEWBOX = "-124.48,42.01,-114.13,32.53";
+
+/** Autocomplete — returns up to `limit` California suggestions. */
 export async function autocompleteAddress(
   query: string,
-  limit = 5,
+  limit = 10,
 ): Promise<NominatimResult[]> {
   if (query.length < 3) return [];
 
@@ -74,6 +77,8 @@ export async function autocompleteAddress(
     limit: String(limit),
     addressdetails: "1",
     countrycodes: "us",
+    viewbox: CA_VIEWBOX,
+    bounded: "1",
     email: NOMINATIM_CONTACT_EMAIL,
   });
 
@@ -86,5 +91,6 @@ export async function autocompleteAddress(
     );
   }
 
-  return response.json();
+  const results: NominatimResult[] = await response.json();
+  return results.filter((r) => r.address?.state === "California");
 }
