@@ -10,7 +10,6 @@ import Navbar from "@/app/components/navbar/Navbar";
 import MobileNavbar from "@/app/components/navbar/MobileNavbar";
 import MobileSidebar from "@/app/components/sidebar/MobileSidebar";
 import OptimizingModal from "@/app/edit/components/shared/OptimizingModal";
-import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import ErrorOverlay from "@/app/edit/components/shared/ErrorOverlay";
 import Sidebar from "@/app/components/sidebar/Sidebar";
 import SidebarEditButton from "@/app/components/sidebar/SidebarEditButton";
@@ -85,12 +84,9 @@ export default function Page() {
     addressState.cacheAddressLocation,
   );
 
-  const { isImportModalOpen } = useCSVImport();
-
   const [isHydrated, setIsHydrated] = useState(false);
 
-  const isDraggingOverPage =
-    dragCount > 0 && !isUploadOverlayOpen && !isImportModalOpen;
+  const isDraggingOverPage = dragCount > 0 && !isUploadOverlayOpen;
 
   useEffect(() => {
     if (!isUploadOverlayOpen) setPendingDropFile(null);
@@ -133,6 +129,10 @@ export default function Page() {
           }
           return;
         }
+
+        // TODO: remove after one release cycle — importedCards was written by
+        // CSVImportModal.handleConfirm which has since been deleted.
+        // Kept as a migration safety net for any in-flight sessions.
         const storedImportedCards = sessionStorage.getItem("importedCards");
         if (storedImportedCards) {
           sessionStorage.removeItem("importedCards");
@@ -145,6 +145,9 @@ export default function Page() {
           }
           return;
         }
+
+        // CSV/JSON file forwarded from upload-save-point — open CSVUploadOverlay
+        // automatically so the user lands directly in the column mapper.
         const storedPendingCSV = sessionStorage.getItem("pendingCSVFile");
         if (storedPendingCSV) {
           sessionStorage.removeItem("pendingCSVFile");

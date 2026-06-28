@@ -48,8 +48,8 @@ const FIELD_LABELS: Record<Exclude<MappableField, "">, string> = {
   recipientAddress: "Recipient Address",
   deliveryTimeStart: "Delivery Time Start",
   deliveryTimeEnd: "Delivery Time End",
-  timeBuffer: "Time Buffer",
   deliveryQuantity: "Delivery Quantity",
+  timeBuffer: "Time Buffer",
   notes: "Notes",
 };
 
@@ -666,7 +666,7 @@ export default function CSVUploadOverlay({
   // HIGH fix: surface parseError from useCSVImport. closeImportModal also
   // clears parseError so dismissing the error resets the overlay correctly.
   if (parseError) {
-    return <ErrorOverlay message={parseError} onClose={handleClose} />;
+    return <ErrorOverlay message={parseError} onClose={closeImportModal} />;
   }
 
   if (isImportModalOpen) {
