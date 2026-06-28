@@ -101,7 +101,9 @@ export default function UploadSavePointPage() {
       openImportModal(file);
     } catch (err) {
       setContinueError(
-        err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
       );
     } finally {
       setIsProcessing(false);
