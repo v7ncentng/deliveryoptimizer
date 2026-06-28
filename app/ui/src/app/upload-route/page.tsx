@@ -3,7 +3,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useRef, useCallback } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
 import { formatSize } from "@/app/utils/routeUtils";
@@ -62,12 +62,14 @@ export default function UploadRoutePage() {
       const text = await file.text();
       sessionStorage.setItem(
         "routeFile",
-        JSON.stringify({ name: file.name, content: text })
+        JSON.stringify({ name: file.name, content: text }),
       );
-      router.push("/driver-view");
+      router.push("/driver_assist");
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Something went wrong. Please try again."
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
       );
       setIsProcessing(false);
     }
@@ -92,7 +94,8 @@ export default function UploadRoutePage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 48px 24px;
+          width: 100%;
+          padding: clamp(28px, 8vw, 48px) clamp(16px, 5vw, 24px);
         }
 
         .ur-title {
@@ -117,7 +120,8 @@ export default function UploadRoutePage() {
           max-width: 580px;
           border: 1.5px dashed #ccc;
           border-radius: 12px;
-          padding: 52px 24px;
+          min-height: 184px;
+          padding: clamp(32px, 10vw, 52px) clamp(18px, 6vw, 24px);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -161,6 +165,7 @@ export default function UploadRoutePage() {
           align-items: center;
           gap: 10px;
           margin-bottom: 24px;
+          min-width: 0;
         }
 
         .ur-file-name {
@@ -168,6 +173,10 @@ export default function UploadRoutePage() {
           font-weight: 500;
           color: #111;
           flex: 1;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .ur-file-size { font-size: 12px; color: #666; }
@@ -249,6 +258,40 @@ export default function UploadRoutePage() {
           border-radius: 50%;
           animation: ur-spin 0.8s linear infinite;
         }
+
+        @media (max-width: 520px) {
+          .ur-content {
+            justify-content: flex-start;
+            padding-top: 36px;
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+          }
+
+          .ur-title {
+            font-size: 1.75rem;
+          }
+
+          .ur-subtitle {
+            margin-bottom: 24px;
+            max-width: 280px;
+            line-height: 1.5;
+          }
+
+          .ur-actions {
+            align-items: stretch;
+            flex-direction: column-reverse;
+            gap: 16px;
+          }
+
+          .ur-back-btn {
+            justify-content: center;
+            min-height: 44px;
+          }
+
+          .ur-continue-btn {
+            min-height: 48px;
+            width: 100%;
+          }
+        }
       `}</style>
 
       <div className="ur-root">
@@ -275,9 +318,29 @@ export default function UploadRoutePage() {
               <>
                 <div className="ur-dropzone-icon">
                   <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                    <rect x="1" y="1" width="22" height="34" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                    <path d="M7 10h10M7 15h10M7 20h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <path d="M15 26v-7M15 19l-3 3M15 19l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect
+                      x="1"
+                      y="1"
+                      width="22"
+                      height="34"
+                      rx="3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <path
+                      d="M7 10h10M7 15h10M7 20h6"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </div>
                 <p className="ur-dropzone-text">
@@ -305,7 +368,6 @@ export default function UploadRoutePage() {
               <span className="ur-file-size">{formatSize(file.size)}</span>
               <button
                 className="ur-file-remove"
-                aria-label="Remove file"
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);

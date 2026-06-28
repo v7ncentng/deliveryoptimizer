@@ -19,9 +19,10 @@ import {
   VEHICLE_INFO_HEADER_ROW,
   VEHICLE_INFO_ROWS,
   VEHICLE_SECTION_BTN_GHOST,
-  VEHICLE_SECTION_ACTIONS,
+  VEHICLE_SECTION_BTN_GROUP,
   VEHICLE_SECTION_HEADER,
   VEHICLE_SECTION_HEADING,
+  VEHICLE_SECTION_HEADING_ROW,
   VEHICLE_SECTION_SUBHEADING,
   MOBILE_EMPTY_STATE_CONTAINER,
   VEHICLE_MOBILE_LIST,
@@ -111,25 +112,28 @@ export default function VehicleSection({
     <section>
       <div className={VEHICLE_SECTION_HEADER}>
         <h2 className={VEHICLE_SECTION_HEADING}>Vehicle details</h2>
-        <p className={VEHICLE_SECTION_SUBHEADING}>Manage your delivery fleet</p>
-      </div>
-
-      <div className={VEHICLE_SECTION_ACTIONS}>
-        <button
-          type="button"
-          onClick={markAllAvailable}
-          className={VEHICLE_SECTION_BTN_GHOST}
-        >
-          Mark all available
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsAddOverlayOpen(true)}
-          disabled={!addEnabled}
-          className={NAVBAR_V2_BTN_OUTLINE}
-        >
-          Add vehicle
-        </button>
+        <div className={VEHICLE_SECTION_HEADING_ROW}>
+          <p className={VEHICLE_SECTION_SUBHEADING}>
+            Manage your delivery fleet
+          </p>
+          <div className={VEHICLE_SECTION_BTN_GROUP}>
+            <button
+              type="button"
+              onClick={markAllAvailable}
+              className={VEHICLE_SECTION_BTN_GHOST}
+            >
+              Mark all available
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAddOverlayOpen(true)}
+              disabled={!addEnabled}
+              className={NAVBAR_V2_BTN_OUTLINE}
+            >
+              Add vehicle
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Desktop: card with header + vehicle rows */}
