@@ -40,7 +40,12 @@ export type DeliveryOptimizerClientError = Error & {
 };
 
 export type OptimizationJobState =
-  "queued" | "running" | "succeeded" | "failed" | "timed_out" | "expired";
+  | "queued"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "timed_out"
+  | "expired";
 
 export type OptimizationJobStatus = {
   job_id: string;
