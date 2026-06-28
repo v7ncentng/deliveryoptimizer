@@ -10,7 +10,7 @@ import {
 import type { CSSProperties } from "react";
 import { useFocusTrap } from "@/app/edit/hooks/useFocusTrap";
 import { SUPPORTED_STATES } from "@/app/edit/constants/supportedRegions";
-import OverlayFieldError from "@/app/edit/components/shared/OverlayFieldError";
+import FieldError from "@/app/edit/components/shared/FieldError";
 import OverlayAutocompleteDropdown from "@/app/edit/components/shared/OverlayAutocompleteDropdown";
 import { useAddressAutocomplete } from "@/app/components/AddressGeocoder/utils/useAddressAutocomplete";
 import type { AddressSuggestion } from "@/app/components/AddressGeocoder/types";
@@ -269,7 +269,7 @@ export default function AddressOverlay({
                   />
                 )}
               </div>
-              {line1Error && <OverlayFieldError message="Enter an address" />}
+              {line1Error && <FieldError message="Enter an address" />}
             </div>
 
             {/* Address line 2 — full width, optional */}
@@ -305,7 +305,7 @@ export default function AddressOverlay({
                   aria-required="true"
                   aria-invalid={cityError}
                 />
-                {cityError && <OverlayFieldError message="Enter a city" />}
+                {cityError && <FieldError message="Enter a city" />}
               </div>
 
               <div className={OVERLAY_FIELD}>
@@ -350,7 +350,7 @@ export default function AddressOverlay({
                     ))}
                   </select>
                 </div>
-                {stateError && <OverlayFieldError message="Enter a state" />}
+                {stateError && <FieldError message="Enter a state" />}
               </div>
             </div>
 
@@ -376,9 +376,7 @@ export default function AddressOverlay({
                   aria-required="true"
                   aria-invalid={zipError}
                 />
-                {zipError && (
-                  <OverlayFieldError message="Zip code must be 5 digits" />
-                )}
+                {zipError && <FieldError message="Zip code must be 5 digits" />}
               </div>
 
               <div className={OVERLAY_FIELD}>
@@ -425,9 +423,7 @@ export default function AddressOverlay({
                     ))}
                   </select>
                 </div>
-                {countryError && (
-                  <OverlayFieldError message="Enter a valid region" />
-                )}
+                {countryError && <FieldError message="Enter a valid region" />}
               </div>
             </div>
           </div>

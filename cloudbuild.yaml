@@ -44,13 +44,13 @@ steps:
   - name: gcr.io/cloud-builders/docker
     id: push-api
     waitFor: [build-api]
-    args: [push, --all-tags, ${_REGION}-docker.pkg.dev/$PROJECT_ID/services/deliveryoptimizer-api]
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/services/deliveryoptimizer-api"]
 
   # Push OSRM images
   - name: gcr.io/cloud-builders/docker
     id: push-osrm
     waitFor: [build-osrm]
-    args: [push, --all-tags, ${_REGION}-docker.pkg.dev/$PROJECT_ID/services/osrm]
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/services/osrm"]
 
   # Deploy sidecar service to Cloud Run
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
@@ -69,12 +69,6 @@ steps:
           | gcloud run services replace - \
               --region ${_REGION} \
               --project $PROJECT_ID
-        gcloud run services add-iam-policy-binding deliveryoptimizer \
-          --region ${_REGION} \
-          --member="serviceAccount:firebase-app-hosting-compute@$PROJECT_ID.iam.gserviceaccount.com" \
-          --role="roles/run.invoker" \
-          --project $PROJECT_ID \
-          --quiet
 
 serviceAccount: projects/$PROJECT_ID/serviceAccounts/do-app-service@$PROJECT_ID.iam.gserviceaccount.com
 

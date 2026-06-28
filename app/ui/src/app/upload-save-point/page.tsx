@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
-import { CSVImportModal } from "@/app/edit/components/CSVImportModal";
+import { CSVImportModal } from "@/app/edit/components/address/CSVImportModal";
 import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
 import { formatSize } from "@/app/utils/routeUtils";
@@ -27,7 +27,6 @@ export default function UploadSavePointPage() {
     csvData,
     isImportModalOpen,
     isLoading,
-    parseError,
     openImportModal,
     closeImportModal,
   } = useCSVImport();
@@ -83,7 +82,6 @@ export default function UploadSavePointPage() {
           return;
         }
 
-        // Valid session save — restore full state on edit page
         try {
           migrateSessionSaveFile(parsed);
           sessionStorage.setItem(
@@ -93,7 +91,7 @@ export default function UploadSavePointPage() {
           router.push("/edit");
           return;
         } catch {
-          // Not a session save — fall through to the column-mapper modal
+          // Not a session save — fall through to the modal flow
         }
       }
 
@@ -219,7 +217,6 @@ export default function UploadSavePointPage() {
           padding: 4px;
           display: flex;
           align-items: center;
-          font-size: 18px;
           line-height: 1;
         }
 
@@ -240,11 +237,10 @@ export default function UploadSavePointPage() {
           cursor: pointer;
           font-size: 14px;
           color: #555;
-          font-family: 'DM Sans', sans-serif;
           display: flex;
           align-items: center;
           gap: 6px;
-          padding: 0;
+          font-family: inherit;
         }
 
         .upload-back-btn:hover { color: #111; }
@@ -257,18 +253,38 @@ export default function UploadSavePointPage() {
           padding: 10px 28px;
           font-size: 14px;
           font-weight: 500;
-          font-family: 'DM Sans', sans-serif;
           cursor: pointer;
-          transition: background 0.15s, opacity 0.15s;
+          font-family: inherit;
+          transition: background 0.15s;
         }
+
+        .upload-continue-btn:hover:not(:disabled) { background: #3d7a6a; }
 
         .upload-continue-btn:disabled {
           opacity: 0.4;
           cursor: not-allowed;
         }
 
-        .upload-continue-btn:not(:disabled):hover {
-          background: #3d7a6a;
+        .upload-parse-error {
+          width: 100%;
+          max-width: 580px;
+          font-size: 13px;
+          color: #c0392b;
+          margin-bottom: 12px;
+          text-align: center;
+        }
+
+        @keyframes upload-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .upload-spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #e0e0e0;
+          border-top-color: #4a8c7a;
+          border-radius: 50%;
+          animation: upload-spin 0.8s linear infinite;
         }
 
         .upload-parse-error {
@@ -326,25 +342,27 @@ export default function UploadSavePointPage() {
             ) : (
               <>
                 <div className="upload-dropzone-icon">
-                  <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
-                    <path
-                      d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
+                  <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
+                    <rect
+                      x="1"
+                      y="1"
+                      width="22"
+                      height="34"
+                      rx="3"
                       stroke="currentColor"
-                      strokeWidth="1.75"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      strokeWidth="1.5"
+                      fill="none"
                     />
                     <path
-                      d="M18 2v12h12"
+                      d="M7 10h10M7 15h10M7 20h6"
                       stroke="currentColor"
-                      strokeWidth="1.75"
+                      strokeWidth="1.5"
                       strokeLinecap="round"
-                      strokeLinejoin="round"
                     />
                     <path
-                      d="M16 22v-6M13 19l3-3 3 3"
+                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
                       stroke="currentColor"
-                      strokeWidth="1.75"
+                      strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -402,8 +420,8 @@ export default function UploadSavePointPage() {
             </div>
           )}
 
-          {(continueError ?? parseError) && (
-            <p className="upload-parse-error">{continueError ?? parseError}</p>
+          {continueError && (
+            <p className="upload-parse-error">{continueError}</p>
           )}
 
           <div className="upload-actions">

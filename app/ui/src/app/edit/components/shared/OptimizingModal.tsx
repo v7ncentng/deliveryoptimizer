@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  MODAL_MESSAGE,
-  MODAL_OVERLAY,
-  MODAL_PANEL,
-  MODAL_TITLE,
-  OPTIMIZING_SPINNER,
-} from "@/app/edit/formStyles";
-import { OPTIMIZING_SPINNER_WRAP } from "@/app/edit/formStyles.v2";
+  OPTIMIZING_MODAL_PANEL,
+  OPTIMIZING_MODAL_STATUS_ROW,
+  OPTIMIZING_MODAL_STATUS_TEXT,
+  OVERLAY_BACKDROP,
+  OVERLAY_TITLE,
+} from "@/app/edit/formStyles.v2";
 import { useFocusTrap } from "@/app/edit/hooks/useFocusTrap";
+import SpinnerIcon from "@/app/edit/components/shared/SpinnerIcon";
 
 type OptimizingModalProps = {
   isOpen: boolean;
@@ -20,24 +20,24 @@ export default function OptimizingModal({ isOpen }: OptimizingModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className={MODAL_OVERLAY}>
+    <div className={OVERLAY_BACKDROP}>
       <div
         ref={panelRef}
-        className={MODAL_PANEL}
+        className={OPTIMIZING_MODAL_PANEL}
         role="dialog"
         aria-modal="true"
         aria-labelledby="optimizing-title"
         aria-describedby="optimizing-desc"
         tabIndex={0}
       >
-        <h2 id="optimizing-title" className={MODAL_TITLE}>
-          Optimizing routes…
+        <h2 id="optimizing-title" className={OVERLAY_TITLE}>
+          Optimizing your delivery routes
         </h2>
-        <p id="optimizing-desc" className={MODAL_MESSAGE}>
-          This may take a few seconds. Please wait.
-        </p>
-        <div className={OPTIMIZING_SPINNER_WRAP}>
-          <span className={OPTIMIZING_SPINNER} aria-hidden="true" />
+        <div id="optimizing-desc" className={OPTIMIZING_MODAL_STATUS_ROW}>
+          <SpinnerIcon />
+          <p className={OPTIMIZING_MODAL_STATUS_TEXT}>
+            Creating your delivery routes
+          </p>
         </div>
       </div>
     </div>

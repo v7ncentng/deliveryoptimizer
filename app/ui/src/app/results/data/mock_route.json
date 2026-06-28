@@ -6,7 +6,11 @@
       "lng": -121.748,
       "address": "230 1st St, Davis",
       "status": "delivered",
-      "sequence": 1
+      "sequence": 1,
+      "addresseeName": "Kayla Wong",
+      "phoneNumber": "(123) 456-7890",
+      "timeWindow": "9:00 AM - 10:00 AM",
+      "note": "Lorem ipsum dolor sit amet consectetur. Ultricies."
     },
     {
       "id": "stop-2",
@@ -14,7 +18,10 @@
       "lng": -121.746,
       "address": "404 2nd St, Davis",
       "status": "delivered",
-      "sequence": 2
+      "sequence": 2,
+      "addresseeName": "Marcus Chen",
+      "phoneNumber": "(530) 555-0422",
+      "timeWindow": "9:30 AM - 11:00 AM"
     },
     {
       "id": "stop-3",

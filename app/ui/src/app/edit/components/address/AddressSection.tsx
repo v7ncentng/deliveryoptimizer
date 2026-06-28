@@ -4,17 +4,12 @@
  * Addresses region: toolbar (find / add / import) and a stacked list of delivery cards for the current page.
  */
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import AddressCard from "@/app/edit/components/address/AddressCard";
 import ConfirmDeletionOverlay from "@/app/edit/components/shared/ConfirmDeletionOverlay";
 import AddressEmptyState from "@/app/edit/components/address/AddressEmptyState";
 import AddressRowHeader from "@/app/edit/components/address/AddressRowHeader";
 import type { AddressCard as AddressCardType } from "@/app/edit/types/delivery";
-import {
-  ADDRESS_EMPTY_STATE,
-  ADDRESS_TOOLBAR_DESKTOP,
-} from "@/app/edit/formStyles";
-
 import AddressSearchBar from "@/app/edit/components/address/AddressSearchBar";
 import {
   ADDRESS_SECTION_HEADER,
@@ -26,6 +21,8 @@ import {
   ADDRESS_LIST_CONTAINER_INNER,
   ADDRESS_LIST_DIVIDER,
   ADDRESS_SEARCH_DESKTOP_SIZE,
+  ADDRESS_SEARCH_NO_RESULTS,
+  ADDRESS_TOOLBAR_DESKTOP,
   ADDRESS_TOOLBAR_SPACER,
   MOBILE_EMPTY_STATE_CONTAINER,
   MOBILE_ADDR_TOOLBAR_ROOT,
@@ -54,7 +51,7 @@ type AddressSectionProps = {
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   outOfRegionIds: number[];
-  onCSVUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onOpenUploadOverlay: () => void;
 };
 
 export default function AddressSection({
@@ -72,9 +69,8 @@ export default function AddressSection({
   searchQuery,
   setSearchQuery,
   outOfRegionIds,
-  onCSVUpload,
+  onOpenUploadOverlay,
 }: AddressSectionProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [addressToDeleteId, setAddressToDeleteId] = useState<number | null>(
     null,
   );
@@ -94,18 +90,6 @@ export default function AddressSection({
         </p>
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv,text/csv"
-        onChange={(e) => {
-          onCSVUpload(e);
-          e.target.value = "";
-        }}
-        className="hidden"
-        aria-hidden="true"
-      />
-
       {/* Mobile: Search top, buttons right-aligned side-by-side (Figma 8325:7503) */}
       <div className={MOBILE_ADDR_TOOLBAR_ROOT}>
         <AddressSearchBar
@@ -116,7 +100,7 @@ export default function AddressSection({
         <div className={MOBILE_ADDR_TOOLBAR_BTN_ROW}>
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={onOpenUploadOverlay}
             className={MOBILE_ADDR_TOOLBAR_BTN_ENABLED}
           >
             Import
@@ -147,7 +131,7 @@ export default function AddressSection({
         <div className={ADDRESS_TOOLBAR_SPACER} />
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={onOpenUploadOverlay}
           className={ADDRESS_BTN_V2_DESKTOP_ENABLED}
         >
           Import
@@ -177,7 +161,7 @@ export default function AddressSection({
       {addressesCount > 0 && (
         <div className={ADDRESS_LIST_MOBILE_WRAP}>
           {searchQuery.trim() !== "" && addressesOnCurrentPage.length === 0 ? (
-            <div className={ADDRESS_EMPTY_STATE}>No Addresses Found</div>
+            <div className={ADDRESS_SEARCH_NO_RESULTS}>No Addresses Found</div>
           ) : (
             addressesOnCurrentPage.map((a) => (
               <AddressCard
@@ -205,7 +189,7 @@ export default function AddressSection({
             <AddressEmptyState />
           ) : searchQuery.trim() !== "" &&
             addressesOnCurrentPage.length === 0 ? (
-            <div className={ADDRESS_EMPTY_STATE}>No Addresses Found</div>
+            <div className={ADDRESS_SEARCH_NO_RESULTS}>No Addresses Found</div>
           ) : (
             addressesOnCurrentPage.map((a) => (
               <AddressCard

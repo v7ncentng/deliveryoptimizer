@@ -38,12 +38,17 @@ export function vroomToRoutes(
   vroomResponse: VroomResponse,
   vehicles: VehicleRow[],
   addresses: AddressCard[],
+  depotAddress: string,
 ): Route[] {
   const vehicleById = new Map(vehicles.map((v) => [String(v.id), v]));
   const addressById = new Map(addresses.map((a) => [String(a.id), a]));
 
   return vroomResponse.routes.map((vroomRoute: VroomRoute): Route => {
     const vehicle = vehicleById.get(vroomRoute.vehicle_external_id);
+
+    const startStep = vroomRoute.steps.find(
+      (s: VroomStep) => s.type === "start",
+    );
 
     const jobSteps = vroomRoute.steps.filter(
       (s: VroomStep) => s.type === "job" && s.job_external_id != null,
@@ -56,6 +61,7 @@ export function vroomToRoutes(
 
       // arrival is in seconds; % 86400 extracts the within-day portion for display
       const arrivalTimeStr = secondsToTimeString(step.arrival % 86400);
+      const deliveryQuantity = address?.deliveryQuantity ?? 0;
 
       return {
         id: step.job_external_id!,
@@ -64,7 +70,8 @@ export function vroomToRoutes(
         lat,
         lng,
         sequence: idx + 1,
-        capacityUsed: step.load?.[0] ?? 0,
+        capacityUsed:
+          deliveryQuantity > 0 ? deliveryQuantity : (step.load?.[0] ?? 0),
         timeWindow: {
           kind: inferTimeWindowKind(
             address?.deliveryTimeStart,
@@ -75,6 +82,8 @@ export function vroomToRoutes(
         note: address?.notes ?? "",
         addresseeName: address?.recipientName || undefined,
         phoneNumber: address?.phoneNumber || undefined,
+        deliveryWindowStart: address?.deliveryTimeStart?.trim() || undefined,
+        deliveryWindowEnd: address?.deliveryTimeEnd?.trim() || undefined,
       };
     });
 
@@ -85,6 +94,13 @@ export function vroomToRoutes(
       vehicleType: vehicle?.type || undefined,
       distanceMi: Math.round(vroomRoute.distance * METERS_TO_MILES * 10) / 10,
       estimatedTimeMinutes: Math.round(vroomRoute.duration / 60),
+      startLocation: startStep
+        ? {
+            lat: startStep.location[1],
+            lng: startStep.location[0],
+            address: vehicle?.startLocation || depotAddress || "",
+          }
+        : undefined,
     };
   });
 }
