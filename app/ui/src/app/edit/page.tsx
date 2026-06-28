@@ -30,13 +30,11 @@ import AddressPaginationMobile from "@/app/edit/components/address/AddressPagina
 import EditPageFooter from "@/app/edit/components/footer/EditPageFooter";
 import MobileEditPageFooter from "@/app/edit/components/footer/MobileEditPageFooter";
 import MobileBottomBar from "@/app/components/navbar/MobileBottomBar";
-import { CSVImportModal } from "@/app/edit/components/address/CSVImportModal";
 import CSVUploadOverlay from "@/app/edit/components/address/CSVUploadOverlay";
 import DragDropOverlay from "@/app/edit/components/shared/DragDropOverlay";
 import { useVehicles } from "@/app/edit/hooks/useVehicles";
 import { useAddresses } from "@/app/edit/hooks/useAddresses";
 import { useOptimize } from "@/app/edit/hooks/useOptimize";
-import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import { useCallback, useEffect, useState } from "react";
 import type { AddressCard } from "@/app/edit/types/delivery";
 import { loadSessionFromFile } from "@/lib/session/importSession";
@@ -46,7 +44,7 @@ import {
   loadEditPageDraft,
 } from "@/lib/session/editPageDraft";
 import {
-  mapEditStateToSessionSave,
+  mapEditStateToOptimizeRequest,
   mapOptimizeRequestToEditState,
 } from "@/app/edit/utils/sessionMapper";
 import AddressOverlay, {
@@ -63,6 +61,8 @@ export default function Page() {
   const [dragCount, setDragCount] = useState(0);
   const [pendingDropFile, setPendingDropFile] = useState<File | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUploadOverlayOpen, setIsUploadOverlayOpen] = useState(false);
+  const [pendingCSVFile, setPendingCSVFile] = useState<File | null>(null);
   const { importVehicles } = vehicleState;
   const { importAddresses } = addressState;
 
@@ -84,24 +84,13 @@ export default function Page() {
     addressState.cacheAddressLocation,
   );
 
-  // In-page modal for CSV/JSON imports triggered from AddressSection
-  const {
-    csvData,
-    isImportModalOpen,
-    parseError,
-    openImportModal,
-    closeImportModal,
-  } = useCSVImport();
-
-  const [isUploadOverlayOpen, setIsUploadOverlayOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  const isDraggingOverPage =
-    dragCount > 0 && !isUploadOverlayOpen && !isImportModalOpen;
+  const isDraggingOverPage = dragCount > 0 && !isUploadOverlayOpen;
 
   useEffect(() => {
-    if (isImportModalOpen || parseError) setIsUploadOverlayOpen(false);
-  }, [isImportModalOpen, parseError]);
+    if (!isUploadOverlayOpen) setPendingDropFile(null);
+  }, [isUploadOverlayOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -138,10 +127,12 @@ export default function Page() {
               );
             }
           }
+          return;
         }
 
-        // Fully-built AddressCard[] written by CSVImportModal's onConfirmAndNavigate path.
-        // No parsing needed — import directly into address state.
+        // TODO: remove after one release cycle — importedCards was written by
+        // CSVImportModal.handleConfirm which has since been deleted.
+        // Kept as a migration safety net for any in-flight sessions.
         const storedImportedCards = sessionStorage.getItem("importedCards");
         if (storedImportedCards) {
           sessionStorage.removeItem("importedCards");
@@ -155,8 +146,32 @@ export default function Page() {
           return;
         }
 
+        // CSV/JSON file forwarded from upload-save-point — open CSVUploadOverlay
+        // automatically so the user lands directly in the column mapper.
+        const storedPendingCSV = sessionStorage.getItem("pendingCSVFile");
+        if (storedPendingCSV) {
+          sessionStorage.removeItem("pendingCSVFile");
+          try {
+            const { name, content } = JSON.parse(storedPendingCSV) as {
+              name: string;
+              content: string;
+            };
+            const type = name.endsWith(".json")
+              ? "application/json"
+              : "text/csv";
+            const file = new File([content], name, { type });
+            if (!cancelled) {
+              setPendingCSVFile(file);
+              setIsUploadOverlayOpen(true);
+            }
+          } catch {
+            // silently ignore malformed stored file
+          }
+          return;
+        }
+
         // Auto-saved draft — restore vehicles and addresses when navigating back
-        // from the results page. Lower priority than savePointFile/importedCards.
+        // from the results page. Lower priority than all sessionStorage paths above.
         const draft = loadEditPageDraft();
         if (draft) {
           if (!cancelled) {
@@ -191,7 +206,7 @@ export default function Page() {
   const handleExportSession = useCallback(async () => {
     setSessionError(null);
     try {
-      const request = await mapEditStateToSessionSave(
+      const request = await mapEditStateToOptimizeRequest(
         vehicleState.vehicles,
         addressState.addresses,
       );
@@ -218,10 +233,6 @@ export default function Page() {
     },
     [optimize],
   );
-
-  useEffect(() => {
-    if (!isUploadOverlayOpen) setPendingDropFile(null);
-  }, [isUploadOverlayOpen]);
 
   function handlePageDragEnter(e: React.DragEvent<HTMLElement>) {
     e.preventDefault();
@@ -254,33 +265,28 @@ export default function Page() {
 
   return (
     <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
+      {/* CSVUploadOverlay handles all three steps: file pick → column mapper → row selector */}
       {isUploadOverlayOpen && (
         <CSVUploadOverlay
-          onClose={() => setIsUploadOverlayOpen(false)}
-          onFileSelect={openImportModal}
+          onClose={() => {
+            setIsUploadOverlayOpen(false);
+            setPendingCSVFile(null);
+          }}
+          importAddresses={(cards: AddressCard[]) =>
+            addressState.importAddresses(reindexAddresses(cards))
+          }
           onInvalidFile={() => {
             setIsUploadOverlayOpen(false);
+            setPendingCSVFile(null);
             setUploadError(
               "This file type is not accepted. Please upload a CSV file.",
             );
           }}
-          initialFile={pendingDropFile ?? undefined}
-        />
-      )}
-
-      {/* In-page import modal — stays on edit page after confirm */}
-      {isImportModalOpen && (
-        <CSVImportModal
-          csvData={csvData}
-          onClose={closeImportModal}
-          importAddresses={(cards: AddressCard[]) =>
-            addressState.importAddresses(reindexAddresses(cards))
-          }
+          initialFile={pendingDropFile ?? pendingCSVFile ?? undefined}
         />
       )}
 
       <ErrorOverlay message={optimizeError} onClose={clearOptimizeError} />
-      <ErrorOverlay message={parseError} onClose={closeImportModal} />
       <ErrorOverlay message={sessionError} onClose={clearSessionError} />
       <ErrorOverlay
         message={uploadError}
