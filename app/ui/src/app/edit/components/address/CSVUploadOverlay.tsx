@@ -26,9 +26,7 @@ import {
   CSV_UPLOAD_FILE_CHIP_RIGHT,
   CSV_UPLOAD_FILE_CHIP_SIZE,
   CSV_UPLOAD_FILE_CHIP_REMOVE,
-  CSV_UPLOAD_SIZE_ERROR,
 } from "@/app/edit/formStyles.v2";
-// HIGH fix: import ErrorOverlay to surface parse errors to the user.
 import ErrorOverlay from "@/app/edit/components/shared/ErrorOverlay";
 import type { AddressCard } from "@/app/edit/types/delivery";
 import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
@@ -39,8 +37,8 @@ type MappableField =
   | "recipientAddress"
   | "deliveryTimeStart"
   | "deliveryTimeEnd"
-  | "deliveryQuantity"
   | "timeBuffer"
+  | "deliveryQuantity"
   | "notes"
   | "";
 
@@ -48,8 +46,8 @@ const FIELD_LABELS: Record<Exclude<MappableField, "">, string> = {
   recipientAddress: "Recipient Address",
   deliveryTimeStart: "Delivery Time Start",
   deliveryTimeEnd: "Delivery Time End",
-  deliveryQuantity: "Delivery Quantity",
   timeBuffer: "Time Buffer",
+  deliveryQuantity: "Delivery Quantity",
   notes: "Notes",
 };
 
@@ -487,8 +485,6 @@ export default function CSVUploadOverlay({
       : null,
   );
 
-  // HIGH fix: destructure parseError so malformed files show user-facing
-  // feedback instead of opening a blank column mapper silently.
   const {
     csvData,
     isImportModalOpen,
@@ -524,8 +520,6 @@ export default function CSVUploadOverlay({
     MappableField
   > | null>(null);
 
-  // MEDIUM fix: reset overrides in a useEffect instead of during render to
-  // avoid the setState-during-render React violation.
   const headersKey = headers.join(",");
   const prevHeadersKeyRef = useRef<string>("");
   useEffect(() => {
@@ -540,8 +534,17 @@ export default function CSVUploadOverlay({
   const activeMapping = mappingOverride ?? mapping;
   const activeSelected = selectedOverride ?? defaultSelected;
 
-  // If a file was pre-supplied (e.g. from upload-save-point), skip step 0
-  // and go straight to the column mapper on first render.
+  useEffect(() => {
+    if (initialFile === undefined) return;
+    if (initialFile.size > MAX_CSV_BYTES) {
+      setFileSizeError("Your file exceeds 10 MB. Please use a smaller file.");
+      setSelectedFile(null);
+    } else {
+      setFileSizeError(null);
+      setSelectedFile(initialFile);
+    }
+  }, [initialFile]);
+
   const hasAutoOpenedRef = useRef(false);
   useEffect(() => {
     if (initialFile && !hasAutoOpenedRef.current && !isImportModalOpen) {
@@ -551,6 +554,7 @@ export default function CSVUploadOverlay({
   }, [initialFile, isImportModalOpen, openImportModal]);
 
   function handleClose() {
+    setStep(1);
     closeImportModal();
     onClose();
   }
@@ -575,8 +579,6 @@ export default function CSVUploadOverlay({
     setFileSizeError(null);
   }
 
-  // LOW fix: removed isUploading state — React 18 batches set+clear into one
-  // render so the spinner never showed. Parsing is fast enough to not need it.
   function handleNext() {
     if (!selectedFile) return;
     openImportModal(selectedFile);
@@ -663,8 +665,6 @@ export default function CSVUploadOverlay({
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  // HIGH fix: surface parseError from useCSVImport. closeImportModal also
-  // clears parseError so dismissing the error resets the overlay correctly.
   if (parseError) {
     return <ErrorOverlay message={parseError} onClose={closeImportModal} />;
   }
@@ -802,13 +802,36 @@ export default function CSVUploadOverlay({
                 MB.
               </p>
               {fileSizeError !== null && (
-                <p
-                  role="alert"
-                  aria-live="assertive"
-                  className={CSV_UPLOAD_SIZE_ERROR}
-                >
-                  {fileSizeError}
-                </p>
+                <div className="flex items-start gap-2 mt-1">
+                  <p
+                    role="alert"
+                    aria-live="assertive"
+                    className="text-sm text-[var(--edit-error-border)] flex-1"
+                  >
+                    {fileSizeError}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFileSizeError(null)}
+                    aria-label="Dismiss error"
+                    className="shrink-0 text-[var(--edit-error-border)] hover:opacity-70 transition-opacity cursor-pointer mt-[2px]"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M1 1l10 10M11 1L1 11"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               )}
             </div>
 
