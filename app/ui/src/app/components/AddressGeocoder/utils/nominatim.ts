@@ -59,21 +59,31 @@ export async function geocodeAddress(
   };
 }
 
-/** Autocomplete — returns up to `limit` suggestions. */
+const AUTOCOMPLETE_DISPLAY_LIMIT = 4;
+
+// California bounding box — tells Nominatim to prefer results inside this area.
+// Format: left (min_lon), top (max_lat), right (max_lon), bottom (min_lat)
+const CA_VIEWBOX = "-124.5,42.0,-114.1,32.5";
+
+/** Autocomplete — returns up to 4 California suggestions. */
 export async function autocompleteAddress(
   query: string,
-  limit = 5,
 ): Promise<NominatimResult[]> {
   if (query.length < 3) return [];
 
   await throttle();
 
+  // Appending ", California" steers Nominatim's ranking toward CA results.
+  // viewbox + bounded=1 hard-limits results to the CA bounding box so we get
+  // multiple distinct suggestions instead of a single best-match geocode.
   const params = new URLSearchParams({
-    q: query,
+    q: `${query}, California`,
     format: "json",
-    limit: String(limit),
+    limit: String(AUTOCOMPLETE_DISPLAY_LIMIT * 3),
     addressdetails: "1",
     countrycodes: "us",
+    viewbox: CA_VIEWBOX,
+    bounded: "1",
     email: NOMINATIM_CONTACT_EMAIL,
   });
 
@@ -86,5 +96,8 @@ export async function autocompleteAddress(
     );
   }
 
-  return response.json();
+  const results: NominatimResult[] = await response.json();
+  return results
+    .filter((r) => r.address?.state === "California")
+    .slice(0, AUTOCOMPLETE_DISPLAY_LIMIT);
 }
