@@ -368,6 +368,7 @@ export default function UploadRoutePage() {
               <span className="ur-file-size">{formatSize(file.size)}</span>
               <button
                 className="ur-file-remove"
+                aria-label="Remove"
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);

@@ -286,28 +286,6 @@ export default function UploadSavePointPage() {
           border-radius: 50%;
           animation: upload-spin 0.8s linear infinite;
         }
-
-        .upload-parse-error {
-          width: 100%;
-          max-width: 580px;
-          font-size: 13px;
-          color: #c0392b;
-          margin-bottom: 12px;
-          text-align: center;
-        }
-
-        @keyframes upload-spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .upload-spinner {
-          width: 32px;
-          height: 32px;
-          border: 3px solid #e0e0e0;
-          border-top-color: #4a8c7a;
-          border-radius: 50%;
-          animation: upload-spin 0.8s linear infinite;
-        }
       `}</style>
 
       <div className="upload-root">
