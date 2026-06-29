@@ -31,6 +31,8 @@ import EditPageFooter from "@/app/edit/components/footer/EditPageFooter";
 import MobileEditPageFooter from "@/app/edit/components/footer/MobileEditPageFooter";
 import MobileBottomBar from "@/app/components/navbar/MobileBottomBar";
 import CSVUploadOverlay from "@/app/edit/components/address/CSVUploadOverlay";
+import { CSVImportModal } from "@/app/edit/components/address/CSVImportModal";
+import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import DragDropOverlay from "@/app/edit/components/shared/DragDropOverlay";
 import { useVehicles } from "@/app/edit/hooks/useVehicles";
 import { useAddresses } from "@/app/edit/hooks/useAddresses";
@@ -65,6 +67,13 @@ export default function Page() {
   const [pendingCSVFile, setPendingCSVFile] = useState<File | null>(null);
   const { importVehicles } = vehicleState;
   const { importAddresses } = addressState;
+  const {
+    csvData,
+    isImportModalOpen,
+    parseError,
+    openImportModal,
+    closeImportModal,
+  } = useCSVImport();
 
   const {
     optimize,
@@ -265,16 +274,18 @@ export default function Page() {
 
   return (
     <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
-      {/* CSVUploadOverlay handles all three steps: file pick → column mapper → row selector */}
+      {/* Step 1: file picker */}
       {isUploadOverlayOpen && (
         <CSVUploadOverlay
           onClose={() => {
             setIsUploadOverlayOpen(false);
             setPendingCSVFile(null);
           }}
-          importAddresses={(cards: AddressCard[]) =>
-            addressState.importAddresses(reindexAddresses(cards))
-          }
+          onFileSelect={(file) => {
+            setIsUploadOverlayOpen(false);
+            setPendingCSVFile(null);
+            openImportModal(file);
+          }}
           onInvalidFile={() => {
             setIsUploadOverlayOpen(false);
             setPendingCSVFile(null);
@@ -285,6 +296,16 @@ export default function Page() {
           initialFile={pendingDropFile ?? pendingCSVFile ?? undefined}
         />
       )}
+      {/* Step 2: column mapper + row selector */}
+      {isImportModalOpen && (
+        <CSVImportModal
+          csvData={csvData}
+          onClose={closeImportModal}
+          importAddresses={(cards: AddressCard[]) =>
+            addressState.importAddresses(reindexAddresses(cards))
+          }
+        />
+      )}
 
       <ErrorOverlay message={optimizeError} onClose={clearOptimizeError} />
       <ErrorOverlay message={sessionError} onClose={clearSessionError} />
@@ -292,6 +313,7 @@ export default function Page() {
         message={uploadError}
         onClose={() => setUploadError(null)}
       />
+      <ErrorOverlay message={parseError} onClose={closeImportModal} />
       <OptimizingModal isOpen={isOptimizing} />
       {needsDepotAddress && (
         <AddressOverlay
