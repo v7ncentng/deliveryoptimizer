@@ -154,13 +154,21 @@ void OptimizationJobRuntime::WorkerLoop(const std::stop_token stop_token,
         }
       }
     } else {
-      const int baseline_seconds = EstimateServiceSeconds(parsed_request->input);
-      const WeatherImpactEstimate impact =
-          EstimateRouteWeatherImpact(weather_options_, parsed_request->input, baseline_seconds);
-      const Json::Value vroom_input = BuildWeatherAdjustedVroomInput(parsed_request->input, impact);
-      const auto solve_result = BuildSolveExecutionResult(
-          parsed_request->input, ToCoordinatedSolveResult(runner_->Run(vroom_input)),
-          BuildWeatherForecastAnnotation(weather_options_, impact));
+      const CoordinatedSolveResult coordinated_result =
+          ToCoordinatedSolveResult(runner_->Run(BuildVroomInput(parsed_request->input)));
+      CoordinatedSolveResult final_result = coordinated_result;
+      std::optional<Json::Value> forecast;
+      if (coordinated_result.output.has_value()) {
+        const WeatherImpactEstimate impact = RecalculateWeatherImpact(
+            weather_options_, parsed_request->input, *coordinated_result.output);
+        forecast = BuildWeatherForecastAnnotation(weather_options_, impact);
+        if (impact.should_reoptimize) {
+          final_result = ToCoordinatedSolveResult(
+              runner_->Run(BuildWeatherAdjustedVroomInput(parsed_request->input, impact)));
+        }
+      }
+      const auto solve_result =
+          BuildSolveExecutionResult(parsed_request->input, final_result, forecast);
       if (solve_result.response_body.has_value()) {
         if (store_->CompleteJobSuccess(claimed_job->record.job_id, claimed_job->worker_id,
                                        *solve_result.response_body, solve_result.outcome,

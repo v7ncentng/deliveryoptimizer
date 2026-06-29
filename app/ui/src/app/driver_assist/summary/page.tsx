@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { downloadRouteSummary } from "@/lib/driver-route/exportSummary";
-import type { DriverRoute } from "@/lib/driver-route/types";
 
 import DriverFooter from "../components/DriverFooter";
 import { WarningIcon } from "../components/icons";
@@ -13,27 +12,28 @@ import SummaryStatBlock from "./components/SummaryStatBlock";
 import SummaryStopCard from "./components/SummaryStopCard";
 import { summaryStyles as styles } from "./styles";
 
+function subscribeToRouteStore() {
+  return () => undefined;
+}
+
+function readEmptyRoute() {
+  return null;
+}
+
 export default function DriverAssistSummaryPage() {
   const router = useRouter();
-  const [route, setRoute] = useState<DriverRoute | null>(null);
-  const [hasCheckedRoute, setHasCheckedRoute] = useState(false);
+  const route = useSyncExternalStore(
+    subscribeToRouteStore,
+    readSavedRoute,
+    readEmptyRoute,
+  );
   const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Let the active route page finish its final localStorage write before the
-    // summary reads it back after the Finish tap.
-    const timeoutId = window.setTimeout(() => {
-      const savedRoute = readSavedRoute();
-      setRoute(savedRoute);
-      setHasCheckedRoute(true);
-
-      if (!savedRoute) {
-        router.replace("/upload-route");
-      }
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [router]);
+    if (!route) {
+      router.replace("/upload-route");
+    }
+  }, [route, router]);
 
   const totals = useMemo(() => {
     // Failed stops count as remaining because they still need office review.
@@ -58,7 +58,7 @@ export default function DriverAssistSummaryPage() {
     );
   };
 
-  if (!hasCheckedRoute || !route) {
+  if (!route) {
     // Keep the transition from the driver screen visually quiet.
     return <main style={styles.loadingScreen} aria-label="Loading summary" />;
   }

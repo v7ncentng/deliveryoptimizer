@@ -110,49 +110,59 @@ constexpr double kDefaultWeatherThresholdPercent = 5.0;
   int delay_seconds = 0;
   const double wind_speed = hour["wind_speed"].isNumeric() ? hour["wind_speed"].asDouble() : 0.0;
   const int visibility = hour["visibility"].isInt() ? hour["visibility"].asInt() : 10000;
-  if (wind_speed >= 10.0) {
-    delay_seconds += 60;
-  }
-  if (visibility < 5000) {
-    delay_seconds += 60;
-  }
-  if (hour["rain"].isObject()) {
-    delay_seconds += 90;
-  }
-  if (hour["snow"].isObject()) {
-    delay_seconds += 180;
-  }
-
+  bool has_thunder = false;
   const Json::Value& weather = hour["weather"];
   if (weather.isArray()) {
-    bool has_thunder = false;
     for (const Json::Value& condition : weather) {
       const int condition_id = condition["id"].isInt() ? condition["id"].asInt() : 0;
       if (condition_id >= 200 && condition_id < 300) {
         has_thunder = true;
       }
     }
-    if (has_thunder) {
-      delay_seconds += 240;
-    }
+  }
+
+  if (wind_speed >= 10.0) {
+    delay_seconds += 60;
+  }
+  if (visibility < 5000) {
+    delay_seconds += 60;
+  }
+  if (has_thunder) {
+    delay_seconds += 240;
+  } else if (hour["rain"].isObject()) {
+    delay_seconds += 90;
+  }
+  if (hour["snow"].isObject()) {
+    delay_seconds += 180;
   }
 
   return delay_seconds;
 }
 
-[[nodiscard]] int DelayFromOpenWeatherBody(const Json::Value& body) {
-  const Json::Value& hourly = body["hourly"];
-  if (!hourly.isArray()) {
-    return 0;
+[[nodiscard]] bool IsRouteHour(const Json::Value& hour,
+                               const std::chrono::sys_seconds route_start_time,
+                               const std::optional<int> route_duration_seconds) {
+  if (!hour["dt"].isInt64() && !hour["dt"].isUInt64()) {
+    return false;
   }
 
-  int delay_seconds = 0;
-  const Json::ArrayIndex hours_to_scan = std::min<Json::ArrayIndex>(hourly.size(), 6U);
-  for (Json::ArrayIndex index = 0; index < hours_to_scan; ++index) {
-    delay_seconds = std::max(delay_seconds, DelayFromHourlyForecast(hourly[index]));
+  const auto forecast_time =
+      std::chrono::sys_seconds{std::chrono::seconds{hour["dt"].asLargestInt()}};
+  const int window_seconds = std::max(route_duration_seconds.value_or(6 * 60 * 60), 60 * 60);
+  return forecast_time >= route_start_time &&
+         forecast_time < route_start_time + std::chrono::seconds{window_seconds};
+}
+
+void SetRouteTimes(const std::optional<std::chrono::sys_seconds> planned_start_time,
+                   deliveryoptimizer::api::WeatherImpactEstimate& impact) {
+  impact.planned_start_time = planned_start_time;
+  if (!impact.planned_start_time.has_value()) {
+    impact.estimated_finish_time = std::nullopt;
+    return;
   }
 
-  return delay_seconds;
+  impact.estimated_finish_time =
+      *impact.planned_start_time + std::chrono::seconds{impact.weather_adjusted_duration_seconds};
 }
 
 } // namespace
@@ -192,8 +202,10 @@ int EstimateServiceSeconds(const OptimizeRequestInput& input) {
   return static_cast<int>(total);
 }
 
-OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options,
-                                                       const Coordinate& coordinate) {
+OpenWeatherDelayEstimate
+FetchOpenWeatherDelayEstimate(const WeatherForecastOptions& options, const Coordinate& coordinate,
+                              const std::optional<std::chrono::sys_seconds> route_start_time,
+                              const std::optional<int> route_duration_seconds) {
   if (!IsOpenWeatherConfigured(options)) {
     return OpenWeatherDelayEstimate{
         .available = false,
@@ -211,7 +223,8 @@ OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOpti
   auto future = promise->get_future();
   client->sendRequest(
       request,
-      [promise](const drogon::ReqResult result, const drogon::HttpResponsePtr& response) {
+      [promise, route_start_time, route_duration_seconds](const drogon::ReqResult result,
+                                                          const drogon::HttpResponsePtr& response) {
         if (result != drogon::ReqResult::Ok || response == nullptr ||
             response->getStatusCode() != drogon::k200OK) {
           promise->set_value(OpenWeatherDelayEstimate{
@@ -234,7 +247,8 @@ OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOpti
 
         promise->set_value(OpenWeatherDelayEstimate{
             .available = true,
-            .delay_seconds_per_stop = DelayFromOpenWeatherBody(*body),
+            .delay_seconds_per_stop =
+                ReadOpenWeatherDelay(*body, route_start_time, route_duration_seconds),
             .source = "openweather",
         });
       },
@@ -250,6 +264,46 @@ OpenWeatherDelayEstimate FetchOpenWeatherDelayEstimate(const WeatherForecastOpti
   }
 
   return future.get();
+}
+
+int ReadOpenWeatherDelay(const Json::Value& body,
+                         const std::optional<std::chrono::sys_seconds> route_start_time,
+                         const std::optional<int> route_duration_seconds) {
+  const Json::Value& hourly = body["hourly"];
+  if (!hourly.isArray()) {
+    return 0;
+  }
+
+  if (!route_start_time.has_value()) {
+    int fallback_delay_seconds = 0;
+    const Json::ArrayIndex hours_to_scan = std::min<Json::ArrayIndex>(hourly.size(), 6U);
+    for (Json::ArrayIndex index = 0U; index < hours_to_scan; ++index) {
+      fallback_delay_seconds =
+          std::max(fallback_delay_seconds, DelayFromHourlyForecast(hourly[index]));
+    }
+    return fallback_delay_seconds;
+  }
+
+  int delay_seconds = 0;
+  Json::ArrayIndex matched_hours = 0U;
+  for (Json::ArrayIndex index = 0U; index < hourly.size(); ++index) {
+    if (!IsRouteHour(hourly[index], *route_start_time, route_duration_seconds)) {
+      continue;
+    }
+    delay_seconds = std::max(delay_seconds, DelayFromHourlyForecast(hourly[index]));
+    ++matched_hours;
+  }
+
+  if (matched_hours > 0U) {
+    return delay_seconds;
+  }
+
+  const Json::ArrayIndex hours_to_scan = std::min<Json::ArrayIndex>(hourly.size(), 6U);
+  for (Json::ArrayIndex index = 0U; index < hours_to_scan; ++index) {
+    delay_seconds = std::max(delay_seconds, DelayFromHourlyForecast(hourly[index]));
+  }
+
+  return delay_seconds;
 }
 
 WeatherImpactEstimate EstimateWeatherImpact(const WeatherForecastOptions& options,
@@ -271,11 +325,15 @@ WeatherImpactEstimate EstimateWeatherImpact(const WeatherForecastOptions& option
   return WeatherImpactEstimate{
       .stop_count = normalized_stop_count,
       .baseline_duration_seconds = normalized_baseline_seconds,
+      .baseline_route_duration_seconds = normalized_baseline_seconds,
       .delay_seconds_per_stop = configured_delay_per_stop,
       .weather_delay_seconds = weather_delay_seconds,
+      .weather_adjusted_duration_seconds = normalized_baseline_seconds + weather_delay_seconds,
       .reoptimize_threshold_seconds = threshold_seconds,
       .should_reoptimize = weather_delay_seconds > 0 && weather_delay_seconds >= threshold_seconds,
       .source = options.enabled ? "fixed_delay" : "disabled",
+      .planned_start_time = std::nullopt,
+      .estimated_finish_time = std::nullopt,
   };
 }
 
@@ -285,15 +343,59 @@ WeatherImpactEstimate EstimateRouteWeatherImpact(const WeatherForecastOptions& o
   WeatherForecastOptions effective_options = options;
   WeatherImpactEstimate impact =
       EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
+  const std::optional<std::chrono::sys_seconds> route_start_time = ReadRouteStartTime(input);
+  SetRouteTimes(route_start_time, impact);
   const OpenWeatherDelayEstimate openweather = FetchOpenWeatherDelayEstimate(
-      options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat});
+      effective_options, Coordinate{.lon = input.depot_lon, .lat = input.depot_lat},
+      route_start_time, baseline_duration_seconds);
   if (openweather.available) {
     effective_options.weather_delay_seconds_per_stop = openweather.delay_seconds_per_stop;
     impact = EstimateWeatherImpact(effective_options, input.jobs.size(), baseline_duration_seconds);
     impact.source = openweather.source;
+    SetRouteTimes(route_start_time, impact);
   }
 
   return impact;
+}
+
+std::optional<std::chrono::sys_seconds> ReadRouteStartTime(const OptimizeRequestInput& input) {
+  std::optional<std::chrono::sys_seconds> planned_start;
+  for (const VehicleInput& vehicle : input.vehicles) {
+    if (!vehicle.time_window.has_value()) {
+      continue;
+    }
+    if (!planned_start.has_value() || vehicle.time_window->start < *planned_start) {
+      planned_start = vehicle.time_window->start;
+    }
+  }
+
+  return planned_start;
+}
+
+std::optional<int> ReadVroomDuration(const Json::Value& vroom_output) {
+  const Json::Value& duration = vroom_output["summary"]["duration"];
+  if (!duration.isNumeric()) {
+    return std::nullopt;
+  }
+
+  const double raw_duration = duration.asDouble();
+  if (raw_duration < 0.0 || raw_duration > static_cast<double>(std::numeric_limits<int>::max())) {
+    return std::nullopt;
+  }
+
+  return static_cast<int>(std::ceil(raw_duration));
+}
+
+WeatherImpactEstimate RecalculateWeatherImpact(const WeatherForecastOptions& options,
+                                               const OptimizeRequestInput& input,
+                                               const Json::Value& vroom_output) {
+  // Callers choose whether OpenWeather may be queried by passing or clearing the API key.
+  const std::optional<int> summary_duration = ReadVroomDuration(vroom_output);
+  if (!summary_duration.has_value()) {
+    return EstimateRouteWeatherImpact(options, input, 0);
+  }
+
+  return EstimateRouteWeatherImpact(options, input, *summary_duration);
 }
 
 Json::Value BuildWeatherAdjustedVroomInput(const OptimizeRequestInput& input,
@@ -319,11 +421,18 @@ Json::Value BuildWeatherForecastAnnotation(const WeatherForecastOptions& options
   forecast["status"] = options.enabled ? "evaluated" : "disabled";
   forecast["provider"] = impact.source;
   forecast["stop_count"] = impact.stop_count;
-  forecast["baseline_duration_seconds"] = impact.baseline_duration_seconds;
+  forecast["baseline_route_duration_seconds"] = impact.baseline_route_duration_seconds;
   forecast["weather_delay_seconds"] = impact.weather_delay_seconds;
-  forecast["predicted_duration_seconds"] =
-      impact.baseline_duration_seconds + impact.weather_delay_seconds;
+  forecast["weather_adjusted_duration_seconds"] = impact.weather_adjusted_duration_seconds;
   forecast["reoptimize_threshold_seconds"] = impact.reoptimize_threshold_seconds;
+  if (impact.planned_start_time.has_value()) {
+    forecast["planned_start_time"] =
+        static_cast<Json::Int64>(impact.planned_start_time->time_since_epoch().count());
+  }
+  if (impact.estimated_finish_time.has_value()) {
+    forecast["estimated_finish_time"] =
+        static_cast<Json::Int64>(impact.estimated_finish_time->time_since_epoch().count());
+  }
 
   Json::Value reoptimization{Json::objectValue};
   reoptimization["applied"] = impact.should_reoptimize;
