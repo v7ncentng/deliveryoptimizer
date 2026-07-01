@@ -6,8 +6,6 @@ export const dynamic = "force-dynamic";
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import ShellNavbar from "@/app/components/ShellNavbar";
-import { CSVImportModal } from "@/app/edit/components/address/CSVImportModal";
-import { useCSVImport } from "@/app/edit/hooks/useCSVImport";
 import { migrateSessionSaveFile } from "@/lib/validation/session.schema";
 import { formatSize } from "@/app/utils/routeUtils";
 
@@ -22,14 +20,6 @@ export default function UploadSavePointPage() {
   const [continueError, setContinueError] = useState<string | null>(null);
   const dragDepth = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const {
-    csvData,
-    isImportModalOpen,
-    isLoading,
-    openImportModal,
-    closeImportModal,
-  } = useCSVImport();
 
   const handleFile = (f: File) => {
     setContinueError(null);
@@ -82,6 +72,7 @@ export default function UploadSavePointPage() {
           return;
         }
 
+        // Valid session save — restore full state on edit page
         try {
           migrateSessionSaveFile(parsed);
           sessionStorage.setItem(
@@ -91,12 +82,27 @@ export default function UploadSavePointPage() {
           router.push("/edit");
           return;
         } catch {
-          // Not a session save — fall through to the modal flow
+          // Not a session save — fall through to CSVUploadOverlay column-mapper
         }
       }
 
-      // CSV or raw JSON array: open two-step column-mapper modal
-      openImportModal(file);
+      // CSV or raw JSON array: store the file content and navigate to /edit,
+      // which will open CSVUploadOverlay automatically on mount.
+      const text = await file.text();
+      try {
+        sessionStorage.setItem(
+          "pendingCSVFile",
+          JSON.stringify({ name: file.name, content: text }),
+        );
+      } catch {
+        // sessionStorage has a ~5 MB quota — large files can exceed it.
+        // Fail visibly rather than silently navigating to a blank column mapper.
+        setContinueError(
+          "This file is too large to import directly. Please use a smaller file (under 5 MB).",
+        );
+        return;
+      }
+      router.push("/edit");
     } catch (err) {
       setContinueError(
         err instanceof Error
@@ -106,9 +112,7 @@ export default function UploadSavePointPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [file, isProcessing, openImportModal, router]);
-
-  const isUploadingOrLoading = (isProcessing && !!file) || isLoading;
+  }, [file, isProcessing, router]);
 
   return (
     <>
@@ -291,56 +295,45 @@ export default function UploadSavePointPage() {
       <div className="upload-root">
         <ShellNavbar />
 
-        {/* Modal renders over the upload page — navigation only happens after Confirm */}
-        {isImportModalOpen && (
-          <CSVImportModal
-            csvData={csvData}
-            onClose={closeImportModal}
-            onConfirmAndNavigate
-          />
-        )}
-
         <div className="upload-content">
           <h2 className="upload-title">Upload your save point</h2>
           <p className="upload-subtitle">
             Continue editing from where you left off.
           </p>
 
-          {/* Drop zone — shows spinner while file is being read/parsed */}
+          {/* Drop zone */}
           <div
             className={`upload-dropzone${isDragging ? " dragging" : ""}`}
-            onClick={() => !isUploadingOrLoading && inputRef.current?.click()}
+            onClick={() => !isProcessing && inputRef.current?.click()}
             onDragEnter={handleDragEnter}
             onDragOver={(e) => e.preventDefault()}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            {isUploadingOrLoading ? (
+            {isProcessing ? (
               <div className="upload-spinner" />
             ) : (
               <>
                 <div className="upload-dropzone-icon">
-                  <svg width="32" height="40" viewBox="0 0 32 40" fill="none">
-                    <rect
-                      x="1"
-                      y="1"
-                      width="22"
-                      height="34"
-                      rx="3"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
+                  <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
                     <path
-                      d="M7 10h10M7 15h10M7 20h6"
+                      d="M18 2H6a2 2 0 00-2 2v28a2 2 0 002 2h20a2 2 0 002-2V14L18 2z"
                       stroke="currentColor"
-                      strokeWidth="1.5"
+                      strokeWidth="1.75"
                       strokeLinecap="round"
+                      strokeLinejoin="round"
                     />
                     <path
-                      d="M15 26v-7M15 19l-3 3M15 19l3 3"
+                      d="M18 2v12h12"
                       stroke="currentColor"
-                      strokeWidth="1.5"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M16 22v-6M13 19l3-3 3 3"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -365,7 +358,7 @@ export default function UploadSavePointPage() {
             />
           </div>
 
-          {file && !isUploadingOrLoading && (
+          {file && !isProcessing && (
             <div className="upload-file-row">
               <svg
                 width="16"
@@ -418,9 +411,9 @@ export default function UploadSavePointPage() {
             <button
               className="upload-continue-btn"
               onClick={() => void handleContinue()}
-              disabled={!file || isUploadingOrLoading}
+              disabled={!file || isProcessing}
             >
-              {isUploadingOrLoading ? "Processing..." : "Continue"}
+              {isProcessing ? "Processing..." : "Continue"}
             </button>
           </div>
         </div>
