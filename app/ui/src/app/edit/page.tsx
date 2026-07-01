@@ -274,18 +274,16 @@ export default function Page() {
 
   return (
     <div className={`${PAGE_V2_ROOT} ${styles.root}`}>
-      {/* Step 1: file picker */}
+      {/* CSVUploadOverlay handles all three steps: file pick → column mapper → row selector */}
       {isUploadOverlayOpen && (
         <CSVUploadOverlay
           onClose={() => {
             setIsUploadOverlayOpen(false);
             setPendingCSVFile(null);
           }}
-          onFileSelect={(file) => {
-            setIsUploadOverlayOpen(false);
-            setPendingCSVFile(null);
-            openImportModal(file);
-          }}
+          importAddresses={(cards: AddressCard[]) =>
+            addressState.importAddresses(reindexAddresses(cards))
+          }
           onInvalidFile={() => {
             setIsUploadOverlayOpen(false);
             setPendingCSVFile(null);
@@ -294,16 +292,6 @@ export default function Page() {
             );
           }}
           initialFile={pendingDropFile ?? pendingCSVFile ?? undefined}
-        />
-      )}
-      {/* Step 2: column mapper + row selector */}
-      {isImportModalOpen && (
-        <CSVImportModal
-          csvData={csvData}
-          onClose={closeImportModal}
-          importAddresses={(cards: AddressCard[]) =>
-            addressState.importAddresses(reindexAddresses(cards))
-          }
         />
       )}
 

@@ -22,8 +22,9 @@ export default function UploadRoutePage() {
 
   const handleFile = (f: File) => {
     setError(null);
-    if (!f.name.endsWith(".json") && !f.name.endsWith(".csv")) {
-      setError("Only .json or .csv route files are accepted.");
+    // Only .json route files are accepted — CSV is rejected here.
+    if (!f.name.endsWith(".json")) {
+      setError("Only .json route files are accepted.");
       return;
     }
     if (f.size > MAX_FILE_BYTES) {
@@ -344,7 +345,7 @@ export default function UploadRoutePage() {
                   </svg>
                 </div>
                 <p className="ur-dropzone-text">
-                  Drag and drop .json or .csv files here, or
+                  Drag and drop .json files here, or
                 </p>
                 <p className="ur-dropzone-browse">Browse files</p>
               </>
@@ -352,7 +353,7 @@ export default function UploadRoutePage() {
             <input
               ref={inputRef}
               type="file"
-              accept=".json,.csv"
+              accept=".json"
               style={{ display: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -368,7 +369,7 @@ export default function UploadRoutePage() {
               <span className="ur-file-size">{formatSize(file.size)}</span>
               <button
                 className="ur-file-remove"
-                aria-label="Remove"
+                aria-label="Remove file"
                 onClick={(e) => {
                   e.stopPropagation();
                   setFile(null);
